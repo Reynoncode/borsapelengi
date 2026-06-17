@@ -149,7 +149,7 @@ body {
   margin-top: 4px;
 }
 
-.app-grid {
+.-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 18px 14px;
@@ -183,6 +183,8 @@ body {
 .app-icon.bmb      { background: linear-gradient(155deg, #5AA9FF, #2A5FC4); }
 .app-icon.news     { background: linear-gradient(155deg, #FF4C5E, #B5223A); }
 .app-icon.instakg  { background: linear-gradient(155deg, #C99CFF, #7A4FD1); }
+.app-icon.travel     { background: linear-gradient(155deg, #5AC8FA, #1E6FA8); }
+.app-icon.realestate { background: linear-gradient(155deg, #E8A33D, #B5701E); }
 
 .app-label {
   font-size: 11px;
