@@ -634,25 +634,24 @@ function renderBank() {
 
 /* ──────────────────────────────────────────────────────────
    NEWS KARTLARI
+   Qeyd: faiz təsiri, "tətbiq olundu" statusu və müsbət/mənfi
+   rəng KƏSDİRİLƏRƏK göstərilmir — oyunçu xəbərin mətnini oxuyub
+   özü təxmin etməlidir ki, bu yaxşı yoxsa pis xəbərdir və
+   nə qədər/neçə gün təsir edə bilər. Arxa planda təsir
+   eyni qaydada (Engine üzərindən) işləyir, sadəcə UI-da
+   görünmür.
 ────────────────────────────────────────────────────────── */
 function renderNewsCard(newsItem, tNum) {
   const asset = getAsset(newsItem.assetId);
   if (!asset) return "";
-  const isPos = newsItem.impact>=0;
-  const ipct  = (newsItem.impact*100).toFixed(1);
-  const sign  = isPos?"+":"";
-  const status = newsItem.applied
-    ? `<div class="news-status-tag applied">✓ Təsir tətbiq olundu</div>`
-    : `<div class="news-status-tag">⏳ Sabah tətbiq olunacaq</div>`;
   const ico = newsItem.icon||"";
   switch(tNum) {
-    case 1: return `<div class="news-card t1"><div class="nc-icon"><img src="${ico}" alt="" onerror="this.style.display='none'"></div><div class="nc-body"><div class="nc-title">${newsItem.title}</div><div class="nc-text">${newsItem.text}</div>${status}</div></div>`;
-    case 2: return `<div class="news-card t2 ${isPos?'positive':''}"><div class="nc-tag"><img src="${ico}" alt="" onerror="this.style.display='none'">${asset.ticker} · ${sign}${ipct}%</div><div class="nc-title">${newsItem.title}</div><div class="nc-text">${newsItem.text}</div>${status}</div>`;
-    case 3: return `<div class="news-card t3"><div class="nc-top"><img src="${ico}" alt="" onerror="this.style.display='none'"><span class="nc-impact-pill ${isPos?'up':'down'}">${sign}${ipct}%</span></div><div class="nc-title">${newsItem.title}</div><div class="nc-text">${newsItem.text}</div>${status}</div>`;
-    case 4: return `<div class="news-card t4"><div class="nc-quote-mark">"</div><div class="nc-body"><div class="nc-title">${newsItem.title}</div><div class="nc-text">${newsItem.text}</div><div class="nc-foot"><img src="${ico}" alt="" onerror="this.style.display='none'"><span style="font-size:11px;color:var(--c-text-tertiary);">${asset.ticker}</span></div>${status}</div></div>`;
+    case 1: return `<div class="news-card t1"><div class="nc-icon"><img src="${ico}" alt="" onerror="this.style.display='none'"></div><div class="nc-body"><div class="nc-title">${newsItem.title}</div><div class="nc-text">${newsItem.text}</div></div></div>`;
+    case 2: return `<div class="news-card t2"><div class="nc-tag"><img src="${ico}" alt="" onerror="this.style.display='none'">${asset.ticker}</div><div class="nc-title">${newsItem.title}</div><div class="nc-text">${newsItem.text}</div></div>`;
+    case 3: return `<div class="news-card t3"><div class="nc-top"><img src="${ico}" alt="" onerror="this.style.display='none'"><span class="nc-ticker-pill">${asset.ticker}</span></div><div class="nc-title">${newsItem.title}</div><div class="nc-text">${newsItem.text}</div></div>`;
+    case 4: return `<div class="news-card t4"><div class="nc-quote-mark">"</div><div class="nc-body"><div class="nc-title">${newsItem.title}</div><div class="nc-text">${newsItem.text}</div><div class="nc-foot"><img src="${ico}" alt="" onerror="this.style.display='none'"><span style="font-size:11px;color:var(--c-text-tertiary);">${asset.ticker}</span></div></div></div>`;
     case 5: default:
-      const bw = Math.min(Math.abs(newsItem.impact)*400,100);
-      return `<div class="news-card t5"><div class="nc-header-row"><span class="nc-ticker-badge">${asset.ticker}</span><img src="${ico}" alt="" onerror="this.style.display='none'"></div><div class="nc-title">${newsItem.title}</div><div class="nc-text">${newsItem.text}</div><div class="nc-impact-bar-wrap"><div class="nc-impact-bar ${isPos?'up':'down'}" style="width:${bw}%;"></div></div><div class="nc-impact-label">Gözlənilən: ${sign}${ipct}% (${newsItem.duration} gün)</div>${status}</div>`;
+      return `<div class="news-card t5"><div class="nc-header-row"><span class="nc-ticker-badge">${asset.ticker}</span><img src="${ico}" alt="" onerror="this.style.display='none'"></div><div class="nc-title">${newsItem.title}</div><div class="nc-text">${newsItem.text}</div></div>`;
   }
 }
 
@@ -669,6 +668,7 @@ function renderNewsFeed() {
   });
   c.innerHTML=html;
 }
+
 
 /* ──────────────────────────────────────────────────────────
    GÜN İRƏLİLƏTMƏ
