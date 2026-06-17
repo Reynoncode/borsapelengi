@@ -1138,21 +1138,38 @@ state.ownedProperties.push({
     });
     addTransaction(`${p.name} alındı`, p.buyPrice, "out", "REALESTATE");
     showToast(`🏠 ${p.name} alındı!`);
-  } else if (reModalAction === "change_business") {
+     
+} else if (reModalAction === "change_business") {
     const selectedBiz = document.querySelector("#re-modal-biz-grid-wrap .re-biz-card.selected");
     if (!selectedBiz) { showToast("Biznes seç"); return; }
     const newBizId = selectedBiz.dataset.biz;
+    const biz = BUSINESS_TYPES.find(b => b.id === newBizId);
+    const setupCost = biz.setupCost || 0;
+
+    if (state.bankBalance < setupCost) {
+      showToast(`Kifayət qədər balans yoxdur — lazım: ${fmtMoney(setupCost)}`);
+      return;
+    }
+
     const owned = state.ownedProperties[changeBizPropertyIdx];
+    state.bankBalance -= setupCost;
     owned.businessTypeId = newBizId;
     owned.ownershipType = "business";
     owned.monthlyIncome = calcPropertyIncome(p, "business", newBizId);
-    showToast(`Biznes dəyişdirildi: ${BUSINESS_TYPES.find(b=>b.id===newBizId).name}`);
+    owned.lastPaymentDay = state.day; // yeni biznes üçün ödəniş dövrü sıfırlanır
+    owned.unpaidCycles = 0;
+    owned.debt = 0;
+
+    addTransaction(`${biz.name} quruluşu: ${p.name}`, setupCost, "out", "REALESTATE");
+    showToast(`${biz.name} quruldu — xərc: ${fmtMoney(setupCost)}`);
 
     saveState();
     closeREModal();
+    renderHome();
     renderREOwned();
-    return; // qalan kodu işə salma
+    return;
   } else {
+     
     const deposit = p.rentPrice * p.depositMonths;
     if (state.bankBalance < deposit) return;
     state.bankBalance -= deposit;
