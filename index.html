@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Borsa Simulyasiyası</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="phone">
+  <div class="phone-screen">
+    <div class="notch"></div>
+
+    <!-- ============ STATUS BAR (bütün ekranlarda ortaq) ============ -->
+    <div class="status-bar">
+      <span class="day-label" id="status-day-label">GÜN 1</span>
+      <span class="status-icons">📶 🔋</span>
+    </div>
+
+    <!-- ============================================================
+         HOME SCREEN
+    ============================================================= -->
+    <div class="screen-view home-view active" id="screen-home">
+      <div class="home-header">
+        <div class="net-worth-label">Ümumi Var-Dövlət</div>
+        <div class="net-worth-value" id="home-net-worth">$10,000.00</div>
+        <div class="net-worth-change up" id="home-net-worth-change">+0.00% başlanğıcdan</div>
+      </div>
+
+      <div class="app-grid">
+        <div class="app-icon-wrap" data-app="invested">
+          <div class="app-icon invested">📈</div>
+          <div class="app-label">INVESTED</div>
+        </div>
+        <div class="app-icon-wrap" data-app="bmb">
+          <div class="app-icon bmb">🏦</div>
+          <div class="app-label">BMB</div>
+        </div>
+        <div class="app-icon-wrap" data-app="news">
+          <div class="app-icon news">📰</div>
+          <div class="app-label">NEWS</div>
+          <div class="badge" id="news-badge" style="display:none;">0</div>
+        </div>
+        <div class="app-icon-wrap" data-app="instakg">
+          <div class="app-icon instakg">📸</div>
+          <div class="app-label">instakg</div>
+        </div>
+      </div>
+
+      <div class="next-day-widget">
+        <div class="nd-info">
+          <div class="nd-title">Növbəti günə keç</div>
+          <div class="nd-sub" id="nd-news-preview">Bazarlar yenilənəcək</div>
+        </div>
+        <button class="btn-next-day" id="btn-advance-day">İrəli ▶</button>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         INVESTED APP — Siyahı görünüşü
+    ============================================================= -->
+    <div class="screen-view" id="screen-invested">
+      <div class="app-header">
+        <div class="btn-back" data-back="home">←</div>
+        <div class="app-title">INVESTED<small>Portfel idarəetməsi</small></div>
+      </div>
+      <div class="app-body">
+        <div class="inv-summary">
+          <div class="inv-summary-card">
+            <div class="label">Trade Balansı</div>
+            <div class="value" id="inv-balance">$0.00</div>
+          </div>
+          <div class="inv-summary-card">
+            <div class="label">Portfel Dəyəri</div>
+            <div class="value" id="inv-portfolio-value">$0.00</div>
+          </div>
+        </div>
+        <div class="inv-tabs">
+          <div class="inv-tab active" data-filter="all">Hamısı</div>
+          <div class="inv-tab" data-filter="stock">Səhm</div>
+          <div class="inv-tab" data-filter="crypto">Kripto</div>
+          <div class="inv-tab" data-filter="commodity">Əmtəə</div>
+        </div>
+        <div class="asset-list" id="asset-list"></div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         INVESTED APP — Aktiv detalı görünüşü
+    ============================================================= -->
+    <div class="screen-view" id="screen-asset-detail">
+      <div class="app-header">
+        <div class="btn-back" data-back="invested">←</div>
+        <div class="app-title" id="detail-asset-name">—<small id="detail-asset-sub">—</small></div>
+      </div>
+      <div class="app-body">
+        <div class="asset-detail-header">
+          <div>
+            <div class="asset-detail-price" id="detail-price">$0.00</div>
+            <div class="asset-change" id="detail-change">+0.00%</div>
+          </div>
+        </div>
+        <div class="chart-wrap" id="detail-chart"></div>
+        <div class="holding-box">
+          <div class="h-item">
+            <div class="h-label">Sahib olduğun</div>
+            <div class="h-value" id="detail-holding-qty">0</div>
+          </div>
+          <div class="h-item">
+            <div class="h-label">Dəyəri</div>
+            <div class="h-value" id="detail-holding-value">$0.00</div>
+          </div>
+          <div class="h-item">
+            <div class="h-label">Trade Balansı</div>
+            <div class="h-value" id="detail-trade-balance">$0.00</div>
+          </div>
+        </div>
+        <div class="trade-buttons">
+          <button class="btn-trade buy" id="btn-open-buy">Al</button>
+          <button class="btn-trade sell" id="btn-open-sell">Sat</button>
+        </div>
+        <div class="news-mini-section">
+          <div class="section-title">Bu aktivlə bağlı xəbərlər</div>
+          <div id="detail-news-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         BMB (BANK) APP
+    ============================================================= -->
+    <div class="screen-view" id="screen-bmb">
+      <div class="app-header">
+        <div class="btn-back" data-back="home">←</div>
+        <div class="app-title">BMB<small>Bank Maliyyə Bankı</small></div>
+      </div>
+      <div class="app-body">
+        <div class="bank-balance-card">
+          <div class="bb-label">Bank Balansı</div>
+          <div class="bb-value" id="bank-balance">$0.00</div>
+          <div class="bb-sub">Hesap №: AZ00 BMB0 0000 0001</div>
+        </div>
+        <div class="bank-actions">
+          <button class="btn-bank-action" id="btn-transfer-to-invested">BMB → INVESTED</button>
+          <button class="btn-bank-action" id="btn-transfer-to-bank">INVESTED → BMB</button>
+        </div>
+        <div class="tx-section">
+          <div class="section-title" style="padding:0 0 10px; font-size:12px; font-weight:700; color:var(--c-text-secondary); text-transform:uppercase; letter-spacing:0.05em;">Tranzaksiya Tarixçəsi</div>
+          <div id="tx-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         NEWS APP
+    ============================================================= -->
+    <div class="screen-view" id="screen-news">
+      <div class="app-header">
+        <div class="btn-back" data-back="home">←</div>
+        <div class="app-title">NEWS<small>Bazar xəbərləri</small></div>
+      </div>
+      <div class="app-body">
+        <div class="news-feed" id="news-feed"></div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         INSTAKG (placeholder)
+    ============================================================= -->
+    <div class="screen-view" id="screen-instakg">
+      <div class="app-header">
+        <div class="btn-back" data-back="home">←</div>
+        <div class="app-title">instakg<small>Sosial media</small></div>
+      </div>
+      <div class="instakg-placeholder">
+        <div class="ip-icon">📸</div>
+        <div class="ip-title">Tezliklə...</div>
+        <div class="ip-text">Bu app hələ hazırlanır. Sonradan başqa funksiya ilə əvəzlənəcək.</div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         TRADE MODAL (Al/Sat)
+    ============================================================= -->
+    <div class="modal-overlay" id="trade-modal-overlay">
+      <div class="trade-modal">
+        <div class="tm-title" id="tm-title">Al</div>
+        <div class="tm-sub" id="tm-sub">Trade balansından alış edilir</div>
+        <div class="tm-input-row">
+          <input type="number" id="tm-quantity-input" placeholder="0" min="0" step="any">
+          <span class="tm-unit" id="tm-unit-label">ədəd</span>
+        </div>
+        <div class="tm-error" id="tm-error">Kifayət qədər balans yoxdur</div>
+        <div class="tm-summary">
+          <span>Cəmi məbləğ</span>
+          <span id="tm-total">$0.00</span>
+        </div>
+        <div class="tm-actions">
+          <button class="btn-modal-cancel" id="btn-modal-cancel">İmtina</button>
+          <button class="btn-modal-confirm buy" id="btn-modal-confirm">Təsdiqlə</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         TRANSFER MODAL (BMB ↔ INVESTED)
+    ============================================================= -->
+    <div class="modal-overlay" id="transfer-modal-overlay">
+      <div class="trade-modal">
+        <div class="tm-title" id="transfer-title">Transfer</div>
+        <div class="tm-sub" id="transfer-sub">Məbləği daxil et</div>
+        <div class="tm-input-row">
+          <span class="tm-unit">$</span>
+          <input type="number" id="transfer-amount-input" placeholder="0.00" min="0" step="any">
+        </div>
+        <div class="tm-error" id="transfer-error">Kifayət qədər balans yoxdur</div>
+        <div class="tm-actions">
+          <button class="btn-modal-cancel" id="btn-transfer-cancel">İmtina</button>
+          <button class="btn-modal-confirm buy" id="btn-transfer-confirm">Köçür</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ TOAST ============ -->
+    <div class="toast" id="toast"></div>
+
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
