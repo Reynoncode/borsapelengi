@@ -210,6 +210,178 @@
         <div class="ip-text">Bu app hələ hazırlanır. Sonradan başqa funksiya ilə əvəzlənəcək.</div>
       </div>
     </div>
+    <!-- Mövcud screen-instakg bağlanan yerdən SONRA əlavə et -->
+
+<!-- ============================================================
+     TRAVEL APP
+============================================================= -->
+<div class="screen-view" id="screen-travel">
+  <div class="app-header">
+    <div class="btn-back" data-back="home">←</div>
+    <div class="app-title">TRAVEL<small>Şəhər seç və köç</small></div>
+  </div>
+  <div class="app-body" style="padding:0;">
+
+    <!-- Aktiv şəhər banner -->
+    <div class="travel-current-city" id="travel-current-city-banner">
+      <div class="tcc-label">Hazırda yaşayırsan</div>
+      <div class="tcc-name" id="tcc-name">Bakı, Azərbaycan</div>
+      <div class="tcc-flag" id="tcc-flag">🇦🇿</div>
+    </div>
+
+    <!-- Xəritə (interaktiv SVG dünya) -->
+    <div class="travel-map-wrap" id="travel-map-wrap">
+      <svg id="travel-map-svg" viewBox="0 0 360 180" xmlns="http://www.w3.org/2000/svg">
+        <!-- Dəniz fonu -->
+        <rect width="360" height="180" fill="#0d2137" rx="12"/>
+        <!-- Sadə quru silueti -->
+        <ellipse cx="180" cy="90" rx="155" ry="72" fill="#1a3a2a" opacity="0.4"/>
+        <!-- Şəhər nöqtələri -->
+        <!-- Bakı -->
+        <circle id="map-dot-baku"    cx="218" cy="72"  r="6" fill="#1FD67A" stroke="#fff" stroke-width="1.5" class="map-city-dot" data-city="baku"/>
+        <!-- Dubai -->
+        <circle id="map-dot-dubai"   cx="228" cy="88"  r="6" fill="#E8A33D" stroke="#fff" stroke-width="1.5" class="map-city-dot" data-city="dubai"/>
+        <!-- London -->
+        <circle id="map-dot-london"  cx="155" cy="60"  r="6" fill="#5AA9FF" stroke="#fff" stroke-width="1.5" class="map-city-dot" data-city="london"/>
+        <!-- New York -->
+        <circle id="map-dot-newyork" cx="98"  cy="70"  r="6" fill="#C99CFF" stroke="#fff" stroke-width="1.5" class="map-city-dot" data-city="newyork"/>
+        <!-- Tokyo -->
+        <circle id="map-dot-tokyo"   cx="298" cy="72"  r="6" fill="#FF8C42" stroke="#fff" stroke-width="1.5" class="map-city-dot" data-city="tokyo"/>
+        <!-- Bali -->
+        <circle id="map-dot-bali"    cx="283" cy="112" r="6" fill="#FF4C5E" stroke="#fff" stroke-width="1.5" class="map-city-dot" data-city="bali"/>
+        <!-- Şəhər adları -->
+        <text x="218" y="65"  text-anchor="middle" font-size="7" fill="#fff" font-family="Inter,sans-serif">Bakı</text>
+        <text x="228" y="101" text-anchor="middle" font-size="7" fill="#fff" font-family="Inter,sans-serif">Dubai</text>
+        <text x="148" y="53"  text-anchor="middle" font-size="7" fill="#fff" font-family="Inter,sans-serif">London</text>
+        <text x="91"  y="63"  text-anchor="middle" font-size="7" fill="#fff" font-family="Inter,sans-serif">New York</text>
+        <text x="298" y="65"  text-anchor="middle" font-size="7" fill="#fff" font-family="Inter,sans-serif">Tokyo</text>
+        <text x="283" y="125" text-anchor="middle" font-size="7" fill="#fff" font-family="Inter,sans-serif">Bali</text>
+      </svg>
+    </div>
+
+    <!-- Şəhər kartları -->
+    <div class="travel-city-list" id="travel-city-list"></div>
+  </div>
+</div>
+
+<!-- ============================================================
+     TRAVEL — Şəhər detail + köçmə
+============================================================= -->
+<div class="screen-view" id="screen-travel-detail">
+  <div class="app-header">
+    <div class="btn-back" data-back="travel">←</div>
+    <div class="app-title" id="travel-detail-title">Şəhər<small id="travel-detail-sub">—</small></div>
+  </div>
+  <div class="app-body">
+    <div class="travel-detail-hero" id="travel-detail-hero">
+      <div class="tdh-flag" id="tdh-flag">🏙️</div>
+      <div class="tdh-name" id="tdh-name">—</div>
+      <div class="tdh-tag" id="tdh-tag">—</div>
+    </div>
+
+    <div class="travel-req-card" id="travel-req-card">
+      <div class="trc-title">Köçmə Tələbləri</div>
+      <div class="trc-row">
+        <span>Minimum bank balansı</span>
+        <span id="trc-min-balance">—</span>
+      </div>
+      <div class="trc-row">
+        <span>Viza &amp; sənəd xərci</span>
+        <span id="trc-visa-cost">—</span>
+      </div>
+      <div class="trc-row">
+        <span>Köçmə xərci (ümumi)</span>
+        <span id="trc-total-cost">—</span>
+      </div>
+      <div class="trc-row">
+        <span>Sənin bank balansın</span>
+        <span id="trc-your-balance">—</span>
+      </div>
+    </div>
+
+    <div class="travel-perks" id="travel-perks"></div>
+
+    <div id="travel-move-status" style="margin:14px 16px 0;font-size:13px;color:var(--c-down);display:none;"></div>
+
+    <div style="padding:16px;">
+      <button class="btn-travel-move" id="btn-travel-move">Bu şəhərə köç</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     REALESTATE APP
+============================================================= -->
+<div class="screen-view" id="screen-realestate">
+  <div class="app-header">
+    <div class="btn-back" data-back="home">←</div>
+    <div class="app-title">REALESTATE<small id="re-city-sub">Bakı əmlak bazarı</small></div>
+  </div>
+  <div class="app-body" style="padding:0;">
+
+    <div class="re-tabs">
+      <div class="re-tab active" data-re-tab="listings">Elanlar</div>
+      <div class="re-tab" data-re-tab="owned">Mənim əmlakım</div>
+    </div>
+
+    <div class="re-panel" id="re-listings-panel">
+      <div class="re-filter-row">
+        <div class="re-filter active" data-re-filter="all">Hamısı</div>
+        <div class="re-filter" data-re-filter="residential">Ev</div>
+        <div class="re-filter" data-re-filter="commercial">Obyekt</div>
+      </div>
+      <div id="re-listings-list"></div>
+    </div>
+
+    <div class="re-panel" id="re-owned-panel" style="display:none;">
+      <div id="re-owned-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     REALESTATE — Əmlak detayı
+============================================================= -->
+<div class="screen-view" id="screen-realestate-detail">
+  <div class="app-header">
+    <div class="btn-back" data-back="realestate">←</div>
+    <div class="app-title" id="re-detail-title">Əmlak<small id="re-detail-sub">—</small></div>
+  </div>
+  <div class="app-body">
+    <div class="re-detail-img" id="re-detail-img">🏠</div>
+    <div class="re-detail-info" id="re-detail-info"></div>
+    <div class="re-detail-actions" id="re-detail-actions"></div>
+
+    <!-- Biznes seçimi (yalnız obyektlər üçün) -->
+    <div id="re-business-section" style="display:none;">
+      <div class="section-title" style="padding:12px 16px 8px;">Biznes növü seç</div>
+      <div class="re-business-grid" id="re-business-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     REALESTATE — Satın alma / Kirayə modal
+============================================================= -->
+<div class="modal-overlay" id="re-modal-overlay">
+  <div class="trade-modal">
+    <div class="tm-title" id="re-modal-title">Əmlak al</div>
+    <div class="tm-sub" id="re-modal-sub">—</div>
+    <div class="tm-summary">
+      <span id="re-modal-cost-label">Məbləğ</span>
+      <span id="re-modal-cost">$0</span>
+    </div>
+    <div class="tm-summary" style="margin-top:6px;">
+      <span>Aylıq gəlir</span>
+      <span id="re-modal-income" style="color:#1FD67A;">$0/ay</span>
+    </div>
+    <div class="tm-error" id="re-modal-error" style="display:none;">Kifayət qədər balans yoxdur</div>
+    <div class="tm-actions">
+      <button class="btn-modal-cancel" id="btn-re-modal-cancel">İmtina</button>
+      <button class="btn-modal-confirm buy" id="btn-re-modal-confirm">Təsdiqlə</button>
+    </div>
+  </div>
+</div>
 
     <!-- ============================================================
          TRADE MODAL (Al/Sat)
