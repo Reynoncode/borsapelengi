@@ -1249,3 +1249,66 @@ body {
 .re-biz-name { font-family: var(--f-display); font-size: 12.5px; font-weight: 700; color: var(--c-text-primary); }
 .re-biz-income { font-family: var(--f-mono); font-size: 12px; font-weight: 600; color: var(--c-up); margin-top: 4px; }
 .re-biz-desc { font-size: 11px; color: var(--c-text-tertiary); margin-top: 4px; line-height: 1.3; }
+
+/* ============================================================
+   REALESTATE — BORC / XƏRC STATUSU
+============================================================ */
+.re-owned-card.has-debt {
+  border-color: var(--c-down);
+  background: rgba(255, 76, 94, 0.06);
+}
+
+.re-oc-expense {
+  font-size: 11.5px;
+  color: var(--c-text-tertiary);
+  margin-top: 6px;
+}
+
+.re-oc-debt {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--c-down);
+  margin-top: 6px;
+}
+
+.re-oc-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.re-oc-toggle {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface-raised);
+  color: var(--c-text-secondary);
+  cursor: pointer;
+}
+.re-oc-toggle.on {
+  border-color: var(--c-up);
+  color: var(--c-up);
+  background: var(--c-up-bg);
+}
+.re-oc-toggle.off {
+  border-color: var(--c-down);
+  color: var(--c-down);
+  background: var(--c-down-bg);
+}
+
+.re-oc-change-biz {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface-raised);
+  color: var(--c-text-secondary);
+  cursor: pointer;
+}
+.re-oc-change-biz:hover {
+  border-color: var(--c-gold);
+  color: var(--c-gold);
+}
