@@ -1,10 +1,12 @@
 /* ============================================================
-   APP.JS — Borsa Simulyasiyası v2
+   APP.JS — Borsa Simulyasiyası v2 + Travel & RealEstate
    Yeniliklər:
    - Portfolio tab: açıq mövqelər (long + short + leveraged)
    - Short (Sell In): aktivsiz satış mövqesi aç, sonra bağla
    - Leverage: 1x, 2x, 5x, 10x seçimi
    - Xəbər: gündə tam 10 aktiv, qalanı dalğalanma
+   - Travel: şəhər dəyişmə
+   - RealEstate: əmlak al / kirayə ver / biznes aç, passiv gəlir
    ============================================================ */
 
 const STORAGE_KEY = "borsa_sim_state_v2";
@@ -20,6 +22,12 @@ const LEVERAGE_OPTIONS = [1, 2, 5, 10];
      leverage, qty, entryPrice, margin,
      openDay, ticker, name
    }
+   currentCity: string                 — hazırkı şəhər id-si
+   ownedProperties: [ OwnedProperty ]
+   OwnedProperty: {
+     propertyId, ownershipType: 'rent_out'|'business'|'rented',
+     businessTypeId, monthlyIncome, rentMonthly, depositPaid
+   }
 ────────────────────────────────────────────────────────── */
 let state = {
   day: 1,
@@ -31,7 +39,9 @@ let state = {
   newsFeed: [],
   transactions: [],
   engineState: null,
-  unseenNewsCount: 0
+  unseenNewsCount: 0,
+  currentCity: "baku",
+  ownedProperties: []
 };
 
 // UI state
@@ -41,6 +51,13 @@ let currentDetailAssetId = null;
 let pendingTradeType = null;      // 'buy_long'|'buy_short'|'sell_long'|'close_pos'
 let pendingLeverage = 1;
 let pendingPositionId = null;
+
+// Travel/RealEstate UI state
+let selectedCityId = null;
+let reActiveFilter = "all";
+let reActiveTab = "listings";
+let selectedPropertyId = null;
+let reModalAction = null; // "buy" | "rent" | "rent_out_business"
 
 /* ──────────────────────────────────────────────────────────
    SAXLAMA
@@ -67,6 +84,8 @@ function initFreshState() {
   state.newsFeed   = [];
   state.transactions = [];
   state.unseenNewsCount = 0;
+  state.currentCity = "baku";
+  state.ownedProperties = [];
   ASSETS.forEach(a => {
     state.holdings[a.id]  = 0;
     state.priceHistory[a.id] = [a.basePrice];
@@ -669,6 +688,407 @@ function renderNewsFeed() {
   c.innerHTML=html;
 }
 
+/* ──────────────────────────────────────────────────────────
+   TRAVEL APP
+────────────────────────────────────────────────────────── */
+function openTravel() {
+  navigateTo("travel");
+  renderTravelMap();
+  renderCityList();
+  renderCurrentCityBanner();
+}
+
+function renderCurrentCityBanner() {
+  const city = CITIES.find(c => c.id === state.currentCity) || CITIES[0];
+  document.getElementById("tcc-name").textContent = `${city.name}, ${city.country}`;
+  document.getElementById("tcc-flag").textContent = city.flag;
+}
+
+function renderTravelMap() {
+  // Aktiv şəhəri xəritədə vurgula
+  document.querySelectorAll(".map-city-dot").forEach(dot => {
+    dot.setAttribute("r", "6");
+    dot.setAttribute("stroke-width", "1.5");
+  });
+  const activeDot = document.getElementById("map-dot-" + state.currentCity);
+  if (activeDot) {
+    activeDot.setAttribute("r", "9");
+    activeDot.setAttribute("stroke-width", "2.5");
+  }
+
+  // Nöqtələrə klik
+  document.querySelectorAll(".map-city-dot").forEach(dot => {
+    dot.style.cursor = "pointer";
+    dot.onclick = () => openCityDetail(dot.dataset.city);
+  });
+}
+
+function renderCityList() {
+  const container = document.getElementById("travel-city-list");
+  container.innerHTML = CITIES.map(city => {
+    const isActive = city.id === state.currentCity;
+    const canAfford = state.bankBalance >= (city.minBalance + city.moveCost);
+    const statusLabel = isActive
+      ? `<span style="color:#1FD67A;font-size:11px;font-weight:600;">✓ Hazırda buradasın</span>`
+      : canAfford
+        ? `<span style="color:#E8A33D;font-size:11px;">Köçmək olar</span>`
+        : `<span style="color:var(--c-down);font-size:11px;">Min: ${fmtMoney(city.minBalance)}</span>`;
+
+    return `
+      <div class="travel-city-card" data-city="${city.id}" style="border-left:3px solid ${city.color};">
+        <div class="tcc-left">
+          <div class="tcc-flag-sm">${city.flag}</div>
+          <div>
+            <div class="tcc-city-name">${city.name}</div>
+            <div class="tcc-country">${city.country}</div>
+          </div>
+        </div>
+        <div class="tcc-right">
+          ${statusLabel}
+          <div class="tcc-arrow">›</div>
+        </div>
+      </div>`;
+  }).join("");
+
+  container.querySelectorAll(".travel-city-card").forEach(card => {
+    card.addEventListener("click", () => openCityDetail(card.dataset.city));
+  });
+}
+
+function openCityDetail(cityId) {
+  selectedCityId = cityId;
+  const city = CITIES.find(c => c.id === cityId);
+  if (!city) return;
+
+  navigateTo("travel-detail");
+
+  document.getElementById("travel-detail-title").childNodes[0].textContent = city.name;
+  document.getElementById("travel-detail-sub").textContent = city.country;
+  document.getElementById("tdh-flag").textContent = city.flag;
+  document.getElementById("tdh-name").textContent = `${city.name}, ${city.country}`;
+  document.getElementById("tdh-tag").textContent = city.tag;
+
+  const totalCost = city.visaCost + city.moveCost;
+  document.getElementById("trc-min-balance").textContent = fmtMoney(city.minBalance);
+  document.getElementById("trc-visa-cost").textContent   = fmtMoney(city.visaCost);
+  document.getElementById("trc-total-cost").textContent  = fmtMoney(totalCost);
+  document.getElementById("trc-your-balance").textContent = fmtMoney(state.bankBalance);
+
+  // Üstünlüklər
+  document.getElementById("travel-perks").innerHTML = `
+    <div class="travel-perks-wrap">
+      ${city.perks.map(p => `<div class="travel-perk-item">✓ ${p}</div>`).join("")}
+    </div>`;
+
+  const statusEl = document.getElementById("travel-move-status");
+  const btn = document.getElementById("btn-travel-move");
+
+  if (city.id === state.currentCity) {
+    statusEl.style.display = "block";
+    statusEl.style.color = "#1FD67A";
+    statusEl.textContent = "✓ Artıq bu şəhərdə yaşayırsan.";
+    btn.disabled = true;
+    btn.textContent = "Hazırda buradasın";
+  } else if (state.bankBalance < city.minBalance) {
+    statusEl.style.display = "block";
+    statusEl.style.color = "var(--c-down)";
+    statusEl.textContent = `✗ Bank balansın kifayət etmir. Minimum: ${fmtMoney(city.minBalance)}`;
+    btn.disabled = true;
+    btn.textContent = "Balans kifayət etmir";
+  } else if (state.bankBalance < city.minBalance + totalCost) {
+    statusEl.style.display = "block";
+    statusEl.style.color = "var(--c-down)";
+    statusEl.textContent = `✗ Köçmə xərci üçün balansın çatmır. Lazım: ${fmtMoney(totalCost)}`;
+    btn.disabled = true;
+    btn.textContent = "Balans kifayət etmir";
+  } else {
+    statusEl.style.display = "none";
+    btn.disabled = false;
+    btn.textContent = `${city.name}-ə köç — ${fmtMoney(totalCost)}`;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────
+   REALESTATE APP
+────────────────────────────────────────────────────────── */
+function openRealEstate() {
+  navigateTo("realestate");
+  const city = CITIES.find(c => c.id === state.currentCity) || CITIES[0];
+  document.getElementById("re-city-sub").textContent = `${city.name} əmlak bazarı`;
+  renderREListings();
+  renderREOwned();
+}
+
+function getPropertiesForCurrentCity() {
+  return ALL_PROPERTIES[state.currentCity] || [];
+}
+
+function renderREListings() {
+  const props = getPropertiesForCurrentCity().filter(p => {
+    const alreadyOwned = state.ownedProperties.some(o => o.propertyId === p.id);
+    if (alreadyOwned) return false;
+    if (reActiveFilter === "all") return true;
+    return p.type === reActiveFilter;
+  });
+
+  const container = document.getElementById("re-listings-list");
+  if (props.length === 0) {
+    container.innerHTML = `<div style="text-align:center;padding:40px 16px;color:var(--c-text-secondary);font-size:13px;">Bu kateqoriyada əlçatan əmlak yoxdur.</div>`;
+    return;
+  }
+
+  container.innerHTML = props.map(p => {
+    const areaMult = AREA_MULTIPLIERS[p.area];
+    const income = p.type === "residential"
+      ? `${fmtMoney(p.rentPrice)}/ay`
+      : `${fmtMoney(Math.round(p.m2 * 15 * areaMult.revenueMult))}-${fmtMoney(Math.round(p.m2 * 25 * areaMult.revenueMult))}/ay`;
+    return `
+      <div class="re-listing-card" data-prop-id="${p.id}">
+        <div class="re-lc-icon">${p.icon}</div>
+        <div class="re-lc-info">
+          <div class="re-lc-name">${p.name}</div>
+          <div class="re-lc-desc">${p.desc}</div>
+          <div class="re-lc-tags">
+            <span class="re-tag">${p.m2} m²</span>
+            <span class="re-tag">${AREA_MULTIPLIERS[p.area].label}</span>
+            <span class="re-tag re-tag-income">↑ ${income}</span>
+          </div>
+        </div>
+        <div class="re-lc-price">${fmtMoney(p.buyPrice)}</div>
+      </div>`;
+  }).join("");
+
+  container.querySelectorAll(".re-listing-card").forEach(card => {
+    card.addEventListener("click", () => openPropertyDetail(card.dataset.propId));
+  });
+}
+
+function renderREOwned() {
+  const container = document.getElementById("re-owned-list");
+  if (state.ownedProperties.length === 0) {
+    container.innerHTML = `<div style="text-align:center;padding:40px 16px;color:var(--c-text-secondary);font-size:13px;">Hələ əmlak almamısan.</div>`;
+    return;
+  }
+
+  container.innerHTML = state.ownedProperties.map(owned => {
+    const allProps = Object.values(ALL_PROPERTIES).flat();
+    const p = allProps.find(x => x.id === owned.propertyId);
+    if (!p) return "";
+
+    const typeLabel = owned.ownershipType === "rent_out"
+      ? "Kirayəyə verilir"
+      : owned.businessTypeId
+        ? BUSINESS_TYPES.find(b => b.id === owned.businessTypeId)?.name || "Biznes"
+        : "Şəxsi istifadə";
+
+    const incomeRange = owned.monthlyIncome
+      ? typeof owned.monthlyIncome === "object"
+        ? `${fmtMoney(owned.monthlyIncome.min)}–${fmtMoney(owned.monthlyIncome.max)}/ay`
+        : `${fmtMoney(owned.monthlyIncome)}/ay`
+      : "—";
+
+    return `
+      <div class="re-owned-card">
+        <div class="re-oc-icon">${p.icon}</div>
+        <div class="re-oc-info">
+          <div class="re-oc-name">${p.name}</div>
+          <div class="re-oc-type">${typeLabel}</div>
+          <div class="re-oc-income" style="color:#1FD67A;">↑ ${incomeRange}</div>
+        </div>
+      </div>`;
+  }).join("");
+}
+
+function openPropertyDetail(propId) {
+  selectedPropertyId = propId;
+  const allProps = Object.values(ALL_PROPERTIES).flat();
+  const p = allProps.find(x => x.id === propId);
+  if (!p) return;
+
+  navigateTo("realestate-detail");
+
+  document.getElementById("re-detail-title").childNodes[0].textContent = p.name;
+  document.getElementById("re-detail-sub").textContent = `${p.m2} m² · ${AREA_MULTIPLIERS[p.area].label}`;
+  document.getElementById("re-detail-img").textContent = p.icon;
+
+  const areaMult = AREA_MULTIPLIERS[p.area];
+  const rentIncome = Math.round(p.rentPrice * areaMult.revenueMult);
+  const deposit = p.rentPrice * p.depositMonths;
+
+  document.getElementById("re-detail-info").innerHTML = `
+    <div class="re-detail-info-grid">
+      <div class="re-di-row"><span>Sahə</span><span>${p.m2} m²</span></div>
+      <div class="re-di-row"><span>Ərazi</span><span>${AREA_MULTIPLIERS[p.area].label}</span></div>
+      <div class="re-di-row"><span>Satış qiyməti</span><span>${fmtMoney(p.buyPrice)}</span></div>
+      <div class="re-di-row"><span>Kirayə (aylıq)</span><span>${fmtMoney(p.rentPrice)}</span></div>
+      <div class="re-di-row"><span>Depozit (${p.depositMonths} ay)</span><span>${fmtMoney(deposit)}</span></div>
+      <div class="re-di-row" style="color:#1FD67A;"><span>Kirayəyə versən gəlir</span><span>${fmtMoney(rentIncome)}/ay</span></div>
+    </div>
+    <div class="re-di-desc">${p.desc}</div>`;
+
+  // Hərəkət düymələri
+  const canBuy   = state.bankBalance >= p.buyPrice;
+  const canRent  = state.bankBalance >= deposit;
+
+  document.getElementById("re-detail-actions").innerHTML = `
+    <button class="btn-re-action${canBuy ? "" : " disabled"}" id="btn-re-buy" ${canBuy ? "" : "disabled"}>
+      Al — ${fmtMoney(p.buyPrice)}
+    </button>
+    <button class="btn-re-action secondary${canRent ? "" : " disabled"}" id="btn-re-rent" ${canRent ? "" : "disabled"}>
+      Kirayə götür — ${fmtMoney(p.rentPrice)}/ay (dep: ${fmtMoney(deposit)})
+    </button>`;
+
+  // Biznes bölməsi (yalnız kommersiya)
+  const bizSection = document.getElementById("re-business-section");
+  if (p.type === "commercial") {
+    bizSection.style.display = "block";
+    const grid = document.getElementById("re-business-grid");
+    grid.innerHTML = BUSINESS_TYPES.map(biz => {
+      const incomeData = calcPropertyIncome(p, "business", biz.id);
+      return `
+        <div class="re-biz-card" data-biz="${biz.id}">
+          <div class="re-biz-icon">${biz.icon}</div>
+          <div class="re-biz-name">${biz.name}</div>
+          <div class="re-biz-income">${fmtMoney(incomeData.min)}–${fmtMoney(incomeData.max)}/ay</div>
+          <div class="re-biz-desc">${biz.desc}</div>
+        </div>`;
+    }).join("");
+
+    grid.querySelectorAll(".re-biz-card").forEach(card => {
+      card.addEventListener("click", () => {
+        grid.querySelectorAll(".re-biz-card").forEach(c => c.classList.remove("selected"));
+        card.classList.add("selected");
+      });
+    });
+  } else {
+    bizSection.style.display = "none";
+  }
+
+  // Düymə eventləri
+  document.getElementById("btn-re-buy").onclick  = () => openREModal("buy", p);
+  document.getElementById("btn-re-rent").onclick = () => openREModal("rent", p);
+}
+
+function openREModal(action, property) {
+  reModalAction = action;
+  const areaMult = AREA_MULTIPLIERS[property.area];
+  const overlay = document.getElementById("re-modal-overlay");
+
+  if (action === "buy") {
+    document.getElementById("re-modal-title").textContent = "Əmlak al";
+    document.getElementById("re-modal-sub").textContent   = property.name;
+    document.getElementById("re-modal-cost-label").textContent = "Satış qiyməti";
+    document.getElementById("re-modal-cost").textContent  = fmtMoney(property.buyPrice);
+
+    // Kirayəyə vermə gəliri
+    const rentIncome = calcPropertyIncome(property, "rent_out");
+    document.getElementById("re-modal-income").textContent = `${fmtMoney(rentIncome)}/ay (kirayəyə versən)`;
+
+    const canAfford = state.bankBalance >= property.buyPrice;
+    document.getElementById("re-modal-error").style.display = canAfford ? "none" : "block";
+    document.getElementById("btn-re-modal-confirm").disabled = !canAfford;
+  } else {
+    const deposit = property.rentPrice * property.depositMonths;
+    document.getElementById("re-modal-title").textContent = "Kirayə götür";
+    document.getElementById("re-modal-sub").textContent   = property.name;
+    document.getElementById("re-modal-cost-label").textContent = `Depozit (${property.depositMonths} ay)`;
+    document.getElementById("re-modal-cost").textContent  = fmtMoney(deposit);
+    document.getElementById("re-modal-income").textContent = `${fmtMoney(property.rentPrice)}/ay kirayə`;
+
+    const canAfford = state.bankBalance >= deposit;
+    document.getElementById("re-modal-error").style.display = canAfford ? "none" : "block";
+    document.getElementById("btn-re-modal-confirm").disabled = !canAfford;
+  }
+
+  overlay.classList.add("active");
+}
+
+function closeREModal() {
+  document.getElementById("re-modal-overlay").classList.remove("active");
+}
+
+function confirmREModal() {
+  const allProps = Object.values(ALL_PROPERTIES).flat();
+  const p = allProps.find(x => x.id === selectedPropertyId);
+  if (!p) return;
+
+  const areaMult = AREA_MULTIPLIERS[p.area];
+
+  if (reModalAction === "buy") {
+    if (state.bankBalance < p.buyPrice) return;
+    state.bankBalance -= p.buyPrice;
+
+    // Biznes seçildi mi?
+    const selectedBiz = document.querySelector(".re-biz-card.selected");
+    let ownershipType = "rent_out";
+    let businessTypeId = null;
+    let monthlyIncome;
+
+    if (selectedBiz && p.type === "commercial") {
+      ownershipType = "business";
+      businessTypeId = selectedBiz.dataset.biz;
+      monthlyIncome = calcPropertyIncome(p, "business", businessTypeId);
+    } else {
+      monthlyIncome = calcPropertyIncome(p, "rent_out");
+    }
+
+    state.ownedProperties.push({ propertyId: p.id, ownershipType, businessTypeId, monthlyIncome });
+    addTransaction(`${p.name} alındı`, p.buyPrice, "out", "REALESTATE");
+    showToast(`🏠 ${p.name} alındı!`);
+
+  } else {
+    const deposit = p.rentPrice * p.depositMonths;
+    if (state.bankBalance < deposit) return;
+    state.bankBalance -= deposit;
+
+    state.ownedProperties.push({
+      propertyId: p.id,
+      ownershipType: "rented",
+      businessTypeId: null,
+      monthlyIncome: 0,
+      rentMonthly: p.rentPrice,
+      depositPaid: deposit
+    });
+    addTransaction(`${p.name} kirayə depoziti`, deposit, "out", "REALESTATE");
+    showToast(`🔑 ${p.name} kirayə götürüldü!`);
+  }
+
+  saveState();
+  renderHome();
+  closeREModal();
+  navigateTo("realestate");
+  renderREListings();
+  renderREOwned();
+}
+
+/* ──────────────────────────────────────────────────────────
+   PASSIV GƏLİR — Hər günün sonunda hesabla
+   advanceDay() funksiyası içində çağırılır
+────────────────────────────────────────────────────────── */
+function processPropertyIncome() {
+  if (!state.ownedProperties || state.ownedProperties.length === 0) return;
+
+  let totalIncome = 0;
+  state.ownedProperties.forEach(owned => {
+    if (!owned.monthlyIncome) return;
+
+    // Aylıq gəliri 30 günə böl → gündəlik gəlir
+    let dailyIncome = 0;
+    if (typeof owned.monthlyIncome === "object") {
+      // min-max aralığında təsadüfi
+      const monthly = owned.monthlyIncome.min + Math.random() * (owned.monthlyIncome.max - owned.monthlyIncome.min);
+      dailyIncome = monthly / 30;
+    } else {
+      dailyIncome = owned.monthlyIncome / 30;
+    }
+    totalIncome += dailyIncome;
+  });
+
+  if (totalIncome > 0) {
+    state.bankBalance += totalIncome;
+    addTransaction("Əmlak gəliri", totalIncome, "in", "REALESTATE");
+  }
+}
 
 /* ──────────────────────────────────────────────────────────
    GÜN İRƏLİLƏTMƏ
@@ -698,6 +1118,9 @@ function advanceDay() {
     showToast(`⚠️ ${pos.ticker} mövqəsi likvidə edildi!`);
   });
 
+  // Əmlakdan passiv gəlir
+  processPropertyIncome();
+
   saveState();
   renderAll();
   showToast("Gün " + state.day + " başladı");
@@ -720,6 +1143,8 @@ function setupEventListeners() {
   document.querySelectorAll(".app-icon-wrap").forEach(el=>{
     el.addEventListener("click", ()=>{
       const app = el.dataset.app;
+      if (app === "travel") { openTravel(); return; }
+      if (app === "realestate") { openRealEstate(); return; }
       navigateTo(app==="invested"?"invested":app);
       if(app==="invested") renderAssetList();
       if(app==="bmb") renderBank();
@@ -780,6 +1205,53 @@ function setupEventListeners() {
   document.getElementById("btn-transfer-to-bank").addEventListener("click",     ()=>openTransferModal("toBank"));
   document.getElementById("btn-transfer-cancel").addEventListener("click",  closeTransferModal);
   document.getElementById("btn-transfer-confirm").addEventListener("click", confirmTransfer);
+
+  // Travel — köç düyməsi
+  document.getElementById("btn-travel-move").addEventListener("click", () => {
+    if (!selectedCityId) return;
+    const city = CITIES.find(c => c.id === selectedCityId);
+    if (!city) return;
+
+    const totalCost = city.visaCost + city.moveCost;
+    if (state.bankBalance < city.minBalance + totalCost) return;
+
+    state.bankBalance -= totalCost;
+    state.currentCity = city.id;
+    addTransaction(`${city.name}-ə köçmə xərci`, totalCost, "out", "TRAVEL");
+
+    saveState();
+    renderHome();
+    showToast(`🌍 ${city.name}-ə köçdün! -${fmtMoney(totalCost)}`);
+    navigateTo("travel");
+    renderCurrentCityBanner();
+    renderTravelMap();
+    renderCityList();
+  });
+
+  // RealEstate — modal
+  document.getElementById("btn-re-modal-cancel").addEventListener("click", closeREModal);
+  document.getElementById("btn-re-modal-confirm").addEventListener("click", confirmREModal);
+
+  // RealEstate — tab / filter
+  document.querySelectorAll(".re-tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".re-tab").forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
+      reActiveTab = tab.dataset.reTab;
+      document.getElementById("re-listings-panel").style.display = reActiveTab === "listings" ? "block" : "none";
+      document.getElementById("re-owned-panel").style.display    = reActiveTab === "owned"    ? "block" : "none";
+      if (reActiveTab === "owned") renderREOwned();
+    });
+  });
+
+  document.querySelectorAll(".re-filter").forEach(f => {
+    f.addEventListener("click", () => {
+      document.querySelectorAll(".re-filter").forEach(x => x.classList.remove("active"));
+      f.classList.add("active");
+      reActiveFilter = f.dataset.reFilter;
+      renderREListings();
+    });
+  });
 }
 
 /* ──────────────────────────────────────────────────────────
@@ -792,6 +1264,8 @@ function start() {
   } else {
     Engine.init(state.engineState);
     if (!state.positions) state.positions = [];
+    if (!state.currentCity) state.currentCity = "baku";
+    if (!state.ownedProperties) state.ownedProperties = [];
   }
   setupEventListeners();
   renderAll();
