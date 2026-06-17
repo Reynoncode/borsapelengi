@@ -558,21 +558,21 @@ const CITIES = [
 
 // Biznes növləri
 const BUSINESS_TYPES = [
-  { id: "cafe",        name: "Kafe",              icon: "☕", baseRevenuePerM2: 18,  desc: "Gündəlik müştəri axını",      utilityFactor: 1.3 },
-  { id: "playstation", name: "PlayStation Salonu", icon: "🎮", baseRevenuePerM2: 22,  desc: "Gənclər üçün əyləncə",        utilityFactor: 1.8 },
-  { id: "grocery",     name: "Ərzaq Mağazası",    icon: "🛒", baseRevenuePerM2: 14,  desc: "Sabit tələb",                 utilityFactor: 1.6 },
-  { id: "pharmacy",    name: "Aptek",              icon: "💊", baseRevenuePerM2: 20,  desc: "Yüksək marjin",               utilityFactor: 1.2 },
-  { id: "barbershop",  name: "Bərbər",             icon: "✂️", baseRevenuePerM2: 16,  desc: "Daimi müştəri bazası",        utilityFactor: 1.4 },
-  { id: "laundry",     name: "Camaşırxana",        icon: "🧺", baseRevenuePerM2: 12,  desc: "Az rəqabət",                  utilityFactor: 2.0 },
-  { id: "gym",         name: "Mini Gym",            icon: "💪", baseRevenuePerM2: 25,  desc: "Aylıq abunə modeli",          utilityFactor: 1.7 },
-  { id: "bookstore",   name: "Kitab Mağazası",     icon: "📚", baseRevenuePerM2: 10,  desc: "Sakin gəlir",                 utilityFactor: 1.0 },
-  { id: "petshop",     name: "Pet Shop",            icon: "🐾", baseRevenuePerM2: 17,  desc: "Böyüyən bazar",               utilityFactor: 1.3 },
-  { id: "photoprint",  name: "Foto Çap Mərkəzi",   icon: "🖨️", baseRevenuePerM2: 13,  desc: "Sürətli xidmət",              utilityFactor: 1.5 },
-  { id: "icecream",    name: "Dondurma Dükanı",    icon: "🍦", baseRevenuePerM2: 15,  desc: "Yüksək mövsüm gəliri",        utilityFactor: 1.9 },
-  { id: "coworking",   name: "Coworking",           icon: "💻", baseRevenuePerM2: 20,  desc: "Freelancer bazarı",           utilityFactor: 1.5 },
-  { id: "flowershop",  name: "Çiçək Dükanı",       icon: "💐", baseRevenuePerM2: 19,  desc: "Bayram dövrü zirvəsi",        utilityFactor: 1.0 },
-  { id: "carwash",     name: "Avtoyuma",            icon: "🚗", baseRevenuePerM2: 21,  desc: "Daimi tələb",                 utilityFactor: 1.6 },
-  { id: "printshop",   name: "Çap Xidməti",        icon: "🖋️", baseRevenuePerM2: 11,  desc: "Biznes müştəriləri",          utilityFactor: 1.4 }
+  { id: "cafe",        name: "Kafe",              icon: "☕", baseRevenuePerM2: 18,  desc: "Gündəlik müştəri axını",      utilityFactor: 1.3, setupCost: 8000 },
+  { id: "playstation", name: "PlayStation Salonu", icon: "🎮", baseRevenuePerM2: 22,  desc: "Gənclər üçün əyləncə",        utilityFactor: 1.8, setupCost: 15000 },
+  { id: "grocery",     name: "Ərzaq Mağazası",    icon: "🛒", baseRevenuePerM2: 14,  desc: "Sabit tələb",                 utilityFactor: 1.6, setupCost: 10000 },
+  { id: "pharmacy",    name: "Aptek",              icon: "💊", baseRevenuePerM2: 20,  desc: "Yüksək marjin",               utilityFactor: 1.2, setupCost: 18000 },
+  { id: "barbershop",  name: "Bərbər",             icon: "✂️", baseRevenuePerM2: 16,  desc: "Daimi müştəri bazası",        utilityFactor: 1.4, setupCost: 6000 },
+  { id: "laundry",     name: "Camaşırxana",        icon: "🧺", baseRevenuePerM2: 12,  desc: "Az rəqabət",                  utilityFactor: 2.0, setupCost: 12000 },
+  { id: "gym",         name: "Mini Gym",            icon: "💪", baseRevenuePerM2: 25,  desc: "Aylıq abunə modeli",          utilityFactor: 1.7, setupCost: 20000 },
+  { id: "bookstore",   name: "Kitab Mağazası",     icon: "📚", baseRevenuePerM2: 10,  desc: "Sakin gəlir",                 utilityFactor: 1.0, setupCost: 5000 },
+  { id: "petshop",     name: "Pet Shop",            icon: "🐾", baseRevenuePerM2: 17,  desc: "Böyüyən bazar",               utilityFactor: 1.3, setupCost: 9000 },
+  { id: "photoprint",  name: "Foto Çap Mərkəzi",   icon: "🖨️", baseRevenuePerM2: 13,  desc: "Sürətli xidmət",              utilityFactor: 1.5, setupCost: 11000 },
+  { id: "icecream",    name: "Dondurma Dükanı",    icon: "🍦", baseRevenuePerM2: 15,  desc: "Yüksək mövsüm gəliri",        utilityFactor: 1.9, setupCost: 7000 },
+  { id: "coworking",   name: "Coworking",           icon: "💻", baseRevenuePerM2: 20,  desc: "Freelancer bazarı",           utilityFactor: 1.5, setupCost: 14000 },
+  { id: "flowershop",  name: "Çiçək Dükanı",       icon: "💐", baseRevenuePerM2: 19,  desc: "Bayram dövrü zirvəsi",        utilityFactor: 1.0, setupCost: 6500 },
+  { id: "carwash",     name: "Avtoyuma",            icon: "🚗", baseRevenuePerM2: 21,  desc: "Daimi tələb",                 utilityFactor: 1.6, setupCost: 16000 },
+  { id: "printshop",   name: "Çap Xidməti",        icon: "🖋️", baseRevenuePerM2: 11,  desc: "Biznes müştəriləri",          utilityFactor: 1.4, setupCost: 9500 }
 ];
 
 // Ərazinin qiymət əmsalı (hər şəhər üçün ərazi növü)
