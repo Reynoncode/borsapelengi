@@ -2182,8 +2182,6 @@ const PROPERTIES_DUBAI = [
     depositMonths: 2,
     desc: "72 m², yaşıl zona, ucuz və stabil seçim"
   },
-const PROPERTIES_DUBAI_COMMERCIAL = [
-
   // ── OBYEKTLƏR (1–10) ──
   {
     id: "dubai_com_1",
