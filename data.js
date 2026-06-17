@@ -790,7 +790,7 @@ const PROPERTIES_BAKU = [
     rentPrice: 1300,
     depositMonths: 2,
     desc: "30 m², mall girişi yaxınlığı, gənc axını"
-  }
+  },
 ];
 
 
@@ -1784,7 +1784,7 @@ const PROPERTIES_BALI = [
     rentPrice: 125000,
     depositMonths: 3,
     desc: "Premium üzvlük sistemli golf kompleksi"
-  }
+  },
 ];
 
 const PROPERTIES_DUBAI = [
@@ -2842,7 +2842,7 @@ const PROPERTIES_DUBAI_COMMERCIAL = [
     rentPrice: 8000,
     depositMonths: 3,
     desc: "60 m², yüksək səviyyəli zərgərlik mağazası"
-  }
+  },
 ];
 
    
