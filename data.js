@@ -558,21 +558,21 @@ const CITIES = [
 
 // Biznes növləri
 const BUSINESS_TYPES = [
-  { id: "cafe",        name: "Kafe",              icon: "☕", baseRevenuePerM2: 18,  desc: "Gündəlik müştəri axını" },
-  { id: "playstation", name: "PlayStation Salonu", icon: "🎮", baseRevenuePerM2: 22,  desc: "Gənclər üçün əyləncə" },
-  { id: "grocery",     name: "Ərzaq Mağazası",    icon: "🛒", baseRevenuePerM2: 14,  desc: "Sabit tələb" },
-  { id: "pharmacy",    name: "Aptek",              icon: "💊", baseRevenuePerM2: 20,  desc: "Yüksək marjin" },
-  { id: "barbershop",  name: "Bərbər",             icon: "✂️", baseRevenuePerM2: 16,  desc: "Daimi müştəri bazası" },
-  { id: "laundry",     name: "Camaşırxana",        icon: "🧺", baseRevenuePerM2: 12,  desc: "Az rəqabət" },
-  { id: "gym",         name: "Mini Gym",            icon: "💪", baseRevenuePerM2: 25,  desc: "Aylıq abunə modeli" },
-  { id: "bookstore",   name: "Kitab Mağazası",     icon: "📚", baseRevenuePerM2: 10,  desc: "Sakin gəlir" },
-  { id: "petshop",     name: "Pet Shop",            icon: "🐾", baseRevenuePerM2: 17,  desc: "Böyüyən bazar" },
-  { id: "photoprint",  name: "Foto Çap Mərkəzi",   icon: "🖨️", baseRevenuePerM2: 13,  desc: "Sürətli xidmət" },
-  { id: "icecream",    name: "Dondurma Dükanı",    icon: "🍦", baseRevenuePerM2: 15,  desc: "Yüksək mövsüm gəliri" },
-  { id: "coworking",   name: "Coworking",           icon: "💻", baseRevenuePerM2: 20,  desc: "Freelancer bazarı" },
-  { id: "flowershop",  name: "Çiçək Dükanı",       icon: "💐", baseRevenuePerM2: 19,  desc: "Bayram dövrü zirvəsi" },
-  { id: "carwash",     name: "Avtoyuma",            icon: "🚗", baseRevenuePerM2: 21,  desc: "Daimi tələb" },
-  { id: "printshop",   name: "Çap Xidməti",        icon: "🖋️", baseRevenuePerM2: 11,  desc: "Biznes müştəriləri" }
+  { id: "cafe",        name: "Kafe",              icon: "☕", baseRevenuePerM2: 18,  desc: "Gündəlik müştəri axını",      utilityFactor: 1.3 },
+  { id: "playstation", name: "PlayStation Salonu", icon: "🎮", baseRevenuePerM2: 22,  desc: "Gənclər üçün əyləncə",        utilityFactor: 1.8 },
+  { id: "grocery",     name: "Ərzaq Mağazası",    icon: "🛒", baseRevenuePerM2: 14,  desc: "Sabit tələb",                 utilityFactor: 1.6 },
+  { id: "pharmacy",    name: "Aptek",              icon: "💊", baseRevenuePerM2: 20,  desc: "Yüksək marjin",               utilityFactor: 1.2 },
+  { id: "barbershop",  name: "Bərbər",             icon: "✂️", baseRevenuePerM2: 16,  desc: "Daimi müştəri bazası",        utilityFactor: 1.4 },
+  { id: "laundry",     name: "Camaşırxana",        icon: "🧺", baseRevenuePerM2: 12,  desc: "Az rəqabət",                  utilityFactor: 2.0 },
+  { id: "gym",         name: "Mini Gym",            icon: "💪", baseRevenuePerM2: 25,  desc: "Aylıq abunə modeli",          utilityFactor: 1.7 },
+  { id: "bookstore",   name: "Kitab Mağazası",     icon: "📚", baseRevenuePerM2: 10,  desc: "Sakin gəlir",                 utilityFactor: 1.0 },
+  { id: "petshop",     name: "Pet Shop",            icon: "🐾", baseRevenuePerM2: 17,  desc: "Böyüyən bazar",               utilityFactor: 1.3 },
+  { id: "photoprint",  name: "Foto Çap Mərkəzi",   icon: "🖨️", baseRevenuePerM2: 13,  desc: "Sürətli xidmət",              utilityFactor: 1.5 },
+  { id: "icecream",    name: "Dondurma Dükanı",    icon: "🍦", baseRevenuePerM2: 15,  desc: "Yüksək mövsüm gəliri",        utilityFactor: 1.9 },
+  { id: "coworking",   name: "Coworking",           icon: "💻", baseRevenuePerM2: 20,  desc: "Freelancer bazarı",           utilityFactor: 1.5 },
+  { id: "flowershop",  name: "Çiçək Dükanı",       icon: "💐", baseRevenuePerM2: 19,  desc: "Bayram dövrü zirvəsi",        utilityFactor: 1.0 },
+  { id: "carwash",     name: "Avtoyuma",            icon: "🚗", baseRevenuePerM2: 21,  desc: "Daimi tələb",                 utilityFactor: 1.6 },
+  { id: "printshop",   name: "Çap Xidməti",        icon: "🖋️", baseRevenuePerM2: 11,  desc: "Biznes müştəriləri",          utilityFactor: 1.4 }
 ];
 
 // Ərazinin qiymət əmsalı (hər şəhər üçün ərazi növü)
@@ -581,7 +581,16 @@ const AREA_MULTIPLIERS = {
   mid:      { label: "Orta zona",          priceMult: 1.2, revenueMult: 1.2 },
   suburban: { label: "Kənar / Şəhərətrafı", priceMult: 0.75, revenueMult: 0.85 }
 };
-
+/* ============================================================
+   REALESTATE — HƏFTƏLİK XƏRC SABİTLƏRİ
+============================================================ */
+const RE_EXPENSE_CONFIG = {
+  baseUtilityPerM2Weekly: 2,   // $/m² həftəlik baza kommunal
+  taxRate: 0.15,                 // xalis gəlirin 15%-i vergi
+  paymentCycleDays: 7,           // ödəniş dövrü
+  graceCycles: 2,                // neçə dövr gecikə bilər (2-dən sonra 3-cü dövrdə satılır)
+  lateFeeDailyRate: 0.05         // gecikmiş borc üzərinə gündəlik 5%
+};
 // Bakı əmlakları
 const PROPERTIES_BAKU = [
   // ── EVLƏR (5 ədəd) ──
