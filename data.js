@@ -447,3 +447,372 @@ const NEWS = [
     icon: "https://api.iconify.design/lucide/hard-hat.svg?color=%23FF8C42"
   }
 ];
+/* ============================================================
+   TRAVEL — ŞƏHƏRLƏRİN DATASI
+   data.js-in sonuna əlavə et
+============================================================ */
+const CITIES = [
+  {
+    id: "baku",
+    name: "Bakı",
+    country: "Azərbaycan",
+    flag: "🇦🇿",
+    color: "#1FD67A",
+    tag: "Başlanğıc şəhəri · Vergi yüksək deyil",
+    minBalance: 0,
+    visaCost: 0,
+    moveCost: 0,
+    isDefault: true,
+    perks: [
+      "Aşağı yaşayış xərci",
+      "Yerli bank sistemi",
+      "Azad ticarət zonaları"
+    ]
+  },
+  {
+    id: "dubai",
+    name: "Dubai",
+    country: "BƏƏ",
+    flag: "🇦🇪",
+    color: "#E8A33D",
+    tag: "Sıfır gəlir vergisi · İnvestor dostu",
+    minBalance: 50000,
+    visaCost: 3500,
+    moveCost: 5000,
+    perks: [
+      "Gəlir vergisi yoxdur",
+      "Güclü maliyyə infrastrukturu",
+      "Yüksək əmlak gəliri"
+    ]
+  },
+  {
+    id: "london",
+    name: "London",
+    country: "Böyük Britaniya",
+    flag: "🇬🇧",
+    color: "#5AA9FF",
+    tag: "Qlobal maliyyə mərkəzi",
+    minBalance: 80000,
+    visaCost: 6000,
+    moveCost: 8000,
+    perks: [
+      "London birjasına giriş",
+      "Güclü tənzimləmə mühiti",
+      "Diversifikasiya imkanı"
+    ]
+  },
+  {
+    id: "newyork",
+    name: "New York",
+    country: "ABŞ",
+    flag: "🇺🇸",
+    color: "#C99CFF",
+    tag: "Dünya maliyyə paytaxtı",
+    minBalance: 150000,
+    visaCost: 12000,
+    moveCost: 15000,
+    perks: [
+      "NYSE və NASDAQ birbaşa giriş",
+      "Hedge fund ekosistemi",
+      "Premium kommersiya əmlakı"
+    ]
+  },
+  {
+    id: "tokyo",
+    name: "Tokyo",
+    country: "Yaponiya",
+    flag: "🇯🇵",
+    color: "#FF8C42",
+    tag: "Asiya bazarlarına giriş",
+    minBalance: 100000,
+    visaCost: 8000,
+    moveCost: 10000,
+    perks: [
+      "Asiya fond bazarlarına giriş",
+      "Sabit iqtisadiyyat",
+      "Texnologiya sektoru üstünlüyü"
+    ]
+  },
+  {
+    id: "bali",
+    name: "Bali",
+    country: "Indoneziya",
+    flag: "🇮🇩",
+    color: "#FF4C5E",
+    tag: "Dijital köçəri · Aşağı xərc",
+    minBalance: 30000,
+    visaCost: 2000,
+    moveCost: 3000,
+    perks: [
+      "Çox aşağı yaşayış xərci",
+      "Rəqəmsal köçəri vizası",
+      "Turizm gəliri yüksəkdir"
+    ]
+  }
+];
+
+/* ============================================================
+   REALESTATE — ƏMLAK DATASI (Bakı)
+   Hər şəhər üçün PROPERTIES_BY_CITY obyektindən istifadə et
+============================================================ */
+
+// Biznes növləri
+const BUSINESS_TYPES = [
+  { id: "cafe",        name: "Kafe",              icon: "☕", baseRevenuePerM2: 18,  desc: "Gündəlik müştəri axını" },
+  { id: "playstation", name: "PlayStation Salonu", icon: "🎮", baseRevenuePerM2: 22,  desc: "Gənclər üçün əyləncə" },
+  { id: "grocery",     name: "Ərzaq Mağazası",    icon: "🛒", baseRevenuePerM2: 14,  desc: "Sabit tələb" },
+  { id: "pharmacy",    name: "Aptek",              icon: "💊", baseRevenuePerM2: 20,  desc: "Yüksək marjin" },
+  { id: "barbershop",  name: "Bərbər",             icon: "✂️", baseRevenuePerM2: 16,  desc: "Daimi müştəri bazası" },
+  { id: "laundry",     name: "Camaşırxana",        icon: "🧺", baseRevenuePerM2: 12,  desc: "Az rəqabət" },
+  { id: "gym",         name: "Mini Gym",            icon: "💪", baseRevenuePerM2: 25,  desc: "Aylıq abunə modeli" },
+  { id: "bookstore",   name: "Kitab Mağazası",     icon: "📚", baseRevenuePerM2: 10,  desc: "Sakin gəlir" },
+  { id: "petshop",     name: "Pet Shop",            icon: "🐾", baseRevenuePerM2: 17,  desc: "Böyüyən bazar" },
+  { id: "photoprint",  name: "Foto Çap Mərkəzi",   icon: "🖨️", baseRevenuePerM2: 13,  desc: "Sürətli xidmət" },
+  { id: "icecream",    name: "Dondurma Dükanı",    icon: "🍦", baseRevenuePerM2: 15,  desc: "Yüksək mövsüm gəliri" },
+  { id: "coworking",   name: "Coworking",           icon: "💻", baseRevenuePerM2: 20,  desc: "Freelancer bazarı" },
+  { id: "flowershop",  name: "Çiçək Dükanı",       icon: "💐", baseRevenuePerM2: 19,  desc: "Bayram dövrü zirvəsi" },
+  { id: "carwash",     name: "Avtoyuma",            icon: "🚗", baseRevenuePerM2: 21,  desc: "Daimi tələb" },
+  { id: "printshop",   name: "Çap Xidməti",        icon: "🖋️", baseRevenuePerM2: 11,  desc: "Biznes müştəriləri" }
+];
+
+// Ərazinin qiymət əmsalı (hər şəhər üçün ərazi növü)
+const AREA_MULTIPLIERS = {
+  premium:  { label: "Mərkəz / Premium",  priceMult: 1.8, revenueMult: 1.6 },
+  mid:      { label: "Orta zona",          priceMult: 1.2, revenueMult: 1.2 },
+  suburban: { label: "Kənar / Şəhərətrafı", priceMult: 0.75, revenueMult: 0.85 }
+};
+
+// Bakı əmlakları
+const PROPERTIES_BAKU = [
+  // ── EVLƏR (5 ədəd) ──
+  {
+    id: "baku_apt_1",
+    city: "baku",
+    type: "residential",
+    name: "Neftçilər prospekti mənzili",
+    icon: "🏢",
+    area: "premium",
+    m2: 85,
+    buyPrice: 85000,
+    rentPrice: 1200,      // aylıq kirayə gəliri (kirayəyə versən)
+    depositMonths: 3,     // depozit = rentPrice * depositMonths
+    desc: "85 m², 3 otaqlı, şəhər mərkəzi, Xəzər mənzərəsi"
+  },
+  {
+    id: "baku_apt_2",
+    city: "baku",
+    type: "residential",
+    name: "Nizami küçəsi studiyası",
+    icon: "🏠",
+    area: "premium",
+    m2: 45,
+    buyPrice: 52000,
+    rentPrice: 700,
+    depositMonths: 2,
+    desc: "45 m², studio, tam mebelli, metro yaxınlığı"
+  },
+  {
+    id: "baku_apt_3",
+    city: "baku",
+    type: "residential",
+    name: "Nəriman Nərimanov mənzili",
+    icon: "🏠",
+    area: "mid",
+    m2: 110,
+    buyPrice: 75000,
+    rentPrice: 900,
+    depositMonths: 2,
+    desc: "110 m², 4 otaqlı, orta zona, sakit mühit"
+  },
+  {
+    id: "baku_apt_4",
+    city: "baku",
+    type: "residential",
+    name: "Binəqədi həyət evi",
+    icon: "🏡",
+    area: "suburban",
+    m2: 200,
+    buyPrice: 65000,
+    rentPrice: 600,
+    depositMonths: 2,
+    desc: "200 m², həyət evi, 5 otaqlı, qaraj"
+  },
+  {
+    id: "baku_apt_5",
+    city: "baku",
+    type: "residential",
+    name: "Flame Towers yaxınlığı mənzil",
+    icon: "🏢",
+    area: "premium",
+    m2: 140,
+    buyPrice: 180000,
+    rentPrice: 2200,
+    depositMonths: 3,
+    desc: "140 m², lüks, 4 otaqlı, panoram mənzərə"
+  },
+
+  // ── OBYEKTLƏRİN (10 ədəd) ──
+  {
+    id: "baku_com_1",
+    city: "baku",
+    type: "commercial",
+    name: "İçəri Şəhər girişi dükanı",
+    icon: "🏪",
+    area: "premium",
+    m2: 60,
+    buyPrice: 95000,
+    rentPrice: 2000,
+    depositMonths: 3,
+    desc: "60 m², turist zonası, yüksək trafikli"
+  },
+  {
+    id: "baku_com_2",
+    city: "baku",
+    type: "commercial",
+    name: "28 May metro üstü köşk",
+    icon: "🏪",
+    area: "premium",
+    m2: 25,
+    buyPrice: 40000,
+    rentPrice: 900,
+    depositMonths: 2,
+    desc: "25 m², metro çıxışı, gündəlik yüksək trafik"
+  },
+  {
+    id: "baku_com_3",
+    city: "baku",
+    type: "commercial",
+    name: "Hövsan sənaye obyekti",
+    icon: "🏭",
+    area: "suburban",
+    m2: 300,
+    buyPrice: 85000,
+    rentPrice: 1500,
+    depositMonths: 2,
+    desc: "300 m², anbar + ofis, əlverişli qiymət"
+  },
+  {
+    id: "baku_com_4",
+    city: "baku",
+    type: "commercial",
+    name: "Nizami ticarət mərkəzi yer",
+    icon: "🛍️",
+    area: "premium",
+    m2: 90,
+    buyPrice: 160000,
+    rentPrice: 3200,
+    depositMonths: 3,
+    desc: "90 m², ticarət mərkəzi içi, yüksək alıcı axını"
+  },
+  {
+    id: "baku_com_5",
+    city: "baku",
+    type: "commercial",
+    name: "Xətai prospekti restorant yeri",
+    icon: "🍽️",
+    area: "mid",
+    m2: 120,
+    buyPrice: 105000,
+    rentPrice: 1800,
+    depositMonths: 2,
+    desc: "120 m², restorant üçün hazır, mətbəxlə"
+  },
+  {
+    id: "baku_com_6",
+    city: "baku",
+    type: "commercial",
+    name: "Biləcəri kiçik anbar",
+    icon: "📦",
+    area: "suburban",
+    m2: 180,
+    buyPrice: 45000,
+    rentPrice: 700,
+    depositMonths: 2,
+    desc: "180 m², anbar, müstəqil giriş, arxivlərə uyğun"
+  },
+  {
+    id: "baku_com_7",
+    city: "baku",
+    type: "commercial",
+    name: "Sahil bulvarı kiosk",
+    icon: "⛱️",
+    area: "premium",
+    m2: 18,
+    buyPrice: 28000,
+    rentPrice: 850,
+    depositMonths: 2,
+    desc: "18 m², bulvar üzərindəki kiosk yeri, turist trafiki"
+  },
+  {
+    id: "baku_com_8",
+    city: "baku",
+    type: "commercial",
+    name: "Sumqayıt yolu mağaza",
+    icon: "🏪",
+    area: "suburban",
+    m2: 80,
+    buyPrice: 38000,
+    rentPrice: 600,
+    depositMonths: 1,
+    desc: "80 m², magistral kənarı, nəqliyyat əlçatımlı"
+  },
+  {
+    id: "baku_com_9",
+    city: "baku",
+    type: "commercial",
+    name: "Elit rezidans həyəti ofis",
+    icon: "🏢",
+    area: "mid",
+    m2: 55,
+    buyPrice: 62000,
+    rentPrice: 1100,
+    depositMonths: 2,
+    desc: "55 m², sakit yaşayış sahəsindəki ofis binası"
+  },
+  {
+    id: "baku_com_10",
+    city: "baku",
+    type: "commercial",
+    name: "Gənclik mall yaxını köşk",
+    icon: "🛒",
+    area: "mid",
+    m2: 30,
+    buyPrice: 52000,
+    rentPrice: 1300,
+    depositMonths: 2,
+    desc: "30 m², mall girişi yaxınlığı, gənc axını"
+  }
+];
+
+// Bütün əmlakları şəhərə görə topla
+const ALL_PROPERTIES = {
+  baku: PROPERTIES_BAKU
+  // dubai: PROPERTIES_DUBAI  — sonra əlavə olunacaq
+  // london: PROPERTIES_LONDON
+};
+
+/* ============================================================
+   REALESTATE — GƏLİR HESABLAMA FUNKSİYASI
+   Aylıq passiv gəliri hesabla
+============================================================ */
+function calcPropertyIncome(property, ownershipType, businessTypeId = null) {
+  const areaMult = AREA_MULTIPLIERS[property.area];
+
+  if (ownershipType === "rent_out") {
+    // Kirayəyə vermək — sabit aylıq gəlir
+    return Math.round(property.rentPrice * areaMult.revenueMult);
+  }
+
+  if (ownershipType === "business" && businessTypeId) {
+    // Biznes qur — m2 * biznes növü gəliri * ərazi əmsalı
+    const biz = BUSINESS_TYPES.find(b => b.id === businessTypeId);
+    if (!biz) return 0;
+    const rawIncome = property.m2 * biz.baseRevenuePerM2 * areaMult.revenueMult;
+    // ±15% təsadüfi dalğalanma üçün range
+    const minIncome = Math.round(rawIncome * 0.85);
+    const maxIncome = Math.round(rawIncome * 1.15);
+    return { min: minIncome, max: maxIncome, avg: Math.round(rawIncome) };
+  }
+
+  return 0;
+}
