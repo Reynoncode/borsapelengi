@@ -1060,7 +1060,34 @@ function confirmREModal() {
   renderREListings();
   renderREOwned();
 }
+/* ──────────────────────────────────────────────────────────
+   REALESTATE — HƏFTƏLİK XƏRC HESABLAMALARI
+────────────────────────────────────────────────────────── */
+function calcWeeklyUtility(property, businessTypeId) {
+  const areaMult = AREA_MULTIPLIERS[property.area];
+  const biz = BUSINESS_TYPES.find(b => b.id === businessTypeId);
+  const utilFactor = biz ? biz.utilityFactor : 1.2; // rent_out üçün default əmsal
+  return property.m2 * RE_EXPENSE_CONFIG.baseUtilityPerM2Weekly * utilFactor * areaMult.revenueMult;
+}
 
+function calcWeeklyNetIncomeEstimate(owned, property) {
+  // owned.monthlyIncome obyekt (min/max/avg) ya da rəqəm ola bilər
+  let monthlyAvg;
+  if (typeof owned.monthlyIncome === "object" && owned.monthlyIncome !== null) {
+    monthlyAvg = owned.monthlyIncome.avg ?? ((owned.monthlyIncome.min + owned.monthlyIncome.max) / 2);
+  } else {
+    monthlyAvg = owned.monthlyIncome || 0;
+  }
+  return (monthlyAvg / 30) * 7; // həftəlik ümumi gəlir təxmini
+}
+
+function calcWeeklyExpense(owned, property) {
+  const utility = calcWeeklyUtility(property, owned.businessTypeId);
+  const grossWeekly = calcWeeklyNetIncomeEstimate(owned, property);
+  const taxable = Math.max(grossWeekly - utility, 0);
+  const tax = taxable * RE_EXPENSE_CONFIG.taxRate;
+  return { utility, tax, total: utility + tax, grossWeekly };
+}
 /* ──────────────────────────────────────────────────────────
    PASSIV GƏLİR — Hər günün sonunda hesabla
    advanceDay() funksiyası içində çağırılır
