@@ -870,16 +870,17 @@ function renderREOwned() {
     return;
   }
 
-  container.innerHTML = state.ownedProperties.map(owned => {
-    const allProps = Object.values(ALL_PROPERTIES).flat();
+  const allProps = Object.values(ALL_PROPERTIES).flat();
+
+  container.innerHTML = state.ownedProperties.map((owned, idx) => {
     const p = allProps.find(x => x.id === owned.propertyId);
     if (!p) return "";
 
     const typeLabel = owned.ownershipType === "rent_out"
       ? "Kirayəyə verilir"
-      : owned.businessTypeId
+      : owned.ownershipType === "business"
         ? BUSINESS_TYPES.find(b => b.id === owned.businessTypeId)?.name || "Biznes"
-        : "Şəxsi istifadə";
+        : "Kirayədə yaşayır";
 
     const incomeRange = owned.monthlyIncome
       ? typeof owned.monthlyIncome === "object"
@@ -887,18 +888,111 @@ function renderREOwned() {
         : `${fmtMoney(owned.monthlyIncome)}/ay`
       : "—";
 
+    // Xərc/borc statusu (yalnız business/rent_out üçün)
+    let expenseHtml = "";
+    if (owned.ownershipType === "business" || owned.ownershipType === "rent_out") {
+      const exp = calcWeeklyExpense(owned, p);
+      const daysLeft = RE_EXPENSE_CONFIG.paymentCycleDays - (state.day - owned.lastPaymentDay);
+      const hasDebt = owned.debt > 0.01;
+
+      const statusLine = hasDebt
+        ? `<div class="re-oc-debt">⚠️ Borc: ${fmtMoney(owned.debt)} (${owned.unpaidCycles}/3 gecikmə)</div>`
+        : `<div class="re-oc-expense">Həftəlik xərc: ${fmtMoney(exp.total)} · ${daysLeft >= 0 ? daysLeft + " gün sonra" : "vaxtı keçib"}</div>`;
+
+      const activeToggle = `
+        <button class="re-oc-toggle ${owned.active ? "on" : "off"}" data-idx="${idx}">
+          ${owned.active ? "Aktivdir" : "Bağlıdır"}
+        </button>`;
+
+      expenseHtml = `${statusLine}<div class="re-oc-actions">${activeToggle}<button class="re-oc-change-biz" data-idx="${idx}">Biznesi dəyiş</button></div>`;
+    }
+
     return `
-      <div class="re-owned-card">
+      <div class="re-owned-card ${owned.debt > 0.01 ? "has-debt" : ""}">
         <div class="re-oc-icon">${p.icon}</div>
         <div class="re-oc-info">
           <div class="re-oc-name">${p.name}</div>
           <div class="re-oc-type">${typeLabel}</div>
           <div class="re-oc-income" style="color:#1FD67A;">↑ ${incomeRange}</div>
+          ${expenseHtml}
         </div>
       </div>`;
   }).join("");
-}
 
+  // Aktiv/bağlı toggle
+  container.querySelectorAll(".re-oc-toggle").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const idx = parseInt(btn.dataset.idx);
+      state.ownedProperties[idx].active = !state.ownedProperties[idx].active;
+      saveState();
+      renderREOwned();
+    });
+  });
+
+  // Biznes dəyiş düyməsi
+  container.querySelectorAll(".re-oc-change-biz").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const idx = parseInt(btn.dataset.idx);
+      openChangeBusinessModal(idx);
+    });
+  });
+}
+let changeBizPropertyIdx = null;
+
+function openChangeBusinessModal(idx) {
+  changeBizPropertyIdx = idx;
+  const owned = state.ownedProperties[idx];
+  const allProps = Object.values(ALL_PROPERTIES).flat();
+  const p = allProps.find(x => x.id === owned.propertyId);
+  if (!p || p.type !== "commercial") {
+    showToast("Bu əmlak üçün biznes dəyişdirilə bilməz");
+    return;
+  }
+
+  const overlay = document.getElementById("re-modal-overlay");
+  document.getElementById("re-modal-title").textContent = "Biznesi dəyiş";
+  document.getElementById("re-modal-sub").textContent = p.name;
+  document.getElementById("re-modal-cost-label").textContent = "Yeni biznes seç";
+  document.getElementById("re-modal-cost").textContent = "—";
+  document.getElementById("re-modal-income").textContent = "—";
+  document.getElementById("re-modal-error").style.display = "none";
+
+  // Trade-modal-dakı biznes grid-i deyil, re-modal daxilinə dinamik grid əlavə edirik
+  let gridWrap = document.getElementById("re-modal-biz-grid-wrap");
+  if (!gridWrap) {
+    gridWrap = document.createElement("div");
+    gridWrap.id = "re-modal-biz-grid-wrap";
+    gridWrap.className = "re-business-grid";
+    gridWrap.style.padding = "10px 0 0";
+    document.querySelector("#re-modal-overlay .trade-modal").insertBefore(
+      gridWrap,
+      document.getElementById("re-modal-error")
+    );
+  }
+  gridWrap.style.display = "grid";
+  gridWrap.innerHTML = BUSINESS_TYPES.map(biz => {
+    const incomeData = calcPropertyIncome(p, "business", biz.id);
+    const isCurrent = biz.id === owned.businessTypeId;
+    return `
+      <div class="re-biz-card ${isCurrent ? "selected" : ""}" data-biz="${biz.id}">
+        <div class="re-biz-icon">${biz.icon}</div>
+        <div class="re-biz-name">${biz.name}</div>
+        <div class="re-biz-income">${fmtMoney(incomeData.min)}–${fmtMoney(incomeData.max)}/ay</div>
+      </div>`;
+  }).join("");
+
+  gridWrap.querySelectorAll(".re-biz-card").forEach(card => {
+    card.addEventListener("click", () => {
+      gridWrap.querySelectorAll(".re-biz-card").forEach(c => c.classList.remove("selected"));
+      card.classList.add("selected");
+    });
+  });
+
+  reModalAction = "change_business";
+  overlay.classList.add("active");
+}
 function openPropertyDetail(propId) {
   selectedPropertyId = propId;
   const allProps = Object.values(ALL_PROPERTIES).flat();
@@ -1044,12 +1138,24 @@ state.ownedProperties.push({
     });
     addTransaction(`${p.name} alındı`, p.buyPrice, "out", "REALESTATE");
     showToast(`🏠 ${p.name} alındı!`);
+  } else if (reModalAction === "change_business") {
+    const selectedBiz = document.querySelector("#re-modal-biz-grid-wrap .re-biz-card.selected");
+    if (!selectedBiz) { showToast("Biznes seç"); return; }
+    const newBizId = selectedBiz.dataset.biz;
+    const owned = state.ownedProperties[changeBizPropertyIdx];
+    owned.businessTypeId = newBizId;
+    owned.ownershipType = "business";
+    owned.monthlyIncome = calcPropertyIncome(p, "business", newBizId);
+    showToast(`Biznes dəyişdirildi: ${BUSINESS_TYPES.find(b=>b.id===newBizId).name}`);
 
+    saveState();
+    closeREModal();
+    renderREOwned();
+    return; // qalan kodu işə salma
   } else {
     const deposit = p.rentPrice * p.depositMonths;
     if (state.bankBalance < deposit) return;
     state.bankBalance -= deposit;
-
     state.ownedProperties.push({
       propertyId: p.id,
       ownershipType: "rented",
@@ -1061,7 +1167,7 @@ state.ownedProperties.push({
     addTransaction(`${p.name} kirayə depoziti`, deposit, "out", "REALESTATE");
     showToast(`🔑 ${p.name} kirayə götürüldü!`);
   }
-
+   
   saveState();
   renderHome();
   closeREModal();
