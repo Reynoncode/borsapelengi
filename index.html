@@ -78,13 +78,32 @@
             <div class="value" id="inv-portfolio-value">$0.00</div>
           </div>
         </div>
-        <div class="inv-tabs">
-          <div class="inv-tab active" data-filter="all">Hamısı</div>
-          <div class="inv-tab" data-filter="stock">Səhm</div>
-          <div class="inv-tab" data-filter="crypto">Kripto</div>
-          <div class="inv-tab" data-filter="commodity">Əmtəə</div>
+
+        <div class="inv-main-tabs">
+          <div class="inv-main-tab active" data-main-tab="market">Bazar</div>
+          <div class="inv-main-tab" data-main-tab="portfolio">Portfel</div>
         </div>
-        <div class="asset-list" id="asset-list"></div>
+
+        <div class="inv-panel" id="inv-market-panel" style="display:flex;">
+          <div class="inv-tabs">
+            <div class="inv-tab active" data-filter="all">Hamısı</div>
+            <div class="inv-tab" data-filter="stock">Səhm</div>
+            <div class="inv-tab" data-filter="crypto">Kripto</div>
+            <div class="inv-tab" data-filter="commodity">Əmtəə</div>
+          </div>
+          <div class="asset-list" id="asset-list"></div>
+        </div>
+
+        <div class="inv-panel" id="inv-portfolio-panel" style="display:none;">
+          <div class="pf-summary">
+            <div class="pf-summary-row">
+              <span>Ümumi Portfel Dəyəri</span>
+              <span id="pf-total-value">$0.00</span>
+            </div>
+            <div class="pf-pnl up" id="pf-total-pnl">+$0.00 (açıq mövqe P&amp;L)</div>
+          </div>
+          <div class="portfolio-list" id="portfolio-list"></div>
+        </div>
       </div>
     </div>
 
@@ -122,6 +141,16 @@
           <button class="btn-trade buy" id="btn-open-buy">Al</button>
           <button class="btn-trade sell" id="btn-open-sell">Sat</button>
         </div>
+        <div class="trade-buttons" style="margin-top:8px;">
+          <button class="btn-trade lev" id="btn-open-long-lev">Long Aç (Leverage)</button>
+          <button class="btn-trade short" id="btn-open-short">Short Aç</button>
+        </div>
+
+        <div class="detail-open-positions" id="detail-open-positions" style="display:none;">
+          <div class="section-title">Açıq mövqələr</div>
+          <div class="detail-pos-list"></div>
+        </div>
+
         <div class="news-mini-section">
           <div class="section-title">Bu aktivlə bağlı xəbərlər</div>
           <div id="detail-news-list"></div>
@@ -193,14 +222,34 @@
           <input type="number" id="tm-quantity-input" placeholder="0" min="0" step="any">
           <span class="tm-unit" id="tm-unit-label">ədəd</span>
         </div>
+        <div class="tm-leverage-row" id="tm-leverage-row" style="display:none;">
+          <button class="lev-btn active" data-lev="1">1x</button>
+          <button class="lev-btn" data-lev="2">2x</button>
+          <button class="lev-btn" data-lev="5">5x</button>
+          <button class="lev-btn" data-lev="10">10x</button>
+        </div>
         <div class="tm-error" id="tm-error">Kifayət qədər balans yoxdur</div>
         <div class="tm-summary">
-          <span>Cəmi məbləğ</span>
+          <span id="tm-total-label">Cəmi məbləğ</span>
           <span id="tm-total">$0.00</span>
         </div>
         <div class="tm-actions">
           <button class="btn-modal-cancel" id="btn-modal-cancel">İmtina</button>
           <button class="btn-modal-confirm buy" id="btn-modal-confirm">Təsdiqlə</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         CLOSE POSITION MODAL (Mövqə bağlama)
+    ============================================================= -->
+    <div class="modal-overlay" id="close-pos-overlay">
+      <div class="trade-modal">
+        <div class="tm-title" id="close-pos-title">Mövqə</div>
+        <div class="tm-sub" id="close-pos-detail">—</div>
+        <div class="tm-actions">
+          <button class="btn-modal-cancel" id="btn-close-pos-cancel">İmtina</button>
+          <button class="btn-modal-confirm sell" id="btn-close-pos-confirm">Mövqəni Bağla</button>
         </div>
       </div>
     </div>
