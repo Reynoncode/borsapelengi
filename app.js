@@ -1032,7 +1032,16 @@ function confirmREModal() {
       monthlyIncome = calcPropertyIncome(p, "rent_out");
     }
 
-    state.ownedProperties.push({ propertyId: p.id, ownershipType, businessTypeId, monthlyIncome });
+state.ownedProperties.push({
+      propertyId: p.id,
+      ownershipType,
+      businessTypeId,
+      monthlyIncome,
+      active: true,            // biznes/kirayə aktiv işləyir mi
+      lastPaymentDay: state.day,   // son ödənişin (və ya alışın) günü
+      unpaidCycles: 0,          // neçə ödəniş dövrü gecikib
+      debt: 0                   // yığılmış borc (cərimə daxil)
+    });
     addTransaction(`${p.name} alındı`, p.buyPrice, "out", "REALESTATE");
     showToast(`🏠 ${p.name} alındı!`);
 
@@ -1092,6 +1101,64 @@ function calcWeeklyExpense(owned, property) {
    PASSIV GƏLİR — Hər günün sonunda hesabla
    advanceDay() funksiyası içində çağırılır
 ────────────────────────────────────────────────────────── */
+function processPropertyExpenses() {
+  if (!state.ownedProperties || state.ownedProperties.length === 0) return;
+
+  const allProps = Object.values(ALL_PROPERTIES).flat();
+  const toRemove = [];
+
+  state.ownedProperties.forEach(owned => {
+    // Yalnız BUSINESS və RENT_OUT mülklər üçün xərc tələb olunur
+    if (owned.ownershipType !== "business" && owned.ownershipType !== "rent_out") return;
+    if (!owned.active) return; // bağlı/deaktiv mülkdən xərc tutulmur
+
+    const property = allProps.find(x => x.id === owned.propertyId);
+    if (!property) return;
+
+    const daysSincePayment = state.day - owned.lastPaymentDay;
+    if (daysSincePayment < RE_EXPENSE_CONFIG.paymentCycleDays) return; // hələ vaxtı çatmayıb
+
+    // Bir dövr keçib — xərc hesabla və borc yarat (əgər artıq ödənməyibsə)
+    const expense = calcWeeklyExpense(owned, property);
+
+    // Avtomatik ödəmə cəhdi: bank balansından tutmağa çalış
+    if (state.bankBalance >= expense.total + owned.debt) {
+      state.bankBalance -= (expense.total + owned.debt);
+      addTransaction(`${property.name} — həftəlik xərc`, expense.total + owned.debt, "out", "REALESTATE");
+      owned.debt = 0;
+      owned.unpaidCycles = 0;
+      owned.lastPaymentDay = state.day;
+    } else {
+      // Ödənilmədi — borc və gecikmə sayğacı artır
+      owned.debt += expense.total;
+      owned.unpaidCycles += 1;
+      owned.lastPaymentDay = state.day; // növbəti dövrü hesablamaq üçün sıfırlanır
+
+      if (owned.unpaidCycles === 1) {
+        showToast(`⚠️ ${property.name}: ödəniş gecikdi, cərimə başladı`);
+      } else if (owned.unpaidCycles === 2) {
+        showToast(`⚠️ ${property.name}: 2-ci gecikmə! Son xəbərdarlıq`);
+      } else if (owned.unpaidCycles >= 3) {
+        toRemove.push({ owned, property });
+      }
+    }
+
+    // Gecikmiş borca gündəlik cərimə əlavə et (hər gün, borc varsa)
+    if (owned.debt > 0 && owned.unpaidCycles > 0) {
+      owned.debt += owned.debt * RE_EXPENSE_CONFIG.lateFeeDailyRate;
+    }
+  });
+
+  // 3-cü dövr də ödənməyən mülkləri sat
+  toRemove.forEach(({ owned, property }) => {
+    const saleValue = Math.round(property.buyPrice * 0.7); // bazar dəyərinin 70%-i ilə məcburi satış
+    const netReturn = Math.max(saleValue - owned.debt, 0);
+    state.bankBalance += netReturn;
+    state.ownedProperties = state.ownedProperties.filter(o => o !== owned);
+    addTransaction(`${property.name} borc üzündən satıldı`, netReturn, "in", "REALESTATE");
+    showToast(`🚨 ${property.name} borc üzündən əldən getdi! Qalan: ${fmtMoney(netReturn)}`);
+  });
+}
 function processPropertyIncome() {
   if (!state.ownedProperties || state.ownedProperties.length === 0) return;
 
@@ -1145,9 +1212,12 @@ function advanceDay() {
     showToast(`⚠️ ${pos.ticker} mövqəsi likvidə edildi!`);
   });
 
+
+// Əmlak həftəlik xərcləri (vergi+kommunal), cərimə və satış
+  processPropertyExpenses();
+
   // Əmlakdan passiv gəlir
   processPropertyIncome();
-
   saveState();
   renderAll();
   showToast("Gün " + state.day + " başladı");
