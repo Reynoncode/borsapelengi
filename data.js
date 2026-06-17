@@ -793,11 +793,1007 @@ const PROPERTIES_BAKU = [
   }
 ];
 
+
+const PROPERTIES_BALI = [
+
+  // ─────────────────────────────
+  // EVLƏR (1-10)
+  // ─────────────────────────────
+
+  {
+    id: "bali_villa_1",
+    city: "bali",
+    type: "residential",
+    name: "Seminyak Lüks Villa",
+    icon: "🏝️",
+    area: "premium",
+    m2: 180,
+    buyPrice: 280000,
+    rentPrice: 3500,
+    depositMonths: 3,
+    desc: "Özəl hovuzlu, premium turizm zonası"
+  },
+
+  {
+    id: "bali_villa_2",
+    city: "bali",
+    type: "residential",
+    name: "Canggu Surf Villa",
+    icon: "🏄",
+    area: "premium",
+    m2: 150,
+    buyPrice: 220000,
+    rentPrice: 2900,
+    depositMonths: 3,
+    desc: "Çimərliyə yaxın, turistlərin sevimlisi"
+  },
+
+  {
+    id: "bali_villa_3",
+    city: "bali",
+    type: "residential",
+    name: "Ubud Jungle House",
+    icon: "🌴",
+    area: "mid",
+    m2: 120,
+    buyPrice: 145000,
+    rentPrice: 1800,
+    depositMonths: 2,
+    desc: "Yaşıllıqlar içində sakit yaşayış"
+  },
+
+  {
+    id: "bali_villa_4",
+    city: "bali",
+    type: "residential",
+    name: "Nusa Dua Residence",
+    icon: "🏡",
+    area: "premium",
+    m2: 140,
+    buyPrice: 190000,
+    rentPrice: 2400,
+    depositMonths: 3,
+    desc: "Resort bölgəsində müasir yaşayış"
+  },
+
+  {
+    id: "bali_villa_5",
+    city: "bali",
+    type: "residential",
+    name: "Jimbaran Ocean Villa",
+    icon: "🌊",
+    area: "premium",
+    m2: 170,
+    buyPrice: 250000,
+    rentPrice: 3200,
+    depositMonths: 3,
+    desc: "Okean mənzərəli villa"
+  },
+
+  {
+    id: "bali_villa_6",
+    city: "bali",
+    type: "residential",
+    name: "Sanur Family House",
+    icon: "🏠",
+    area: "mid",
+    m2: 130,
+    buyPrice: 120000,
+    rentPrice: 1400,
+    depositMonths: 2,
+    desc: "Ailə üçün uyğun sakit məhəllə"
+  },
+
+  {
+    id: "bali_villa_7",
+    city: "bali",
+    type: "residential",
+    name: "Denpasar City Apartment",
+    icon: "🏢",
+    area: "mid",
+    m2: 85,
+    buyPrice: 95000,
+    rentPrice: 1100,
+    depositMonths: 2,
+    desc: "Şəhər mərkəzində mənzil"
+  },
+
+  {
+    id: "bali_villa_8",
+    city: "bali",
+    type: "residential",
+    name: "Uluwatu Cliff Villa",
+    icon: "🌅",
+    area: "premium",
+    m2: 220,
+    buyPrice: 420000,
+    rentPrice: 5200,
+    depositMonths: 3,
+    desc: "Qayalıq üzərində lüks villa"
+  },
+
+  {
+    id: "bali_villa_9",
+    city: "bali",
+    type: "residential",
+    name: "Kuta Beach Apartment",
+    icon: "🏖️",
+    area: "mid",
+    m2: 75,
+    buyPrice: 110000,
+    rentPrice: 1600,
+    depositMonths: 2,
+    desc: "Çimərliyə piyada məsafədə"
+  },
+
+  {
+    id: "bali_villa_10",
+    city: "bali",
+    type: "residential",
+    name: "Legian Resort Residence",
+    icon: "🌴",
+    area: "premium",
+    m2: 90,
+    buyPrice: 135000,
+    rentPrice: 1900,
+    depositMonths: 2,
+    desc: "Resort zonasına yaxın yaşayış"
+  },
+
+  // ─────────────────────────────
+  // EVLƏR (11-20)
+  // ─────────────────────────────
+
+  {
+    id: "bali_villa_11",
+    city: "bali",
+    type: "residential",
+    name: "Canggu Modern Loft",
+    icon: "🏢",
+    area: "premium",
+    m2: 95,
+    buyPrice: 150000,
+    rentPrice: 2100,
+    depositMonths: 2,
+    desc: "Rəqəmsal köçərilər üçün ideal"
+  },
+
+  {
+    id: "bali_villa_12",
+    city: "bali",
+    type: "residential",
+    name: "Seminyak Penthouse",
+    icon: "🏙️",
+    area: "premium",
+    m2: 160,
+    buyPrice: 340000,
+    rentPrice: 4200,
+    depositMonths: 3,
+    desc: "Premium penthouse və şəhər mənzərəsi"
+  },
+
+  {
+    id: "bali_villa_13",
+    city: "bali",
+    type: "residential",
+    name: "Ubud Eco Villa",
+    icon: "🌿",
+    area: "mid",
+    m2: 140,
+    buyPrice: 175000,
+    rentPrice: 2200,
+    depositMonths: 2,
+    desc: "Ekoloji təmiz və müasir dizayn"
+  },
+
+  {
+    id: "bali_villa_14",
+    city: "bali",
+    type: "residential",
+    name: "Gianyar Garden House",
+    icon: "🌺",
+    area: "mid",
+    m2: 110,
+    buyPrice: 90000,
+    rentPrice: 950,
+    depositMonths: 2,
+    desc: "Bağçalı rahat yaşayış evi"
+  },
+
+  {
+    id: "bali_villa_15",
+    city: "bali",
+    type: "residential",
+    name: "Tabanan Ricefield Villa",
+    icon: "🌾",
+    area: "suburban",
+    m2: 160,
+    buyPrice: 125000,
+    rentPrice: 1300,
+    depositMonths: 2,
+    desc: "Düyü sahələri mənzərəli villa"
+  },
+
+  {
+    id: "bali_villa_16",
+    city: "bali",
+    type: "residential",
+    name: "Nusa Dua Elite Residence",
+    icon: "⭐",
+    area: "premium",
+    m2: 190,
+    buyPrice: 310000,
+    rentPrice: 3900,
+    depositMonths: 3,
+    desc: "Elit yaşayış kompleksi"
+  },
+
+  {
+    id: "bali_villa_17",
+    city: "bali",
+    type: "residential",
+    name: "Singaraja Coastal House",
+    icon: "🌊",
+    area: "suburban",
+    m2: 150,
+    buyPrice: 85000,
+    rentPrice: 900,
+    depositMonths: 2,
+    desc: "Sahil yaxınlığında sərfəli ev"
+  },
+
+  {
+    id: "bali_villa_18",
+    city: "bali",
+    type: "residential",
+    name: "Jimbaran Sunset Villa",
+    icon: "🌅",
+    area: "premium",
+    m2: 175,
+    buyPrice: 235000,
+    rentPrice: 3000,
+    depositMonths: 3,
+    desc: "Gün batımı mənzərəli villa"
+  },
+
+  {
+    id: "bali_villa_19",
+    city: "bali",
+    type: "residential",
+    name: "Canggu Luxury Estate",
+    icon: "💎",
+    area: "premium",
+    m2: 250,
+    buyPrice: 480000,
+    rentPrice: 6200,
+    depositMonths: 3,
+    desc: "Ultra lüks premium yaşayış"
+  },
+
+  {
+    id: "bali_villa_20",
+    city: "bali",
+    type: "residential",
+    name: "Seminyak Designer Villa",
+    icon: "🎨",
+    area: "premium",
+    m2: 210,
+    buyPrice: 370000,
+    rentPrice: 4700,
+    depositMonths: 3,
+    desc: "Memarlıq dizaynı ilə seçilən villa"
+  },
+
+  // ─────────────────────────────
+  // KOMMERSİYA (1-15)
+  // ─────────────────────────────
+
+  {
+    id: "bali_com_1",
+    city: "bali",
+    type: "commercial",
+    name: "Seminyak Beach Cafe",
+    icon: "☕",
+    area: "premium",
+    m2: 120,
+    buyPrice: 180000,
+    rentPrice: 4200,
+    depositMonths: 3,
+    desc: "Çimərlik qarşısında məşhur kafe"
+  },
+
+  {
+    id: "bali_com_2",
+    city: "bali",
+    type: "commercial",
+    name: "Canggu Surf Shop",
+    icon: "🏄",
+    area: "premium",
+    m2: 80,
+    buyPrice: 120000,
+    rentPrice: 2600,
+    depositMonths: 3,
+    desc: "Surf avadanlıqları mağazası"
+  },
+
+  {
+    id: "bali_com_3",
+    city: "bali",
+    type: "commercial",
+    name: "Ubud Art Gallery",
+    icon: "🎨",
+    area: "premium",
+    m2: 140,
+    buyPrice: 150000,
+    rentPrice: 2800,
+    depositMonths: 2,
+    desc: "Turistlər üçün sənət qalereyası"
+  },
+
+  {
+    id: "bali_com_4",
+    city: "bali",
+    type: "commercial",
+    name: "Kuta Beach Bar",
+    icon: "🍹",
+    area: "premium",
+    m2: 100,
+    buyPrice: 160000,
+    rentPrice: 3600,
+    depositMonths: 3,
+    desc: "Populyar gecə həyatı məkanı"
+  },
+
+  {
+    id: "bali_com_5",
+    city: "bali",
+    type: "commercial",
+    name: "Nusa Dua Luxury Spa",
+    icon: "💆",
+    area: "premium",
+    m2: 180,
+    buyPrice: 250000,
+    rentPrice: 5200,
+    depositMonths: 3,
+    desc: "Lüks spa və wellness mərkəzi"
+  },
+
+  {
+    id: "bali_com_6",
+    city: "bali",
+    type: "commercial",
+    name: "Jimbaran Seafood Restaurant",
+    icon: "🍽️",
+    area: "premium",
+    m2: 220,
+    buyPrice: 240000,
+    rentPrice: 5000,
+    depositMonths: 3,
+    desc: "Dəniz məhsulları restoranı"
+  },
+
+  {
+    id: "bali_com_7",
+    city: "bali",
+    type: "commercial",
+    name: "Seminyak Night Club",
+    icon: "🎵",
+    area: "premium",
+    m2: 260,
+    buyPrice: 350000,
+    rentPrice: 7500,
+    depositMonths: 3,
+    desc: "Turistlər arasında məşhur klub"
+  },
+
+  {
+    id: "bali_com_8",
+    city: "bali",
+    type: "commercial",
+    name: "Uluwatu Cliff Restaurant",
+    icon: "🍴",
+    area: "premium",
+    m2: 180,
+    buyPrice: 270000,
+    rentPrice: 5600,
+    depositMonths: 3,
+    desc: "Qayalıq üzərində restoran"
+  },
+
+  {
+    id: "bali_com_9",
+    city: "bali",
+    type: "commercial",
+    name: "Sanur Diving Center",
+    icon: "🤿",
+    area: "mid",
+    m2: 130,
+    buyPrice: 140000,
+    rentPrice: 2700,
+    depositMonths: 2,
+    desc: "Dalğıclıq və turizm xidməti"
+  },
+
+  {
+    id: "bali_com_10",
+    city: "bali",
+    type: "commercial",
+    name: "Bali Yoga Studio",
+    icon: "🧘",
+    area: "mid",
+    m2: 110,
+    buyPrice: 115000,
+    rentPrice: 2200,
+    depositMonths: 2,
+    desc: "Yoga və sağlamlıq mərkəzi"
+  },
+
+  {
+    id: "bali_com_11",
+    city: "bali",
+    type: "commercial",
+    name: "Bali Souvenir Market",
+    icon: "🎁",
+    area: "mid",
+    m2: 150,
+    buyPrice: 125000,
+    rentPrice: 2400,
+    depositMonths: 2,
+    desc: "Suvenir və hədiyyə bazarı"
+  },
+
+  {
+    id: "bali_com_12",
+    city: "bali",
+    type: "commercial",
+    name: "Seminyak Fashion Boutique",
+    icon: "👗",
+    area: "premium",
+    m2: 90,
+    buyPrice: 145000,
+    rentPrice: 3100,
+    depositMonths: 2,
+    desc: "Premium geyim mağazası"
+  },
+
+  {
+    id: "bali_com_13",
+    city: "bali",
+    type: "commercial",
+    name: "Canggu Skate Shop",
+    icon: "🛹",
+    area: "mid",
+    m2: 75,
+    buyPrice: 85000,
+    rentPrice: 1700,
+    depositMonths: 2,
+    desc: "Skate və gənclər məhsulları"
+  },
+
+  {
+    id: "bali_com_14",
+    city: "bali",
+    type: "commercial",
+    name: "Ubud Handmade Store",
+    icon: "🏺",
+    area: "mid",
+    m2: 95,
+    buyPrice: 95000,
+    rentPrice: 1800,
+    depositMonths: 2,
+    desc: "Əl işləri və sənətkarlıq məhsulları"
+  },
+
+  {
+    id: "bali_com_15",
+    city: "bali",
+    type: "commercial",
+    name: "Denpasar Electronics Shop",
+    icon: "📱",
+    area: "mid",
+    m2: 120,
+    buyPrice: 135000,
+    rentPrice: 2600,
+    depositMonths: 2,
+    desc: "Elektronika və aksesuar mağazası"
+  },
+  {
+    id: "bali_com_16",
+    city: "bali",
+    type: "commercial",
+    name: "Bali Jewelry Boutique",
+    icon: "💍",
+    area: "premium",
+    m2: 70,
+    buyPrice: 165000,
+    rentPrice: 3200,
+    depositMonths: 3,
+    desc: "Lüks zinət əşyaları mağazası"
+  },
+
+  {
+    id: "bali_com_17",
+    city: "bali",
+    type: "commercial",
+    name: "Kuta Surf Equipment Store",
+    icon: "🌊",
+    area: "premium",
+    m2: 85,
+    buyPrice: 130000,
+    rentPrice: 2600,
+    depositMonths: 2,
+    desc: "Surf və çimərlik avadanlıqları"
+  },
+
+  {
+    id: "bali_com_18",
+    city: "bali",
+    type: "commercial",
+    name: "Nusa Dua Luxury Store",
+    icon: "👜",
+    area: "premium",
+    m2: 100,
+    buyPrice: 190000,
+    rentPrice: 3900,
+    depositMonths: 3,
+    desc: "Premium brend mağazası"
+  },
+
+  {
+    id: "bali_com_19",
+    city: "bali",
+    type: "commercial",
+    name: "Bali Mini Market",
+    icon: "🛒",
+    area: "mid",
+    m2: 120,
+    buyPrice: 90000,
+    rentPrice: 1800,
+    depositMonths: 2,
+    desc: "Yerli və turist məhsulları"
+  },
+
+  {
+    id: "bali_com_20",
+    city: "bali",
+    type: "commercial",
+    name: "Jimbaran Gift Shop",
+    icon: "🎁",
+    area: "mid",
+    m2: 75,
+    buyPrice: 85000,
+    rentPrice: 1600,
+    depositMonths: 2,
+    desc: "Turist hədiyyələri mağazası"
+  },
+
+  {
+    id: "bali_com_21",
+    city: "bali",
+    type: "commercial",
+    name: "Boutique Hotel Seminyak",
+    icon: "🏨",
+    area: "premium",
+    m2: 850,
+    buyPrice: 950000,
+    rentPrice: 18000,
+    depositMonths: 3,
+    desc: "25 otaqlı butik otel"
+  },
+
+  {
+    id: "bali_com_22",
+    city: "bali",
+    type: "commercial",
+    name: "Canggu Guesthouse",
+    icon: "🏠",
+    area: "mid",
+    m2: 350,
+    buyPrice: 280000,
+    rentPrice: 6500,
+    depositMonths: 3,
+    desc: "Sörfçülər üçün qonaq evi"
+  },
+
+  {
+    id: "bali_com_23",
+    city: "bali",
+    type: "commercial",
+    name: "Ubud Eco Resort",
+    icon: "🌿",
+    area: "premium",
+    m2: 1200,
+    buyPrice: 1200000,
+    rentPrice: 24000,
+    depositMonths: 3,
+    desc: "Ekoloji resort kompleksi"
+  },
+
+  {
+    id: "bali_com_24",
+    city: "bali",
+    type: "commercial",
+    name: "Kuta Budget Hotel",
+    icon: "🛏️",
+    area: "mid",
+    m2: 700,
+    buyPrice: 520000,
+    rentPrice: 11000,
+    depositMonths: 3,
+    desc: "Büdcə dostu otel"
+  },
+
+  {
+    id: "bali_com_25",
+    city: "bali",
+    type: "commercial",
+    name: "Nusa Dua Beach Resort",
+    icon: "🏖️",
+    area: "premium",
+    m2: 1800,
+    buyPrice: 2200000,
+    rentPrice: 42000,
+    depositMonths: 3,
+    desc: "Dənizkənarı premium resort"
+  },
+
+  {
+    id: "bali_com_26",
+    city: "bali",
+    type: "commercial",
+    name: "Jimbaran Villa Complex",
+    icon: "🏝️",
+    area: "premium",
+    m2: 1500,
+    buyPrice: 1750000,
+    rentPrice: 34000,
+    depositMonths: 3,
+    desc: "Kirayəlik villalar kompleksi"
+  },
+
+  {
+    id: "bali_com_27",
+    city: "bali",
+    type: "commercial",
+    name: "Sanur Holiday Apartments",
+    icon: "🏢",
+    area: "mid",
+    m2: 900,
+    buyPrice: 750000,
+    rentPrice: 14500,
+    depositMonths: 3,
+    desc: "Turist apart kompleksi"
+  },
+
+  {
+    id: "bali_com_28",
+    city: "bali",
+    type: "commercial",
+    name: "Uluwatu Luxury Resort",
+    icon: "⭐",
+    area: "premium",
+    m2: 2500,
+    buyPrice: 3500000,
+    rentPrice: 68000,
+    depositMonths: 3,
+    desc: "Ultra lüks okean resortu"
+  },
+
+  {
+    id: "bali_com_29",
+    city: "bali",
+    type: "commercial",
+    name: "Bali Backpacker Hostel",
+    icon: "🎒",
+    area: "mid",
+    m2: 450,
+    buyPrice: 240000,
+    rentPrice: 5200,
+    depositMonths: 2,
+    desc: "Gənc turistlər üçün hostel"
+  },
+
+  {
+    id: "bali_com_30",
+    city: "bali",
+    type: "commercial",
+    name: "Seminyak Business Hotel",
+    icon: "🏨",
+    area: "premium",
+    m2: 1100,
+    buyPrice: 1400000,
+    rentPrice: 26000,
+    depositMonths: 3,
+    desc: "Biznes səfərləri üçün otel"
+  },
+
+  {
+    id: "bali_com_31",
+    city: "bali",
+    type: "commercial",
+    name: "Digital Nomad Coworking",
+    icon: "💻",
+    area: "premium",
+    m2: 300,
+    buyPrice: 260000,
+    rentPrice: 5800,
+    depositMonths: 2,
+    desc: "Rəqəmsal köçərilər üçün iş məkanı"
+  },
+
+  {
+    id: "bali_com_32",
+    city: "bali",
+    type: "commercial",
+    name: "Bali Marketing Agency",
+    icon: "📈",
+    area: "mid",
+    m2: 140,
+    buyPrice: 125000,
+    rentPrice: 2500,
+    depositMonths: 2,
+    desc: "Marketinq və reklam xidməti"
+  },
+
+  {
+    id: "bali_com_33",
+    city: "bali",
+    type: "commercial",
+    name: "Travel Agency Bali",
+    icon: "✈️",
+    area: "mid",
+    m2: 90,
+    buyPrice: 95000,
+    rentPrice: 1900,
+    depositMonths: 2,
+    desc: "Tur və səyahət xidməti"
+  },
+
+  {
+    id: "bali_com_34",
+    city: "bali",
+    type: "commercial",
+    name: "Immigration Consultant",
+    icon: "📄",
+    area: "mid",
+    m2: 110,
+    buyPrice: 120000,
+    rentPrice: 2400,
+    depositMonths: 2,
+    desc: "Viza və immiqrasiya xidmətləri"
+  },
+
+  {
+    id: "bali_com_35",
+    city: "bali",
+    type: "commercial",
+    name: "Property Management Office",
+    icon: "🏢",
+    area: "premium",
+    m2: 180,
+    buyPrice: 210000,
+    rentPrice: 4200,
+    depositMonths: 2,
+    desc: "Əmlak idarəetmə şirkəti"
+  },
+
+  {
+    id: "bali_com_36",
+    city: "bali",
+    type: "commercial",
+    name: "Software Startup Hub",
+    icon: "🚀",
+    area: "premium",
+    m2: 260,
+    buyPrice: 320000,
+    rentPrice: 6800,
+    depositMonths: 3,
+    desc: "Texnologiya startap mərkəzi"
+  },
+
+  {
+    id: "bali_com_37",
+    city: "bali",
+    type: "commercial",
+    name: "Accounting Office",
+    icon: "📊",
+    area: "mid",
+    m2: 100,
+    buyPrice: 95000,
+    rentPrice: 1800,
+    depositMonths: 2,
+    desc: "Mühasibat və audit xidməti"
+  },
+
+  {
+    id: "bali_com_38",
+    city: "bali",
+    type: "commercial",
+    name: "Legal Consultancy",
+    icon: "⚖️",
+    area: "mid",
+    m2: 130,
+    buyPrice: 135000,
+    rentPrice: 2600,
+    depositMonths: 2,
+    desc: "Hüquqi məsləhət xidməti"
+  },
+
+  {
+    id: "bali_com_39",
+    city: "bali",
+    type: "commercial",
+    name: "Recruitment Agency",
+    icon: "👔",
+    area: "mid",
+    m2: 110,
+    buyPrice: 110000,
+    rentPrice: 2200,
+    depositMonths: 2,
+    desc: "İşçi təminatı agentliyi"
+  },
+
+  {
+    id: "bali_com_40",
+    city: "bali",
+    type: "commercial",
+    name: "Event Management Company",
+    icon: "🎉",
+    area: "premium",
+    m2: 170,
+    buyPrice: 190000,
+    rentPrice: 3900,
+    depositMonths: 2,
+    desc: "Tədbir təşkilatçılığı şirkəti"
+  },
+  {
+    id: "bali_com_41",
+    city: "bali",
+    type: "commercial",
+    name: "Denpasar Logistics Warehouse",
+    icon: "📦",
+    area: "suburban",
+    m2: 850,
+    buyPrice: 420000,
+    rentPrice: 7800,
+    depositMonths: 2,
+    desc: "Adanın əsas logistika anbarı"
+  },
+
+  {
+    id: "bali_com_42",
+    city: "bali",
+    type: "commercial",
+    name: "Bali Food Distribution Center",
+    icon: "🚚",
+    area: "suburban",
+    m2: 1200,
+    buyPrice: 650000,
+    rentPrice: 11500,
+    depositMonths: 2,
+    desc: "Restoran və hotellərə ərzaq təchizatı"
+  },
+
+  {
+    id: "bali_com_43",
+    city: "bali",
+    type: "commercial",
+    name: "Import Export Depot",
+    icon: "🚢",
+    area: "suburban",
+    m2: 1500,
+    buyPrice: 850000,
+    rentPrice: 15000,
+    depositMonths: 3,
+    desc: "İdxal və ixrac əməliyyatları üçün depo"
+  },
+
+  {
+    id: "bali_com_44",
+    city: "bali",
+    type: "commercial",
+    name: "Cold Storage Facility",
+    icon: "❄️",
+    area: "suburban",
+    m2: 700,
+    buyPrice: 520000,
+    rentPrice: 9200,
+    depositMonths: 2,
+    desc: "Soyuducu anbar kompleksi"
+  },
+
+  {
+    id: "bali_com_45",
+    city: "bali",
+    type: "commercial",
+    name: "Retail Supply Warehouse",
+    icon: "🏭",
+    area: "suburban",
+    m2: 1000,
+    buyPrice: 560000,
+    rentPrice: 9800,
+    depositMonths: 2,
+    desc: "Pərakəndə satış şəbəkələrinə təchizat"
+  },
+
+  {
+    id: "bali_com_46",
+    city: "bali",
+    type: "commercial",
+    name: "Bali Waterpark",
+    icon: "🎢",
+    area: "premium",
+    m2: 3500,
+    buyPrice: 4200000,
+    rentPrice: 78000,
+    depositMonths: 3,
+    desc: "Adanın ən böyük su əyləncə parkı"
+  },
+
+  {
+    id: "bali_com_47",
+    city: "bali",
+    type: "commercial",
+    name: "Luxury Beach Club",
+    icon: "🍾",
+    area: "premium",
+    m2: 1200,
+    buyPrice: 2600000,
+    rentPrice: 52000,
+    depositMonths: 3,
+    desc: "VIP turistlər üçün premium beach club"
+  },
+
+  {
+    id: "bali_com_48",
+    city: "bali",
+    type: "commercial",
+    name: "Adventure Tour Center",
+    icon: "🚁",
+    area: "premium",
+    m2: 500,
+    buyPrice: 950000,
+    rentPrice: 18000,
+    depositMonths: 3,
+    desc: "Helikopter və macəra turları mərkəzi"
+  },
+
+  {
+    id: "bali_com_49",
+    city: "bali",
+    type: "commercial",
+    name: "Private Marina Office",
+    icon: "⛵",
+    area: "premium",
+    m2: 800,
+    buyPrice: 3800000,
+    rentPrice: 72000,
+    depositMonths: 3,
+    desc: "Şəxsi yaxtalar üçün marina kompleksi"
+  },
+
+  {
+    id: "bali_com_50",
+    city: "bali",
+    type: "commercial",
+    name: "Exclusive Golf Club",
+    icon: "⛳",
+    area: "premium",
+    m2: 5000,
+    buyPrice: 6500000,
+    rentPrice: 125000,
+    depositMonths: 3,
+    desc: "Premium üzvlük sistemli golf kompleksi"
+  }
+
+];
+
+
+   
 // Bütün əmlakları şəhərə görə topla
 const ALL_PROPERTIES = {
-  baku: PROPERTIES_BAKU
-  // dubai: PROPERTIES_DUBAI  — sonra əlavə olunacaq
-  // london: PROPERTIES_LONDON
+  baku: PROPERTIES_BAKU,
+  bali: PROPERTIES_BALI
 };
 
 /* ============================================================
