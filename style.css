@@ -353,6 +353,85 @@ body {
   border-color: var(--c-border);
 }
 
+/* === Market / Portfel əsas tabları === */
+.inv-main-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 0 18px 12px;
+  border-bottom: 1px solid var(--c-border);
+  margin-bottom: 4px;
+}
+.inv-main-tab {
+  padding: 8px 4px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--c-text-tertiary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.inv-main-tab.active {
+  color: var(--c-text-primary);
+  border-bottom-color: var(--c-up);
+}
+
+.inv-panel {
+  flex-direction: column;
+}
+
+/* === Portfel paneli === */
+.pf-summary {
+  margin: 14px 18px 10px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 14px;
+  padding: 14px;
+}
+.pf-summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--c-text-secondary);
+  margin-bottom: 6px;
+}
+.pf-summary-row span:last-child {
+  font-family: var(--f-mono);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--c-text-primary);
+}
+.pf-pnl {
+  font-family: var(--f-mono);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.portfolio-list {
+  padding: 0 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.pf-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--c-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 4px 0 4px;
+}
+.pf-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 14px;
+  cursor: pointer;
+}
+.pf-row:active { background: var(--c-surface-raised); }
+
 .asset-list {
   padding: 0 18px 20px;
   display: flex;
@@ -460,7 +539,25 @@ body {
 }
 .btn-trade.buy  { background: var(--c-up); color: #06241A; }
 .btn-trade.sell { background: var(--c-surface-raised); color: var(--c-text-primary); border: 1px solid var(--c-border); }
+.btn-trade.lev   { background: var(--c-up-bg); color: var(--c-up); border: 1px solid var(--c-up); }
+.btn-trade.short { background: var(--c-down-bg); color: var(--c-down); border: 1px solid var(--c-down); }
 .btn-trade:active { transform: scale(0.97); }
+
+.detail-open-positions { padding: 0 18px 18px; }
+.detail-open-positions .section-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--c-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 10px;
+}
+.detail-pos-list {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 14px;
+  padding: 4px 14px;
+}
 
 .news-mini-section { padding: 0 18px 18px; }
 .news-mini-section .section-title {
@@ -516,6 +613,29 @@ body {
   width: 100%;
 }
 .tm-input-row .tm-unit { font-size: 12px; color: var(--c-text-tertiary); }
+
+.tm-leverage-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.lev-btn {
+  flex: 1;
+  padding: 9px 0;
+  border-radius: 10px;
+  border: 1px solid var(--c-border);
+  background: var(--c-screen-bg);
+  color: var(--c-text-secondary);
+  font-family: var(--f-mono);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.lev-btn.active {
+  background: var(--c-up-bg);
+  color: var(--c-up);
+  border-color: var(--c-up);
+}
 
 .tm-summary { display: flex; justify-content: space-between; font-size: 12px; color: var(--c-text-secondary); margin-bottom: 18px; }
 .tm-summary span:last-child { font-family: var(--f-mono); color: var(--c-text-primary); font-weight: 600; }
