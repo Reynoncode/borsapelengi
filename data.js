@@ -7748,7 +7748,6 @@ const PROPERTIES_LONDON = [
   depositMonths: 6,
   desc: "Qlobal səviyyəli ultra mega investisiya şəhər layihəsi"
 },
-   
 ];
 
 
