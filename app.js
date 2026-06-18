@@ -866,7 +866,7 @@ function renderREListings() {
 function renderREOwned() {
   const container = document.getElementById("re-owned-list");
   if (state.ownedProperties.length === 0) {
-    container.innerHTML = `<div style="text-align:center;padding:40px 16px;color:var(--c-text-secondary);font-size:13px;">Hələ əmlak almamısan.</div>`;
+    container.innerHTML = `<div class="re-empty">Hələ əmlak almamısan.</div>`;
     return;
   }
 
@@ -876,52 +876,77 @@ function renderREOwned() {
     const p = allProps.find(x => x.id === owned.propertyId);
     if (!p) return "";
 
+    const biz = BUSINESS_TYPES.find(b => b.id === owned.businessTypeId);
     const typeLabel = owned.ownershipType === "rent_out"
       ? "Kirayəyə verilir"
       : owned.ownershipType === "business"
-        ? BUSINESS_TYPES.find(b => b.id === owned.businessTypeId)?.name || "Biznes"
+        ? (biz?.name || "Biznes")
         : "Kirayədə yaşayır";
 
-    const incomeRange = owned.monthlyIncome
-      ? typeof owned.monthlyIncome === "object"
-        ? `${fmtMoney(owned.monthlyIncome.min)}–${fmtMoney(owned.monthlyIncome.max)}/ay`
-        : `${fmtMoney(owned.monthlyIncome)}/ay`
-      : "—";
+    // Gəlir göstərmə — həftəlik kimi
+    let incomeStr = "—";
+    if (owned.monthlyIncome) {
+      if (typeof owned.monthlyIncome === "object") {
+        incomeStr = `${fmtMoney(owned.monthlyIncome.min)}–${fmtMoney(owned.monthlyIncome.max)}/həftə`;
+      } else {
+        incomeStr = `${fmtMoney(owned.monthlyIncome)}/həftə`;
+      }
+    }
 
-    // Xərc/borc statusu (yalnız business/rent_out üçün)
+    // Satış qiyməti (85%)
+    const salePrice = Math.round(p.buyPrice * 0.85);
+
+    // Xərc/borc statusu
     let expenseHtml = "";
     if (owned.ownershipType === "business" || owned.ownershipType === "rent_out") {
       const exp = calcWeeklyExpense(owned, p);
-      const daysLeft = RE_EXPENSE_CONFIG.paymentCycleDays - (state.day - owned.lastPaymentDay);
-      const hasDebt = owned.debt > 0.01;
+      const daysSince = state.day - (owned.lastPaymentDay || state.day);
+      const daysLeft = RE_EXPENSE_CONFIG.paymentCycleDays - daysSince;
+      const hasDebt = (owned.debt || 0) > 0.01;
 
-      const statusLine = hasDebt
-        ? `<div class="re-oc-debt">⚠️ Borc: ${fmtMoney(owned.debt)} (${owned.unpaidCycles}/3 gecikmə)</div>`
-        : `<div class="re-oc-expense">Həftəlik xərc: ${fmtMoney(exp.total)} · ${daysLeft >= 0 ? daysLeft + " gün sonra" : "vaxtı keçib"}</div>`;
-
-      const activeToggle = `
-        <button class="re-oc-toggle ${owned.active ? "on" : "off"}" data-idx="${idx}">
-          ${owned.active ? "Aktivdir" : "Bağlıdır"}
-        </button>`;
-
-      expenseHtml = `${statusLine}<div class="re-oc-actions">${activeToggle}<button class="re-oc-change-biz" data-idx="${idx}">Biznesi dəyiş</button></div>`;
+      expenseHtml = hasDebt
+        ? `<div class="re-oc-debt">⚠️ Borc: ${fmtMoney(owned.debt)} · ${owned.unpaidCycles}/3 gecikmə</div>`
+        : `<div class="re-oc-expense">Həftəlik xərc: ${fmtMoney(exp.total)} · ${Math.max(daysLeft,0)} gün sonra</div>`;
     }
 
+    // Aktiv/bağlı düyməsi (yalnız business/rent_out)
+    const toggleHtml = (owned.ownershipType === "business" || owned.ownershipType === "rent_out")
+      ? `<button class="re-oc-toggle ${owned.active ? "on" : "off"}" data-idx="${idx}">
+           ${owned.active ? "Aktivdir" : "Bağlıdır"}
+         </button>`
+      : "";
+
+    // Biznes dəyiş (yalnız commercial + business)
+    const changeBizHtml = (owned.ownershipType === "business" && p.type === "commercial")
+      ? `<button class="re-oc-change-biz" data-idx="${idx}">Biznesi dəyiş</button>`
+      : "";
+
     return `
-      <div class="re-owned-card ${owned.debt > 0.01 ? "has-debt" : ""}">
-        <div class="re-oc-icon">${p.icon}</div>
-        <div class="re-oc-info">
-          <div class="re-oc-name">${p.name}</div>
-          <div class="re-oc-type">${typeLabel}</div>
-          <div class="re-oc-income" style="color:#1FD67A;">↑ ${incomeRange}</div>
-          ${expenseHtml}
+      <div class="re-owned-card ${(owned.debt||0) > 0.01 ? "has-debt" : ""}">
+        <div class="re-oc-top">
+          <div class="re-oc-icon-name">
+            <span class="re-oc-icon">${p.icon}</span>
+            <div>
+              <div class="re-oc-name">${p.name}</div>
+              <div class="re-oc-type">${typeLabel}</div>
+            </div>
+          </div>
+          <div class="re-oc-income-badge">↑ ${incomeStr}</div>
+        </div>
+        ${expenseHtml}
+        <div class="re-oc-footer">
+          <div class="re-oc-btns">
+            ${toggleHtml}
+            ${changeBizHtml}
+          </div>
+          <button class="re-oc-sell" data-idx="${idx}">Sat · ${fmtMoney(salePrice)}</button>
         </div>
       </div>`;
   }).join("");
 
-  // Aktiv/bağlı toggle
+  // Event dinləyicilər
   container.querySelectorAll(".re-oc-toggle").forEach(btn => {
-    btn.addEventListener("click", (e) => {
+    btn.addEventListener("click", e => {
       e.stopPropagation();
       const idx = parseInt(btn.dataset.idx);
       state.ownedProperties[idx].active = !state.ownedProperties[idx].active;
@@ -930,12 +955,24 @@ function renderREOwned() {
     });
   });
 
-  // Biznes dəyiş düyməsi
   container.querySelectorAll(".re-oc-change-biz").forEach(btn => {
-    btn.addEventListener("click", (e) => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      openChangeBusinessModal(parseInt(btn.dataset.idx));
+    });
+  });
+
+  container.querySelectorAll(".re-oc-sell").forEach(btn => {
+    btn.addEventListener("click", e => {
       e.stopPropagation();
       const idx = parseInt(btn.dataset.idx);
-      openChangeBusinessModal(idx);
+      const owned = state.ownedProperties[idx];
+      const allProps2 = Object.values(ALL_PROPERTIES).flat();
+      const pp = allProps2.find(x => x.id === owned.propertyId);
+      const salePrice = pp ? Math.round(pp.buyPrice * 0.85) : 0;
+      if (confirm(`${pp?.name || "Əmlak"} satmaq istəyirsən?\nAlacağın məbləğ: ${fmtMoney(salePrice)}`)) {
+        sellProperty(idx);
+      }
     });
   });
 }
@@ -973,17 +1010,17 @@ function openChangeBusinessModal(idx) {
     );
   }
   gridWrap.style.display = "grid";
-  gridWrap.innerHTML = BUSINESS_TYPES.map(biz => {
-    const incomeData = calcPropertyIncome(p, "business", biz.id);
-    const isCurrent = biz.id === owned.businessTypeId;
-    return `
-      <div class="re-biz-card ${isCurrent ? "selected" : ""}" data-biz="${biz.id}">
-        <div class="re-biz-icon">${biz.icon}</div>
-        <div class="re-biz-name">${biz.name}</div>
-        <div class="re-biz-income">${fmtMoney(incomeData.min)}–${fmtMoney(incomeData.max)}/həftə</div>
-        <div class="re-biz-setup">Quraşdırma: ${fmtMoney(biz.setupCost)}</div>
-      </div>`;
-  }).join("");
+   gridWrap.innerHTML = BUSINESS_TYPES.map(biz => {
+     const incomeData = calcPropertyIncome(p, "business", biz.id);
+     const isCurrent = biz.id === owned.businessTypeId;
+     return `
+       <div class="re-biz-card ${isCurrent ? "selected" : ""}" data-biz="${biz.id}">
+         <div class="re-biz-icon">${biz.icon}</div>
+         <div class="re-biz-name">${biz.name}</div>
+         <div class="re-biz-income">${fmtMoney(incomeData.min)}–${fmtMoney(incomeData.max)}/həftə</div>
+         <div class="re-biz-setup" style="color:#E8A33D;font-size:10px;">Quraşdırma: ${fmtMoney(biz.setupCost)}</div>
+       </div>`;
+   }).join("");
 
   gridWrap.querySelectorAll(".re-biz-card").forEach(card => {
     card.addEventListener("click", () => {
@@ -1116,7 +1153,29 @@ function openREModal(action, property) {
 function closeREModal() {
   document.getElementById("re-modal-overlay").classList.remove("active");
 }
+function sellProperty(ownedIdx) {
+  const owned = state.ownedProperties[ownedIdx];
+  if (!owned) return;
 
+  const allProps = Object.values(ALL_PROPERTIES).flat();
+  const p = allProps.find(x => x.id === owned.propertyId);
+  if (!p) return;
+
+  // Satış qiyməti: alış qiymətinin 85%-i (bazar komissiyası)
+  const salePrice = Math.round(p.buyPrice * 0.85);
+  const debtDeduction = owned.debt || 0;
+  const netReturn = Math.max(salePrice - debtDeduction, 0);
+
+  state.bankBalance += netReturn;
+  state.ownedProperties.splice(ownedIdx, 1);
+
+  addTransaction(`${p.name} satıldı`, netReturn, "in", "REALESTATE");
+  showToast(`🏷️ ${p.name} satıldı — ${fmtMoney(netReturn)}`);
+  saveState();
+  renderHome();
+  renderREOwned();
+  renderREListings();
+}
 function confirmREModal() {
   const allProps = Object.values(ALL_PROPERTIES).flat();
   const p = allProps.find(x => x.id === selectedPropertyId);
@@ -1219,14 +1278,15 @@ function calcWeeklyUtility(property, businessTypeId) {
 }
 
 function calcWeeklyNetIncomeEstimate(owned, property) {
-  // owned.monthlyIncome obyekt (min/max/avg) ya da rəqəm ola bilər
-  let monthlyAvg;
+  // monthlyIncome həftəlik kimi işlədilir — birbaşa istifadə et
+  let weeklyAvg;
   if (typeof owned.monthlyIncome === "object" && owned.monthlyIncome !== null) {
-    monthlyAvg = owned.monthlyIncome.avg ?? ((owned.monthlyIncome.min + owned.monthlyIncome.max) / 2);
+    weeklyAvg = owned.monthlyIncome.avg ??
+      ((owned.monthlyIncome.min + owned.monthlyIncome.max) / 2);
   } else {
-    monthlyAvg = owned.monthlyIncome || 0;
+    weeklyAvg = owned.monthlyIncome || 0;
   }
-  return (monthlyAvg / 30) * 7; // həftəlik ümumi gəlir təxmini
+  return weeklyAvg; // artıq həftəlik
 }
 
 function calcWeeklyExpense(owned, property) {
@@ -1304,20 +1364,22 @@ function processPropertyIncome() {
   let totalIncome = 0;
   state.ownedProperties.forEach(owned => {
     if (!owned.monthlyIncome) return;
+    if (owned.ownershipType === "rented") return; // kirayədə yaşayan xərc ödəyir, gəlir yox
 
-    // Aylıq gəliri 30 günə böl → gündəlik gəlir
-    let dailyIncome = 0;
+    // aylıq gəliri HƏFTƏLİK kimi qəbul et, sonra günə böl
+    let weeklyIncome = 0;
     if (typeof owned.monthlyIncome === "object") {
-      // min-max aralığında təsadüfi
-      const monthly = owned.monthlyIncome.min + Math.random() * (owned.monthlyIncome.max - owned.monthlyIncome.min);
-      dailyIncome = monthly / 30;
+      const avg = owned.monthlyIncome.avg ??
+        ((owned.monthlyIncome.min + owned.monthlyIncome.max) / 2);
+      weeklyIncome = avg; // aylıq yazılıb amma həftəlik kimi işlət
     } else {
-      dailyIncome = owned.monthlyIncome / 30;
+      weeklyIncome = owned.monthlyIncome;
     }
+    const dailyIncome = weeklyIncome / 7;
     totalIncome += dailyIncome;
   });
 
-  if (totalIncome > 0) {
+  if (totalIncome > 0.01) {
     state.bankBalance += totalIncome;
     addTransaction("Əmlak gəliri", totalIncome, "in", "REALESTATE");
   }
