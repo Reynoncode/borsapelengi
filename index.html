@@ -166,30 +166,136 @@
       </div>
     </div>
 
-    <!-- ============================================================
-         BMB (BANK) APP
-    ============================================================= -->
-    <div class="screen-view" id="screen-bmb">
-      <div class="app-header">
-        <div class="btn-back" data-back="home">←</div>
-        <div class="app-title">BMB<small>Bank Maliyyə Bankı</small></div>
+   <div class="screen-view" id="screen-bmb">
+  <div class="app-header">
+    <div class="btn-back" data-back="home">←</div>
+    <div class="app-title">WALLET<small>Kartlar və Balanslar</small></div>
+  </div>
+  <div class="app-body" style="padding:0;">
+
+    <!-- INVESTED xülasəsi (yuxarı sabit bant) -->
+    <div class="wallet-invested-bar" id="wallet-invested-bar">
+      <div class="wib-label">INVESTED Balansı</div>
+      <div class="wib-value" id="wallet-inv-balance">$0.00</div>
+      <div class="wib-sub" id="wallet-inv-portfolio">Portfel: $0.00</div>
+    </div>
+
+    <!-- Kart carousel (üfüqi sürüşdürmə) -->
+    <div class="wallet-carousel-wrap">
+      <div class="wallet-cards-carousel" id="wallet-cards-carousel">
+        <!-- JS tərəfindən renderCard() ilə doldurulur -->
       </div>
-      <div class="app-body">
-        <div class="bank-balance-card">
-          <div class="bb-label">Bank Balansı</div>
-          <div class="bb-value" id="bank-balance">$0.00</div>
-          <div class="bb-sub">Hesap №: AZ00 BMB0 0000 0001</div>
-        </div>
-        <div class="bank-actions">
-          <button class="btn-bank-action" id="btn-transfer-to-invested">BMB → INVESTED</button>
-          <button class="btn-bank-action" id="btn-transfer-to-bank">INVESTED → BMB</button>
-        </div>
-        <div class="tx-section">
-          <div class="section-title" style="padding:0 0 10px; font-size:12px; font-weight:700; color:var(--c-text-secondary); text-transform:uppercase; letter-spacing:0.05em;">Tranzaksiya Tarixçəsi</div>
-          <div id="tx-list"></div>
-        </div>
+      <!-- Yeni kart əlavə et düyməsi -->
+      <div class="wallet-add-card" id="btn-add-card">
+        <span>＋ Yeni kart</span>
       </div>
     </div>
+
+    <!-- Kart nöqtə indikatoru -->
+    <div class="wallet-dots" id="wallet-dots"></div>
+
+    <!-- Seçili kart detalları -->
+    <div class="wallet-card-detail" id="wallet-card-detail">
+      <div class="wcd-row">
+        <span class="wcd-label">Həftəlik limit</span>
+        <span class="wcd-value" id="wcd-limit">—</span>
+      </div>
+      <div class="wcd-row">
+        <span class="wcd-label">Bu həftə köçürüldü</span>
+        <span class="wcd-value" id="wcd-used">—</span>
+      </div>
+      <div class="wcd-row">
+        <span class="wcd-label">Limit aşım komisyası</span>
+        <span class="wcd-value" id="wcd-fee">—</span>
+      </div>
+      <div class="wcd-row">
+        <span class="wcd-label">Həftəlik faiz</span>
+        <span class="wcd-value" id="wcd-interest">—</span>
+      </div>
+      <div class="wcd-row" id="wcd-vault-row" style="display:none;">
+        <span class="wcd-label">Xəzinə</span>
+        <span class="wcd-value" id="wcd-vault">—</span>
+      </div>
+    </div>
+
+    <!-- Əməliyyat düymələri -->
+    <div class="wallet-actions">
+      <button class="btn-wallet-action" id="btn-wallet-transfer">↕ Transfer</button>
+      <button class="btn-wallet-action" id="btn-wallet-vault">🔒 Xəzinə</button>
+      <button class="btn-wallet-action" id="btn-wallet-set-primary">⭐ Əsas et</button>
+    </div>
+
+    <!-- Tranzaksiya tarixçəsi -->
+    <div class="tx-section" style="padding:0 16px;">
+      <div class="section-title" style="padding:12px 0 10px;font-size:12px;font-weight:700;color:var(--c-text-secondary);text-transform:uppercase;letter-spacing:0.05em;">Tranzaksiya Tarixçəsi</div>
+      <div id="tx-list"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- WALLET — Transfer Modal -->
+<div class="modal-overlay" id="wallet-transfer-overlay">
+  <div class="trade-modal">
+    <div class="tm-title">Transfer</div>
+    <div class="wallet-transfer-selectors">
+      <div class="wts-label">Mənbə</div>
+      <select id="wt-from-select" class="wallet-select"></select>
+      <div class="wts-arrow">↓</div>
+      <div class="wts-label">Təyinat</div>
+      <select id="wt-to-select" class="wallet-select"></select>
+    </div>
+    <div class="tm-input-row">
+      <span class="tm-unit">$</span>
+      <input type="number" id="wt-amount-input" placeholder="0.00" min="0" step="any">
+    </div>
+    <div class="wt-fee-preview" id="wt-fee-preview" style="font-size:12px;color:var(--c-text-secondary);padding:6px 0;">Komisya: $0.00</div>
+    <div class="tm-error" id="wt-error" style="display:none;">Kifayət qədər balans yoxdur</div>
+    <div class="tm-actions">
+      <button class="btn-modal-cancel" id="btn-wt-cancel">İmtina</button>
+      <button class="btn-modal-confirm buy" id="btn-wt-confirm">Köçür</button>
+    </div>
+  </div>
+</div>
+
+<!-- WALLET — Xəzinə Modal -->
+<div class="modal-overlay" id="wallet-vault-overlay">
+  <div class="trade-modal">
+    <div class="tm-title">🔒 Xəzinəyə Qoy</div>
+    <div class="tm-sub" id="vault-modal-sub">Pulu müddətli depozitə qoy</div>
+    <div class="tm-input-row">
+      <span class="tm-unit">$</span>
+      <input type="number" id="vault-amount-input" placeholder="0.00" min="0" step="any">
+    </div>
+    <div class="vault-duration-row">
+      <button class="vault-dur-btn active" data-days="7">7 gün</button>
+      <button class="vault-dur-btn" data-days="14">14 gün</button>
+      <button class="vault-dur-btn" data-days="28">28 gün</button>
+    </div>
+    <div class="vault-preview" id="vault-preview">
+      <!-- faiz hesablaması burda görünür -->
+    </div>
+    <div class="tm-error" id="vault-error" style="display:none;">Kifayət qədər balans yoxdur</div>
+    <div class="tm-actions">
+      <button class="btn-modal-cancel" id="btn-vault-cancel">İmtina</button>
+      <button class="btn-modal-confirm buy" id="btn-vault-confirm">Qoy</button>
+    </div>
+  </div>
+</div>
+
+<!-- WALLET — Kart əlavə et Modal -->
+<div class="modal-overlay" id="wallet-addcard-overlay">
+  <div class="trade-modal" style="max-height:80vh;overflow-y:auto;">
+    <div class="tm-title">Yeni Kart</div>
+    <div class="addcard-list" id="addcard-list">
+      <!-- JS tərəfindən doldurulur -->
+    </div>
+    <div class="tm-actions">
+      <button class="btn-modal-cancel" id="btn-addcard-cancel">İmtina</button>
+      <button class="btn-modal-confirm buy" id="btn-addcard-confirm">Əlavə et</button>
+    </div>
+  </div>
+</div>
 
     <!-- ============================================================
          NEWS APP
@@ -420,7 +526,7 @@
       </div>
     </div>
 
-    <!-- ============================================================
+<!-- ============================================================
          CLOSE POSITION MODAL (Mövqə bağlama)
     ============================================================= -->
     <div class="modal-overlay" id="close-pos-overlay">
@@ -434,31 +540,70 @@
       </div>
     </div>
 
-    <!-- ============================================================
-         TRANSFER MODAL (BMB ↔ INVESTED)
-    ============================================================= -->
-    <div class="modal-overlay" id="transfer-modal-overlay">
+    <!-- WALLET — Transfer Modal -->
+    <div class="modal-overlay" id="wallet-transfer-overlay">
       <div class="trade-modal">
-        <div class="tm-title" id="transfer-title">Transfer</div>
-        <div class="tm-sub" id="transfer-sub">Məbləği daxil et</div>
+        <div class="tm-title">Transfer</div>
+        <div class="wallet-transfer-selectors">
+          <div class="wts-label">Mənbə</div>
+          <select id="wt-from-select" class="wallet-select"></select>
+          <div class="wts-arrow">↓</div>
+          <div class="wts-label">Təyinat</div>
+          <select id="wt-to-select" class="wallet-select"></select>
+        </div>
         <div class="tm-input-row">
           <span class="tm-unit">$</span>
-          <input type="number" id="transfer-amount-input" placeholder="0.00" min="0" step="any">
+          <input type="number" id="wt-amount-input" placeholder="0.00" min="0" step="any">
         </div>
-        <div class="tm-error" id="transfer-error">Kifayət qədər balans yoxdur</div>
+        <div class="wt-fee-preview" id="wt-fee-preview" style="font-size:12px;color:var(--c-text-secondary);padding:6px 0;">Komisya: $0.00</div>
+        <div class="tm-error" id="wt-error" style="display:none;">Kifayət qədər balans yoxdur</div>
         <div class="tm-actions">
-          <button class="btn-modal-cancel" id="btn-transfer-cancel">İmtina</button>
-          <button class="btn-modal-confirm buy" id="btn-transfer-confirm">Köçür</button>
+          <button class="btn-modal-cancel" id="btn-wt-cancel">İmtina</button>
+          <button class="btn-modal-confirm buy" id="btn-wt-confirm">Köçür</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- WALLET — Xəzinə Modal -->
+    <div class="modal-overlay" id="wallet-vault-overlay">
+      <div class="trade-modal">
+        <div class="tm-title">🔒 Xəzinəyə Qoy</div>
+        <div class="tm-sub" id="vault-modal-sub">Pulu müddətli depozitə qoy</div>
+        <div class="tm-input-row">
+          <span class="tm-unit">$</span>
+          <input type="number" id="vault-amount-input" placeholder="0.00" min="0" step="any">
+        </div>
+        <div class="vault-duration-row">
+          <button class="vault-dur-btn active" data-days="7">7 gün</button>
+          <button class="vault-dur-btn" data-days="14">14 gün</button>
+          <button class="vault-dur-btn" data-days="28">28 gün</button>
+        </div>
+        <div class="vault-preview" id="vault-preview"></div>
+        <div class="tm-error" id="vault-error" style="display:none;">Kifayət qədər balans yoxdur</div>
+        <div class="tm-actions">
+          <button class="btn-modal-cancel" id="btn-vault-cancel">İmtina</button>
+          <button class="btn-modal-confirm buy" id="btn-vault-confirm">Qoy</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- WALLET — Kart əlavə et Modal -->
+    <div class="modal-overlay" id="wallet-addcard-overlay">
+      <div class="trade-modal" style="max-height:80vh;overflow-y:auto;">
+        <div class="tm-title">Yeni Kart</div>
+        <div class="addcard-list" id="addcard-list"></div>
+        <div class="tm-actions">
+          <button class="btn-modal-cancel" id="btn-addcard-cancel">İmtina</button>
+          <button class="btn-modal-confirm buy" id="btn-addcard-confirm">Əlavə et</button>
         </div>
       </div>
     </div>
 
     <!-- ============ TOAST ============ -->
     <div class="toast" id="toast"></div>
-
   </div>
 </div>
-
+<script src="banks-config.js"></script>
 <script src="data.js"></script>
 <script src="engine.js"></script>
 <script src="app.js"></script>
