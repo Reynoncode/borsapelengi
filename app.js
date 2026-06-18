@@ -1,40 +1,18 @@
 /* ============================================================
-   APP.JS — Borsa Simulyasiyası v2 + Travel & RealEstate
-   Yeniliklər:
-   - Portfolio tab: açıq mövqelər (long + short + leveraged)
-   - Short (Sell In): aktivsiz satış mövqesi aç, sonra bağla
-   - Leverage: 1x, 2x, 5x, 10x seçimi
-   - Xəbər: gündə tam 10 aktiv, qalanı dalğalanma
-   - Travel: şəhər dəyişmə
-   - RealEstate: əmlak al / kirayə ver / biznes aç, passiv gəlir
+   APP.JS — Borsa Simulyasiyası v2 + Travel & RealEstate + Wallet
    ============================================================ */
 
 const STORAGE_KEY = "borsa_sim_state_v2";
 const STARTING_BALANCE = 10000;
 const LEVERAGE_OPTIONS = [1, 2, 5, 10];
 
-/* ──────────────────────────────────────────────────────────
-   STATE
-   holdings: { assetId: qty }          — long mövqelər (spot)
-   positions: [ Position ]             — leverage/short mövqelər
-   Position: {
-     id, assetId, type: 'long'|'short',
-     leverage, qty, entryPrice, margin,
-     openDay, ticker, name
-   }
-   currentCity: string                 — hazırkı şəhər id-si
-   ownedProperties: [ OwnedProperty ]
-   OwnedProperty: {
-     propertyId, ownershipType: 'rent_out'|'business'|'rented',
-     businessTypeId, monthlyIncome, rentMonthly, depositPaid
-   }
-────────────────────────────────────────────────────────── */
 let state = {
   day: 1,
-  bankBalance: STARTING_BALANCE,
+  cards: [],
+  primaryCardId: null,
   investedBalance: 0,
-  holdings: {},       // spot long-lar
-  positions: [],      // leveraged / short mövqelər
+  holdings: {},
+  positions: [],
   priceHistory: {},
   newsFeed: [],
   transactions: [],
@@ -45,19 +23,23 @@ let state = {
 };
 
 // UI state
-let activeFilter    = "all";
-let activeInvTab    = "market";   // 'market' | 'portfolio'
+let activeFilter         = "all";
+let activeInvTab         = "market";
 let currentDetailAssetId = null;
-let pendingTradeType = null;      // 'buy_long'|'buy_short'|'sell_long'|'close_pos'
-let pendingLeverage = 1;
-let pendingPositionId = null;
+let pendingTradeType     = null;
+let pendingLeverage      = 1;
+let pendingPositionId    = null;
 
 // Travel/RealEstate UI state
-let selectedCityId = null;
-let reActiveFilter = "all";
-let reActiveTab = "listings";
+let selectedCityId     = null;
+let reActiveFilter     = "all";
+let reActiveTab        = "listings";
 let selectedPropertyId = null;
-let reModalAction = null; // "buy" | "rent" | "rent_out_business"
+let reModalAction      = null;
+
+// Wallet UI state
+let walletActiveCardIndex = 0;
+let vaultSelectedDays     = 7;
 
 /* ──────────────────────────────────────────────────────────
    SAXLAMA
@@ -76,23 +58,126 @@ function loadState() {
 
 function initFreshState() {
   state.day = 1;
-  state.bankBalance = STARTING_BALANCE;
-  state.investedBalance = 0;
-  state.holdings   = {};
-  state.positions  = [];
-  state.priceHistory = {};
-  state.newsFeed   = [];
-  state.transactions = [];
-  state.unseenNewsCount = 0;
-  state.currentCity = "baku";
-  state.ownedProperties = [];
+  state.cards = [{
+    id: "kapitan_standard_" + Date.now(),
+    bankId: "kapitan",
+    tier: "standard",
+    balance: STARTING_BALANCE,
+    vault: null,
+    weeklyTransferUsed: 0,
+    lastWeekNumber: 0,
+    subscriptionPaidUntilWeek: null
+  }];
+  state.primaryCardId    = state.cards[0].id;
+  state.investedBalance  = 0;
+  state.holdings         = {};
+  state.positions        = [];
+  state.priceHistory     = {};
+  state.newsFeed         = [];
+  state.transactions     = [];
+  state.unseenNewsCount  = 0;
+  state.currentCity      = "baku";
+  state.ownedProperties  = [];
   ASSETS.forEach(a => {
-    state.holdings[a.id]  = 0;
+    state.holdings[a.id]     = 0;
     state.priceHistory[a.id] = [a.basePrice];
   });
   Engine.init(null);
   state.engineState = Engine.getState();
-  addTransaction("Hesab açıldı", STARTING_BALANCE, "in", "BMB");
+  addTransaction("Hesab açıldı", STARTING_BALANCE, "in", "WALLET");
+}
+
+/* ──────────────────────────────────────────────────────────
+   WALLET — KÖMƏKÇİ FUNKSIYALAR
+────────────────────────────────────────────────────────── */
+function getPrimaryCard() {
+  return state.cards.find(c => c.id === state.primaryCardId) || state.cards[0];
+}
+
+function getPrimaryBalance() {
+  return getPrimaryCard()?.balance || 0;
+}
+
+function getWeekNumber(day) {
+  return Math.floor((day - 1) / 7);
+}
+
+function resetWeeklyLimitsIfNeeded() {
+  const currentWeek = getWeekNumber(state.day);
+  state.cards.forEach(card => {
+    if (card.lastWeekNumber < currentWeek) {
+      card.weeklyTransferUsed = 0;
+      card.lastWeekNumber = currentWeek;
+    }
+  });
+}
+
+function calcTransferFee(card, amount) {
+  const bank = BANKS.find(b => b.id === card.bankId);
+  const cfg  = bank.cards[card.tier];
+  const limit = cfg.weeklyFreeLimit;
+  if (limit === null) return 0;
+  if (card.balance >= (cfg.feeWaiveMinBalance || Infinity)) return 0;
+  const used = card.weeklyTransferUsed || 0;
+  if (used >= limit) return amount * cfg.overLimitFeeRate;
+  const freeRemaining = limit - used;
+  const overAmount = Math.max(amount - freeRemaining, 0);
+  return overAmount * cfg.overLimitFeeRate;
+}
+
+function calcVaultInterest(card) {
+  if (!card.vault) return 0;
+  const bank = BANKS.find(b => b.id === card.bankId);
+  const cfg  = bank.cards[card.tier];
+  const ratio = card.vault.totalDays / 28;
+  return card.vault.amount * cfg.vaultMonthlyRate * ratio;
+}
+
+function getAvailableBanks() {
+  const currentCountry = CITY_TO_COUNTRY[state.currentCity] || "azerbaijan";
+  return BANKS.filter(b => b.countryId === "azerbaijan" || b.countryId === currentCountry);
+}
+
+/* ──────────────────────────────────────────────────────────
+   WALLET — HƏFTƏLIK / GÜNDƏLIK PROSESLƏR
+────────────────────────────────────────────────────────── */
+function processWeeklyCardEvents(weekNum) {
+  state.cards.forEach(card => {
+    const bank = BANKS.find(b => b.id === card.bankId);
+    const cfg  = bank.cards[card.tier];
+
+    const interest = card.balance * cfg.weeklyInterestRate;
+    if (interest > 0.001) {
+      card.balance += interest;
+      addTransaction(`${cfg.name} — həftəlik faiz`, interest, "in", "WALLET");
+    }
+
+    if (cfg.subscriptionFee > 0) {
+      if (card.balance >= cfg.subscriptionFee) {
+        card.balance -= cfg.subscriptionFee;
+        addTransaction(`${cfg.name} — abunəlik`, cfg.subscriptionFee, "out", "WALLET");
+      } else {
+        showToast(`⚠️ ${cfg.name}: abunə ödənişi alınmadı!`);
+      }
+    }
+  });
+}
+
+function processVaultMaturity() {
+  state.cards.forEach(card => {
+    if (!card.vault) return;
+    card.vault.lockDays--;
+    if (card.vault.lockDays <= 0) {
+      const bank  = BANKS.find(b => b.id === card.bankId);
+      const cfg   = bank.cards[card.tier];
+      const ratio = card.vault.totalDays / 28;
+      const finalInterest = card.vault.amount * cfg.vaultMonthlyRate * ratio;
+      card.balance += card.vault.amount + finalInterest;
+      addTransaction(`${cfg.name} Xəzinə — müddət bitdi`, card.vault.amount + finalInterest, "in", "WALLET");
+      showToast(`🏦 Xəzinə açıldı! +${fmtMoney(finalInterest)} faiz`);
+      card.vault = null;
+    }
+  });
 }
 
 /* ──────────────────────────────────────────────────────────
@@ -104,10 +189,10 @@ function fmtMoney(val) {
 }
 function fmtPrice(val) {
   if (val < 0.01) return "$" + val.toFixed(6);
-  if (val < 1)   return "$" + val.toFixed(4);
+  if (val < 1)    return "$" + val.toFixed(4);
   return "$" + val.toLocaleString("en-US", { minimumFractionDigits:2, maximumFractionDigits:2 });
 }
-function getAsset(id)   { return ASSETS.find(a => a.id === id); }
+function getAsset(id)     { return ASSETS.find(a => a.id === id); }
 function getLastPrice(id) { const h = state.priceHistory[id]; return h[h.length-1]; }
 function getAssetInitials(name) { return name.split(" ").slice(0,2).map(w=>w[0]).join("").toUpperCase().slice(0,2); }
 function sectorColor(sector) { return (SECTORS[sector] && SECTORS[sector].color) || "#8B94A3"; }
@@ -125,14 +210,12 @@ function calcPositionsPnl() {
 
 function calcPosPnl(pos) {
   const cur = getLastPrice(pos.assetId);
-  const priceDiff = pos.type === 'long'
-    ? cur - pos.entryPrice
-    : pos.entryPrice - cur;
+  const priceDiff = pos.type === 'long' ? cur - pos.entryPrice : pos.entryPrice - cur;
   return priceDiff * pos.qty * pos.leverage;
 }
 
 function calcNetWorth() {
-  return state.bankBalance + state.investedBalance
+  return getPrimaryBalance() + state.investedBalance
     + calcSpotPortfolioValue() + calcPositionsPnl();
 }
 
@@ -170,7 +253,7 @@ function navigateTo(screenId) {
    RENDER: HOME
 ────────────────────────────────────────────────────────── */
 function renderHome() {
-  const nw = calcNetWorth();
+  const nw  = calcNetWorth();
   const pct = ((nw - STARTING_BALANCE) / STARTING_BALANCE) * 100;
   document.getElementById("status-day-label").textContent = "GÜN " + state.day;
   document.getElementById("home-net-worth").textContent = fmtMoney(nw);
@@ -189,7 +272,7 @@ function renderHome() {
 ────────────────────────────────────────────────────────── */
 function renderAssetList() {
   const container = document.getElementById("asset-list");
-  const filtered = activeFilter==="all" ? ASSETS : ASSETS.filter(a=>a.type===activeFilter);
+  const filtered  = activeFilter==="all" ? ASSETS : ASSETS.filter(a=>a.type===activeFilter);
   document.getElementById("inv-balance").textContent = fmtMoney(state.investedBalance);
   document.getElementById("inv-portfolio-value").textContent = fmtMoney(calcSpotPortfolioValue() + calcPositionsPnl());
 
@@ -200,8 +283,7 @@ function renderAssetList() {
     const sign   = change>=0?"+":"";
     const color  = sectorColor(asset.sector);
     const initials = getAssetInitials(asset.name);
-    // Sahib olduğun göstərici
-    const qty = state.holdings[asset.id] || 0;
+    const qty    = state.holdings[asset.id] || 0;
     const hasPos = state.positions.some(p=>p.assetId===asset.id);
     const indicator = qty > 0 || hasPos
       ? `<div style="width:6px;height:6px;border-radius:50%;background:var(--c-up);margin-top:3px;"></div>` : "";
@@ -226,25 +308,23 @@ function renderAssetList() {
 
 /* ──────────────────────────────────────────────────────────
    RENDER: PORTFOLIO TAB
-   Spot long-lar + açıq mövqelər (leveraged/short)
 ────────────────────────────────────────────────────────── */
 function renderPortfolio() {
   const container = document.getElementById("portfolio-list");
   let html = "";
 
-  // ── SPOT LONG-LAR ──
   const spotHoldings = ASSETS.filter(a => (state.holdings[a.id]||0) > 0);
   if (spotHoldings.length > 0) {
     html += `<div class="pf-section-title">📦 Spot Mövqelər</div>`;
     spotHoldings.forEach(asset => {
-      const qty   = state.holdings[asset.id];
-      const price = getLastPrice(asset.id);
-      const val   = qty * price;
-      const color = sectorColor(asset.sector);
+      const qty    = state.holdings[asset.id];
+      const price  = getLastPrice(asset.id);
+      const val    = qty * price;
+      const color  = sectorColor(asset.sector);
       const initials = getAssetInitials(asset.name);
       const change = Engine.getDailyChangePercent(state.priceHistory[asset.id]);
-      const cls  = change>=0?"up":"down";
-      const sign = change>=0?"+":"";
+      const cls    = change>=0?"up":"down";
+      const sign   = change>=0?"+":"";
       html += `
         <div class="pf-row" data-asset-id="${asset.id}" data-action="spot">
           <div class="asset-icon" style="background:${color}33;color:${color};width:36px;height:36px;font-size:11px;border-radius:10px;">${initials}</div>
@@ -260,18 +340,16 @@ function renderPortfolio() {
     });
   }
 
-  // ── LEVERAGED / SHORT MÖVQƏLƏRİ ──
   const openPos = state.positions;
   if (openPos.length > 0) {
     html += `<div class="pf-section-title" style="margin-top:14px;">⚡ Açıq Mövqelər</div>`;
     openPos.forEach(pos => {
-      const asset = getAsset(pos.assetId);
-      const cur   = getLastPrice(pos.assetId);
-      const pnl   = calcPosPnl(pos);
+      const asset  = getAsset(pos.assetId);
+      const pnl    = calcPosPnl(pos);
       const pnlPct = (pnl / pos.margin) * 100;
       const pnlCls = pnl>=0?"up":"down";
-      const pnlSign = pnl>=0?"+":"";
-      const color = sectorColor(asset.sector);
+      const pnlSign= pnl>=0?"+":"";
+      const color  = sectorColor(asset.sector);
       const initials = getAssetInitials(asset.name);
       const typeLabel = pos.type==="long"
         ? `<span style="color:var(--c-up);font-size:10px;font-weight:700;">LONG ${pos.leverage}x</span>`
@@ -297,16 +375,13 @@ function renderPortfolio() {
 
   container.innerHTML = html;
 
-  // Spot row click → aktiv detalına get
   container.querySelectorAll(".pf-row[data-asset-id]").forEach(row=>{
     row.addEventListener("click", ()=>openAssetDetail(row.dataset.assetId));
   });
-  // Pos row click → mövqəni bağla modal
   container.querySelectorAll(".pf-pos-row[data-pos-id]").forEach(row=>{
     row.addEventListener("click", ()=>openClosePosModal(row.dataset.posId));
   });
 
-  // Portfolio xülasəsi
   const totalPnl = calcPositionsPnl();
   const spotVal  = calcSpotPortfolioValue();
   document.getElementById("pf-total-value").textContent = fmtMoney(spotVal + totalPnl + state.investedBalance);
@@ -316,13 +391,13 @@ function renderPortfolio() {
 }
 
 /* ──────────────────────────────────────────────────────────
-   INVESTED TABS: Market / Portfolio
+   INVESTED TABS
 ────────────────────────────────────────────────────────── */
 function switchInvTab(tab) {
   activeInvTab = tab;
   document.querySelectorAll(".inv-main-tab").forEach(t=>t.classList.remove("active"));
   document.querySelector(`.inv-main-tab[data-main-tab="${tab}"]`).classList.add("active");
-  document.getElementById("inv-market-panel").style.display  = tab==="market"    ? "flex" : "none";
+  document.getElementById("inv-market-panel").style.display    = tab==="market"    ? "flex" : "none";
   document.getElementById("inv-portfolio-panel").style.display = tab==="portfolio" ? "flex" : "none";
   if (tab==="portfolio") renderPortfolio();
   if (tab==="market")    renderAssetList();
@@ -358,15 +433,14 @@ function renderAssetDetail() {
   document.getElementById("detail-holding-value").textContent = fmtMoney(qty*price);
   document.getElementById("detail-trade-balance").textContent = fmtMoney(state.investedBalance);
 
-  // Açıq mövqelər bölməsi (detail-də)
   const posContainer = document.getElementById("detail-open-positions");
   if (openPos.length > 0) {
     posContainer.style.display = "block";
     posContainer.querySelector(".detail-pos-list").innerHTML = openPos.map(pos=>{
-      const pnl = calcPosPnl(pos);
+      const pnl    = calcPosPnl(pos);
       const pnlCls = pnl>=0?"up":"down";
-      const pnlSign = pnl>=0?"+":"";
-      const lbl = pos.type==="long"
+      const pnlSign= pnl>=0?"+":"";
+      const lbl    = pos.type==="long"
         ? `<span style="color:var(--c-up)">LONG ${pos.leverage}x</span>`
         : `<span style="color:var(--c-down)">SHORT ${pos.leverage}x</span>`;
       return `
@@ -396,7 +470,7 @@ function renderAssetDetail() {
 }
 
 function renderMiniChart(assetId) {
-  const history = state.priceHistory[assetId].slice(-30);
+  const history   = state.priceHistory[assetId].slice(-30);
   const container = document.getElementById("detail-chart");
   if (history.length < 2) { container.innerHTML=""; return; }
   const w=354, h=140, pad=8;
@@ -406,8 +480,8 @@ function renderMiniChart(assetId) {
     return [ pad+(i/(history.length-1))*(w-pad*2),
              h-pad-((p-min)/range)*(h-pad*2) ];
   });
-  const isUp = history[history.length-1] >= history[0];
-  const lc   = isUp ? "#1FD67A" : "#FF4C5E";
+  const isUp  = history[history.length-1] >= history[0];
+  const lc    = isUp ? "#1FD67A" : "#FF4C5E";
   const pathD = points.map((p,i)=>(i===0?"M":"L")+p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ");
   const areaD = pathD+` L${points[points.length-1][0].toFixed(1)},${h-pad} L${points[0][0].toFixed(1)},${h-pad} Z`;
   container.innerHTML=`
@@ -429,8 +503,7 @@ function renderAssetNewsHistory(assetId) {
 }
 
 /* ──────────────────────────────────────────────────────────
-   TRADE MODAL — Al / Spot Sat / Short Aç
-   type: 'buy_long' | 'sell_long' | 'open_short' | 'open_long_lev'
+   TRADE MODAL
 ────────────────────────────────────────────────────────── */
 function openTradeModal(type) {
   pendingTradeType = type;
@@ -438,7 +511,6 @@ function openTradeModal(type) {
   const asset = getAsset(currentDetailAssetId);
   const modal = document.getElementById("trade-modal-overlay");
 
-  // Başlıq və alt başlıq
   const titles = {
     buy_long:      `Al — ${asset.name}`,
     sell_long:     `Sat — ${asset.name}`,
@@ -459,7 +531,6 @@ function openTradeModal(type) {
   document.getElementById("tm-total").textContent = "$0.00";
   document.getElementById("tm-error").classList.remove("active");
 
-  // Leverage sıraları
   const levRow = document.getElementById("tm-leverage-row");
   const isLev  = type === "open_short" || type === "open_long_lev";
   levRow.style.display = isLev ? "flex" : "none";
@@ -473,7 +544,7 @@ function openTradeModal(type) {
   const confirmBtn = document.getElementById("btn-modal-confirm");
   confirmBtn.className = "btn-modal-confirm " + (type==="sell_long"||type==="open_short" ? "sell" : "buy");
   confirmBtn.textContent = type==="sell_long" ? "Sat"
-    : type==="open_short" ? "Short Aç"
+    : type==="open_short"    ? "Short Aç"
     : type==="open_long_lev" ? "Long Aç"
     : "Al";
 
@@ -490,15 +561,14 @@ function updateTradeTotal() {
   const price = getLastPrice(asset.id);
   const isLev = pendingTradeType==="open_short" || pendingTradeType==="open_long_lev";
   const cost  = isLev ? (qty * price / pendingLeverage) : (qty * price);
-  const lbl   = isLev ? `Margin: ${fmtMoney(cost)}` : `Cəmi: ${fmtMoney(cost)}`;
   document.getElementById("tm-total-label").textContent = isLev ? "Margin tələbi" : "Cəmi məbləğ";
   document.getElementById("tm-total").textContent = fmtMoney(cost);
 }
 
 function confirmTrade() {
-  const asset = getAsset(currentDetailAssetId);
-  const qty   = parseFloat(document.getElementById("tm-quantity-input").value) || 0;
-  const price = getLastPrice(asset.id);
+  const asset   = getAsset(currentDetailAssetId);
+  const qty     = parseFloat(document.getElementById("tm-quantity-input").value) || 0;
+  const price   = getLastPrice(asset.id);
   const errorEl = document.getElementById("tm-error");
 
   if (qty <= 0) { errorEl.textContent="Düzgün miqdar daxil et"; errorEl.classList.add("active"); return; }
@@ -525,7 +595,7 @@ function confirmTrade() {
     if (margin > state.investedBalance) { errorEl.textContent="Margin üçün balans kifayət etmir"; errorEl.classList.add("active"); return; }
     state.investedBalance -= margin;
     const posType = pendingTradeType === "open_short" ? "short" : "long";
-    const newPos = {
+    state.positions.push({
       id: Date.now() + "_" + Math.random(),
       assetId: asset.id,
       type: posType,
@@ -534,8 +604,7 @@ function confirmTrade() {
       openDay: state.day,
       ticker: asset.ticker,
       name: asset.name
-    };
-    state.positions.push(newPos);
+    });
     addTransaction(`${posType.toUpperCase()} ${pendingLeverage}x: ${asset.ticker}`, margin, "out", "INVESTED");
     showToast(`${posType.toUpperCase()} ${pendingLeverage}x açıldı — margin: ${fmtMoney(margin)}`);
   }
@@ -551,11 +620,11 @@ function confirmTrade() {
 ────────────────────────────────────────────────────────── */
 function openClosePosModal(posId) {
   pendingPositionId = posId;
-  const pos   = state.positions.find(p=>p.id===posId);
+  const pos = state.positions.find(p=>p.id===posId);
   if (!pos) return;
-  const pnl   = calcPosPnl(pos);
+  const pnl    = calcPosPnl(pos);
   const pnlCls = pnl>=0?"up":"down";
-  const pnlSign = pnl>=0?"+":"";
+  const pnlSign= pnl>=0?"+":"";
 
   document.getElementById("close-pos-title").textContent =
     `${pos.type==="long"?"LONG":"SHORT"} ${pos.leverage}x — ${pos.name}`;
@@ -577,9 +646,9 @@ function closeClosePosModal() {
 function confirmClosePos() {
   const pos = state.positions.find(p=>p.id===pendingPositionId);
   if (!pos) { closeClosePosModal(); return; }
-  const pnl = calcPosPnl(pos);
+  const pnl      = calcPosPnl(pos);
   const returned = pos.margin + pnl;
-  state.investedBalance += Math.max(returned, 0); // margin yandısa sıfır qayıdır
+  state.investedBalance += Math.max(returned, 0);
   state.positions = state.positions.filter(p=>p.id!==pendingPositionId);
   const sign = pnl>=0?"+":"";
   addTransaction(`Mövqə bağlandı: ${pos.ticker}`, Math.abs(pnl), pnl>=0?"in":"out", "INVESTED");
@@ -592,53 +661,93 @@ function confirmClosePos() {
 }
 
 /* ──────────────────────────────────────────────────────────
-   TRANSFER MODAL
+   RENDER: WALLET
 ────────────────────────────────────────────────────────── */
-let transferDirection = null;
-
-function openTransferModal(dir) {
-  transferDirection = dir;
-  document.getElementById("transfer-title").textContent = dir==="toInvested" ? "BMB → INVESTED" : "INVESTED → BMB";
-  document.getElementById("transfer-sub").textContent   = dir==="toInvested" ? "Bank balansından trade balansına köçür" : "Trade balansından bank balansına köçür";
-  document.getElementById("transfer-amount-input").value = "";
-  document.getElementById("transfer-error").classList.remove("active");
-  document.getElementById("transfer-modal-overlay").classList.add("active");
+function renderWallet() {
+  document.getElementById("wallet-inv-balance").textContent = fmtMoney(state.investedBalance);
+  document.getElementById("wallet-inv-portfolio").textContent =
+    "Portfel: " + fmtMoney(calcSpotPortfolioValue() + calcPositionsPnl());
+  renderWalletCarousel();
+  renderWalletCardDetail();
+  renderTxList();
 }
 
-function closeTransferModal() { document.getElementById("transfer-modal-overlay").classList.remove("active"); }
+function renderWalletCarousel() {
+  const carousel = document.getElementById("wallet-cards-carousel");
+  const dotsEl   = document.getElementById("wallet-dots");
 
-function confirmTransfer() {
-  const amount = parseFloat(document.getElementById("transfer-amount-input").value)||0;
-  const errorEl = document.getElementById("transfer-error");
-  if (amount<=0) { errorEl.textContent="Düzgün məbləğ daxil et"; errorEl.classList.add("active"); return; }
-  if (transferDirection==="toInvested") {
-    if (amount>state.bankBalance) { errorEl.textContent="Bank balansı kifayət etmir"; errorEl.classList.add("active"); return; }
-    state.bankBalance -= amount;
-    state.investedBalance += amount;
-    addTransaction("Transfer → INVESTED", amount, "out", "BMB");
+  carousel.innerHTML = state.cards.map((card, i) => {
+    const bank      = BANKS.find(b => b.id === card.bankId);
+    const cfg       = bank.cards[card.tier];
+    const isPrimary = card.id === state.primaryCardId;
+    const tierLabel = card.tier === "standard" ? "Standart" : card.tier === "gold" ? "Gold ✦" : "Lux ◆";
+    const vaultInfo = card.vault
+      ? `🔒 ${fmtMoney(card.vault.amount)} — ${card.vault.lockDays} gün qalıb`
+      : "";
+    return `
+      <div class="wallet-card ${card.tier} ${i === walletActiveCardIndex ? "active" : ""}"
+           data-idx="${i}"
+           style="background:linear-gradient(135deg,${bank.color}22,${bank.color}44);border-color:${bank.color}66;">
+        <div class="wc-top">
+          <div class="wc-bank-name" style="color:${bank.color}">${bank.name}</div>
+          <div class="wc-tier">${tierLabel}</div>
+        </div>
+        ${isPrimary ? '<div class="wc-primary-badge">⭐ Əsas</div>' : ""}
+        <div class="wc-balance">${fmtMoney(card.balance)}</div>
+        ${vaultInfo ? `<div class="wc-vault-info">${vaultInfo}</div>` : ""}
+        <div class="wc-card-number">•••• ${card.id.slice(-4).toUpperCase()}</div>
+      </div>`;
+  }).join("");
+
+  dotsEl.innerHTML = state.cards.map((_, i) =>
+    `<div class="wallet-dot ${i === walletActiveCardIndex ? "active" : ""}"></div>`
+  ).join("");
+
+  carousel.querySelectorAll(".wallet-card").forEach(el => {
+    el.addEventListener("click", () => {
+      walletActiveCardIndex = parseInt(el.dataset.idx);
+      renderWalletCarousel();
+      renderWalletCardDetail();
+    });
+  });
+}
+
+function renderWalletCardDetail() {
+  if (!state.cards.length) return;
+  const card = state.cards[walletActiveCardIndex];
+  const bank = BANKS.find(b => b.id === card.bankId);
+  const cfg  = bank.cards[card.tier];
+
+  document.getElementById("wcd-limit").textContent =
+    cfg.weeklyFreeLimit === null ? "Limitsiz" : fmtMoney(cfg.weeklyFreeLimit);
+  document.getElementById("wcd-used").textContent = fmtMoney(card.weeklyTransferUsed || 0);
+  document.getElementById("wcd-fee").textContent =
+    cfg.weeklyFreeLimit === null ? "0%" :
+    (card.balance >= (cfg.feeWaiveMinBalance || Infinity)
+      ? "Silinib (min. balans)"
+      : (cfg.overLimitFeeRate * 100).toFixed(1) + "%");
+  document.getElementById("wcd-interest").textContent =
+    (cfg.weeklyInterestRate * 100).toFixed(2) + "% / həftə";
+
+  const vaultRow = document.getElementById("wcd-vault-row");
+  if (card.vault) {
+    vaultRow.style.display = "flex";
+    document.getElementById("wcd-vault").textContent =
+      `${fmtMoney(card.vault.amount)} — ${card.vault.lockDays}/${card.vault.totalDays} gün`;
   } else {
-    if (amount>state.investedBalance) { errorEl.textContent="Trade balansı kifayət etmir"; errorEl.classList.add("active"); return; }
-    state.investedBalance -= amount;
-    state.bankBalance += amount;
-    addTransaction("Transfer → BMB", amount, "in", "BMB");
+    vaultRow.style.display = "none";
   }
-  saveState();
-  closeTransferModal();
-  renderBank();
-  renderAssetList();
-  showToast("Transfer tamamlandı: "+fmtMoney(amount));
 }
 
-/* ──────────────────────────────────────────────────────────
-   RENDER: BMB
-────────────────────────────────────────────────────────── */
-function renderBank() {
-  document.getElementById("bank-balance").textContent = fmtMoney(state.bankBalance);
+function renderTxList() {
   const c = document.getElementById("tx-list");
-  if (state.transactions.length===0) { c.innerHTML='<div class="empty-state">Tranzaksiya tarixçəsi boşdur</div>'; return; }
-  c.innerHTML = state.transactions.slice(0,30).map(tx=>{
-    const icon = tx.direction==="in"?"↓":"↑";
-    const sign = tx.direction==="in"?"+":"−";
+  if (!state.transactions.length) {
+    c.innerHTML = '<div class="empty-state">Tranzaksiya tarixçəsi boşdur</div>';
+    return;
+  }
+  c.innerHTML = state.transactions.slice(0, 30).map(tx => {
+    const icon = tx.direction === "in" ? "↓" : "↑";
+    const sign = tx.direction === "in" ? "+" : "−";
     return `
       <div class="tx-row">
         <div class="tx-icon ${tx.direction}">${icon}</div>
@@ -652,13 +761,221 @@ function renderBank() {
 }
 
 /* ──────────────────────────────────────────────────────────
+   WALLET — TRANSFER MODAL
+────────────────────────────────────────────────────────── */
+function openWalletTransferModal() {
+  const fromSelect = document.getElementById("wt-from-select");
+  const toSelect   = document.getElementById("wt-to-select");
+
+  const cardOptions = state.cards.map(c => {
+    const bank = BANKS.find(b => b.id === c.bankId);
+    return `<option value="card_${c.id}">${bank.cards[c.tier].name} — ${fmtMoney(c.balance)}</option>`;
+  }).join("");
+  const investedOption = `<option value="invested">INVESTED — ${fmtMoney(state.investedBalance)}</option>`;
+
+  fromSelect.innerHTML = cardOptions + investedOption;
+  toSelect.innerHTML   = cardOptions + investedOption;
+
+  const activeCard = state.cards[walletActiveCardIndex];
+  if (activeCard) fromSelect.value = "card_" + activeCard.id;
+
+  document.getElementById("wt-amount-input").value = "";
+  document.getElementById("wt-fee-preview").textContent = "Komisya: $0.00";
+  document.getElementById("wt-error").style.display = "none";
+  document.getElementById("wallet-transfer-overlay").classList.add("active");
+}
+
+function updateTransferFeePreview() {
+  const fromVal = document.getElementById("wt-from-select").value;
+  const amount  = parseFloat(document.getElementById("wt-amount-input").value) || 0;
+  let fee = 0;
+  if (fromVal.startsWith("card_")) {
+    const cardId = fromVal.replace("card_", "");
+    const card   = state.cards.find(c => c.id === cardId);
+    if (card) fee = calcTransferFee(card, amount);
+  }
+  document.getElementById("wt-fee-preview").textContent = `Komisya: ${fmtMoney(fee)}`;
+}
+
+function confirmWalletTransfer() {
+  const fromVal  = document.getElementById("wt-from-select").value;
+  const toVal    = document.getElementById("wt-to-select").value;
+  const amount   = parseFloat(document.getElementById("wt-amount-input").value) || 0;
+  const errorEl  = document.getElementById("wt-error");
+
+  errorEl.style.display = "none";
+  if (fromVal === toVal) { errorEl.textContent="Eyni hesab seçildi"; errorEl.style.display="block"; return; }
+  if (amount <= 0) { errorEl.textContent="Düzgün məbləğ daxil et"; errorEl.style.display="block"; return; }
+
+  let sourceBalance = 0;
+  let fee = 0;
+  if (fromVal === "invested") {
+    sourceBalance = state.investedBalance;
+  } else {
+    const card = state.cards.find(c => c.id === fromVal.replace("card_", ""));
+    sourceBalance = card ? card.balance : 0;
+    fee = card ? calcTransferFee(card, amount) : 0;
+  }
+
+  if (amount + fee > sourceBalance) {
+    errorEl.textContent = "Balans + komisya kifayət etmir";
+    errorEl.style.display = "block";
+    return;
+  }
+
+  if (fromVal === "invested") {
+    state.investedBalance -= amount;
+  } else {
+    const card = state.cards.find(c => c.id === fromVal.replace("card_", ""));
+    card.balance -= (amount + fee);
+    card.weeklyTransferUsed = (card.weeklyTransferUsed || 0) + amount;
+    if (fee > 0) addTransaction("Köçürmə komisyası", fee, "out", "WALLET");
+  }
+
+  if (toVal === "invested") {
+    state.investedBalance += amount;
+  } else {
+    const card = state.cards.find(c => c.id === toVal.replace("card_", ""));
+    card.balance += amount;
+  }
+
+  addTransaction("Transfer", amount, "out", fromVal === "invested" ? "INVESTED" : "WALLET");
+  saveState();
+  document.getElementById("wallet-transfer-overlay").classList.remove("active");
+  renderWallet();
+  renderAssetList();
+  showToast(`Transfer tamamlandı — ${fmtMoney(amount)}`);
+}
+
+/* ──────────────────────────────────────────────────────────
+   WALLET — VAULT MODAL
+────────────────────────────────────────────────────────── */
+function openVaultModal() {
+  const card = state.cards[walletActiveCardIndex];
+  if (!card) return;
+  if (card.vault) { showToast("Bu kartda artıq aktiv Xəzinə var"); return; }
+  const bank = BANKS.find(b => b.id === card.bankId);
+  const cfg  = bank.cards[card.tier];
+
+  document.getElementById("vault-modal-sub").textContent =
+    `${cfg.name} — Xəzinə (maks. faiz: ${(cfg.vaultMonthlyRate*100).toFixed(1)}%)`;
+  document.getElementById("vault-amount-input").value = "";
+  vaultSelectedDays = 7;
+  document.querySelectorAll(".vault-dur-btn").forEach(b =>
+    b.classList.toggle("active", parseInt(b.dataset.days) === 7));
+  updateVaultPreview();
+  document.getElementById("vault-error").style.display = "none";
+  document.getElementById("wallet-vault-overlay").classList.add("active");
+}
+
+function updateVaultPreview() {
+  const card   = state.cards[walletActiveCardIndex];
+  if (!card) return;
+  const bank   = BANKS.find(b => b.id === card.bankId);
+  const cfg    = bank.cards[card.tier];
+  const amount = parseFloat(document.getElementById("vault-amount-input").value) || 0;
+  const ratio  = vaultSelectedDays / 28;
+  const interest = amount * cfg.vaultMonthlyRate * ratio;
+  document.getElementById("vault-preview").innerHTML =
+    amount > 0
+      ? `<div style="font-size:12px;color:var(--c-up);padding:6px 0;">
+           +${fmtMoney(interest)} faiz · ${vaultSelectedDays} gün sonra ${fmtMoney(amount + interest)} alacaqsan
+         </div>`
+      : "";
+}
+
+function confirmVault() {
+  const card    = state.cards[walletActiveCardIndex];
+  const amount  = parseFloat(document.getElementById("vault-amount-input").value) || 0;
+  const errorEl = document.getElementById("vault-error");
+
+  if (amount <= 0 || amount > card.balance) { errorEl.style.display="block"; return; }
+
+  card.balance -= amount;
+  card.vault = { amount, lockDays: vaultSelectedDays, totalDays: vaultSelectedDays, startDay: state.day };
+
+  const bank = BANKS.find(b => b.id === card.bankId);
+  addTransaction(`${bank.cards[card.tier].name} — Xəzinəyə qoyuldu`, amount, "out", "WALLET");
+  saveState();
+  document.getElementById("wallet-vault-overlay").classList.remove("active");
+  renderWallet();
+  showToast(`🔒 ${fmtMoney(amount)} Xəzinəyə qoyuldu — ${vaultSelectedDays} gün`);
+}
+
+/* ──────────────────────────────────────────────────────────
+   WALLET — KART ƏLAVƏ ET MODAL
+────────────────────────────────────────────────────────── */
+let selectedNewCardKey = null;
+
+function openAddCardModal() {
+  const nw        = calcNetWorth();
+  const availBanks = getAvailableBanks();
+  const ownedKeys  = state.cards.map(c => c.bankId + "_" + c.tier);
+
+  const list = document.getElementById("addcard-list");
+  list.innerHTML = availBanks.flatMap(bank =>
+    Object.entries(bank.cards).map(([tier, cfg]) => {
+      const key    = bank.id + "_" + tier;
+      const owned  = ownedKeys.includes(key);
+      const locked = cfg.requiredNetWorth && nw < cfg.requiredNetWorth;
+      const tierLabel = tier === "standard" ? "Standart" : tier === "gold" ? "Gold ✦" : "Lux ◆";
+      const subText = locked
+        ? `🔒 Lazım: ${fmtMoney(cfg.requiredNetWorth)} var-dövlət`
+        : owned  ? "✓ Artıq var"
+        : cfg.subscriptionFee > 0 ? `${fmtMoney(cfg.subscriptionFee)}/həftə abunə`
+        : "Pulsuz";
+      return `
+        <div class="addcard-option ${owned || locked ? "disabled" : ""} ${selectedNewCardKey === key ? "selected" : ""}"
+             data-key="${key}">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-weight:700;font-size:13px;color:${bank.color}">${bank.name} ${tierLabel}</div>
+              <div style="font-size:11px;color:var(--c-text-secondary);margin-top:2px;">${subText}</div>
+            </div>
+            <div style="text-align:right;font-size:11px;color:var(--c-text-tertiary);">
+              ${cfg.weeklyInterestRate ? (cfg.weeklyInterestRate*100).toFixed(2)+"% həftəlik" : ""}
+            </div>
+          </div>
+        </div>`;
+    })
+  ).join("");
+
+  list.querySelectorAll(".addcard-option:not(.disabled)").forEach(el => {
+    el.addEventListener("click", () => {
+      list.querySelectorAll(".addcard-option").forEach(x => x.classList.remove("selected"));
+      el.classList.add("selected");
+      selectedNewCardKey = el.dataset.key;
+    });
+  });
+
+  selectedNewCardKey = null;
+  document.getElementById("wallet-addcard-overlay").classList.add("active");
+}
+
+function confirmAddCard() {
+  if (!selectedNewCardKey) { showToast("Kart seç"); return; }
+  const [bankId, tier] = selectedNewCardKey.split("_");
+  if (state.cards.some(c => c.bankId === bankId && c.tier === tier)) {
+    showToast("Bu kart artıq var"); return;
+  }
+  state.cards.push({
+    id: bankId + "_" + tier + "_" + Date.now(),
+    bankId, tier,
+    balance: 0,
+    vault: null,
+    weeklyTransferUsed: 0,
+    lastWeekNumber: getWeekNumber(state.day),
+    subscriptionPaidUntilWeek: null
+  });
+  saveState();
+  document.getElementById("wallet-addcard-overlay").classList.remove("active");
+  walletActiveCardIndex = state.cards.length - 1;
+  renderWallet();
+  showToast("Kart əlavə edildi!");
+}
+
+/* ──────────────────────────────────────────────────────────
    NEWS KARTLARI
-   Qeyd: faiz təsiri, "tətbiq olundu" statusu və müsbət/mənfi
-   rəng KƏSDİRİLƏRƏK göstərilmir — oyunçu xəbərin mətnini oxuyub
-   özü təxmin etməlidir ki, bu yaxşı yoxsa pis xəbərdir və
-   nə qədər/neçə gün təsir edə bilər. Arxa planda təsir
-   eyni qaydada (Engine üzərindən) işləyir, sadəcə UI-da
-   görünmür.
 ────────────────────────────────────────────────────────── */
 function renderNewsCard(newsItem, tNum) {
   const asset = getAsset(newsItem.assetId);
@@ -705,7 +1022,6 @@ function renderCurrentCityBanner() {
 }
 
 function renderTravelMap() {
-  // Aktiv şəhəri xəritədə vurgula
   document.querySelectorAll(".map-city-dot").forEach(dot => {
     dot.setAttribute("r", "6");
     dot.setAttribute("stroke-width", "1.5");
@@ -715,8 +1031,6 @@ function renderTravelMap() {
     activeDot.setAttribute("r", "9");
     activeDot.setAttribute("stroke-width", "2.5");
   }
-
-  // Nöqtələrə klik
   document.querySelectorAll(".map-city-dot").forEach(dot => {
     dot.style.cursor = "pointer";
     dot.onclick = () => openCityDetail(dot.dataset.city);
@@ -726,14 +1040,13 @@ function renderTravelMap() {
 function renderCityList() {
   const container = document.getElementById("travel-city-list");
   container.innerHTML = CITIES.map(city => {
-    const isActive = city.id === state.currentCity;
-    const canAfford = state.bankBalance >= (city.minBalance + city.moveCost);
+    const isActive  = city.id === state.currentCity;
+    const canAfford = getPrimaryBalance() >= (city.minBalance + city.moveCost);
     const statusLabel = isActive
       ? `<span style="color:#1FD67A;font-size:11px;font-weight:600;">✓ Hazırda buradasın</span>`
       : canAfford
         ? `<span style="color:#E8A33D;font-size:11px;">Köçmək olar</span>`
         : `<span style="color:var(--c-down);font-size:11px;">Min: ${fmtMoney(city.minBalance)}</span>`;
-
     return `
       <div class="travel-city-card" data-city="${city.id}" style="border-left:3px solid ${city.color};">
         <div class="tcc-left">
@@ -749,7 +1062,6 @@ function renderCityList() {
         </div>
       </div>`;
   }).join("");
-
   container.querySelectorAll(".travel-city-card").forEach(card => {
     card.addEventListener("click", () => openCityDetail(card.dataset.city));
   });
@@ -764,43 +1076,37 @@ function openCityDetail(cityId) {
 
   document.getElementById("travel-detail-title").childNodes[0].textContent = city.name;
   document.getElementById("travel-detail-sub").textContent = city.country;
-  document.getElementById("tdh-flag").textContent = city.flag;
-  document.getElementById("tdh-name").textContent = `${city.name}, ${city.country}`;
-  document.getElementById("tdh-tag").textContent = city.tag;
+  document.getElementById("tdh-flag").textContent  = city.flag;
+  document.getElementById("tdh-name").textContent  = `${city.name}, ${city.country}`;
+  document.getElementById("tdh-tag").textContent   = city.tag;
 
   const totalCost = city.visaCost + city.moveCost;
   document.getElementById("trc-min-balance").textContent = fmtMoney(city.minBalance);
   document.getElementById("trc-visa-cost").textContent   = fmtMoney(city.visaCost);
   document.getElementById("trc-total-cost").textContent  = fmtMoney(totalCost);
-  document.getElementById("trc-your-balance").textContent = fmtMoney(state.bankBalance);
+  document.getElementById("trc-your-balance").textContent = fmtMoney(getPrimaryBalance());
 
-  // Üstünlüklər
   document.getElementById("travel-perks").innerHTML = `
     <div class="travel-perks-wrap">
       ${city.perks.map(p => `<div class="travel-perk-item">✓ ${p}</div>`).join("")}
     </div>`;
 
   const statusEl = document.getElementById("travel-move-status");
-  const btn = document.getElementById("btn-travel-move");
+  const btn      = document.getElementById("btn-travel-move");
+  const bal      = getPrimaryBalance();
 
   if (city.id === state.currentCity) {
-    statusEl.style.display = "block";
-    statusEl.style.color = "#1FD67A";
+    statusEl.style.display = "block"; statusEl.style.color = "#1FD67A";
     statusEl.textContent = "✓ Artıq bu şəhərdə yaşayırsan.";
-    btn.disabled = true;
-    btn.textContent = "Hazırda buradasın";
-  } else if (state.bankBalance < city.minBalance) {
-    statusEl.style.display = "block";
-    statusEl.style.color = "var(--c-down)";
+    btn.disabled = true; btn.textContent = "Hazırda buradasın";
+  } else if (bal < city.minBalance) {
+    statusEl.style.display = "block"; statusEl.style.color = "var(--c-down)";
     statusEl.textContent = `✗ Bank balansın kifayət etmir. Minimum: ${fmtMoney(city.minBalance)}`;
-    btn.disabled = true;
-    btn.textContent = "Balans kifayət etmir";
-  } else if (state.bankBalance < city.minBalance + totalCost) {
-    statusEl.style.display = "block";
-    statusEl.style.color = "var(--c-down)";
+    btn.disabled = true; btn.textContent = "Balans kifayət etmir";
+  } else if (bal < city.minBalance + totalCost) {
+    statusEl.style.display = "block"; statusEl.style.color = "var(--c-down)";
     statusEl.textContent = `✗ Köçmə xərci üçün balansın çatmır. Lazım: ${fmtMoney(totalCost)}`;
-    btn.disabled = true;
-    btn.textContent = "Balans kifayət etmir";
+    btn.disabled = true; btn.textContent = "Balans kifayət etmir";
   } else {
     statusEl.style.display = "none";
     btn.disabled = false;
@@ -839,7 +1145,7 @@ function renderREListings() {
 
   container.innerHTML = props.map(p => {
     const areaMult = AREA_MULTIPLIERS[p.area];
-    const income = p.type === "residential"
+    const income   = p.type === "residential"
       ? `${fmtMoney(p.rentPrice)}/ay`
       : `${fmtMoney(Math.round(p.m2 * 15 * areaMult.revenueMult))}-${fmtMoney(Math.round(p.m2 * 25 * areaMult.revenueMult))}/ay`;
     return `
@@ -869,21 +1175,15 @@ function renderREOwned() {
     container.innerHTML = `<div class="re-empty">Hələ əmlak almamısan.</div>`;
     return;
   }
-
   const allProps = Object.values(ALL_PROPERTIES).flat();
-
   container.innerHTML = state.ownedProperties.map((owned, idx) => {
     const p = allProps.find(x => x.id === owned.propertyId);
     if (!p) return "";
-
     const biz = BUSINESS_TYPES.find(b => b.id === owned.businessTypeId);
     const typeLabel = owned.ownershipType === "rent_out"
       ? "Kirayəyə verilir"
-      : owned.ownershipType === "business"
-        ? (biz?.name || "Biznes")
-        : "Kirayədə yaşayır";
-
-    // Gəlir göstərmə — həftəlik kimi
+      : owned.ownershipType === "business" ? (biz?.name || "Biznes")
+      : "Kirayədə yaşayır";
     let incomeStr = "—";
     if (owned.monthlyIncome) {
       if (typeof owned.monthlyIncome === "object") {
@@ -892,34 +1192,22 @@ function renderREOwned() {
         incomeStr = `${fmtMoney(owned.monthlyIncome)}/həftə`;
       }
     }
-
-    // Satış qiyməti (85%)
     const salePrice = Math.round(p.buyPrice * 0.85);
-
-    // Xərc/borc statusu
     let expenseHtml = "";
     if (owned.ownershipType === "business" || owned.ownershipType === "rent_out") {
-      const exp = calcWeeklyExpense(owned, p);
+      const exp      = calcWeeklyExpense(owned, p);
       const daysSince = state.day - (owned.lastPaymentDay || state.day);
-      const daysLeft = RE_EXPENSE_CONFIG.paymentCycleDays - daysSince;
-      const hasDebt = (owned.debt || 0) > 0.01;
-
+      const daysLeft  = RE_EXPENSE_CONFIG.paymentCycleDays - daysSince;
+      const hasDebt   = (owned.debt || 0) > 0.01;
       expenseHtml = hasDebt
         ? `<div class="re-oc-debt">⚠️ Borc: ${fmtMoney(owned.debt)} · ${owned.unpaidCycles}/3 gecikmə</div>`
         : `<div class="re-oc-expense">Həftəlik xərc: ${fmtMoney(exp.total)} · ${Math.max(daysLeft,0)} gün sonra</div>`;
     }
-
-    // Aktiv/bağlı düyməsi (yalnız business/rent_out)
     const toggleHtml = (owned.ownershipType === "business" || owned.ownershipType === "rent_out")
-      ? `<button class="re-oc-toggle ${owned.active ? "on" : "off"}" data-idx="${idx}">
-           ${owned.active ? "Aktivdir" : "Bağlıdır"}
-         </button>`
+      ? `<button class="re-oc-toggle ${owned.active ? "on" : "off"}" data-idx="${idx}">${owned.active ? "Aktivdir" : "Bağlıdır"}</button>`
       : "";
-
-    // Biznes dəyiş (yalnız commercial + business)
     const changeBizHtml = (owned.ownershipType === "business" && p.type === "commercial")
-      ? `<button class="re-oc-change-biz" data-idx="${idx}">Biznesi dəyiş</button>`
-      : "";
+      ? `<button class="re-oc-change-biz" data-idx="${idx}">Biznesi dəyiş</button>` : "";
 
     return `
       <div class="re-owned-card ${(owned.debt||0) > 0.01 ? "has-debt" : ""}">
@@ -935,40 +1223,33 @@ function renderREOwned() {
         </div>
         ${expenseHtml}
         <div class="re-oc-footer">
-          <div class="re-oc-btns">
-            ${toggleHtml}
-            ${changeBizHtml}
-          </div>
+          <div class="re-oc-btns">${toggleHtml}${changeBizHtml}</div>
           <button class="re-oc-sell" data-idx="${idx}">Sat · ${fmtMoney(salePrice)}</button>
         </div>
       </div>`;
   }).join("");
 
-  // Event dinləyicilər
   container.querySelectorAll(".re-oc-toggle").forEach(btn => {
     btn.addEventListener("click", e => {
       e.stopPropagation();
       const idx = parseInt(btn.dataset.idx);
       state.ownedProperties[idx].active = !state.ownedProperties[idx].active;
-      saveState();
-      renderREOwned();
+      saveState(); renderREOwned();
     });
   });
-
   container.querySelectorAll(".re-oc-change-biz").forEach(btn => {
     btn.addEventListener("click", e => {
       e.stopPropagation();
       openChangeBusinessModal(parseInt(btn.dataset.idx));
     });
   });
-
   container.querySelectorAll(".re-oc-sell").forEach(btn => {
     btn.addEventListener("click", e => {
       e.stopPropagation();
-      const idx = parseInt(btn.dataset.idx);
-      const owned = state.ownedProperties[idx];
+      const idx    = parseInt(btn.dataset.idx);
+      const owned  = state.ownedProperties[idx];
       const allProps2 = Object.values(ALL_PROPERTIES).flat();
-      const pp = allProps2.find(x => x.id === owned.propertyId);
+      const pp     = allProps2.find(x => x.id === owned.propertyId);
       const salePrice = pp ? Math.round(pp.buyPrice * 0.85) : 0;
       if (confirm(`${pp?.name || "Əmlak"} satmaq istəyirsən?\nAlacağın məbləğ: ${fmtMoney(salePrice)}`)) {
         sellProperty(idx);
@@ -976,28 +1257,25 @@ function renderREOwned() {
     });
   });
 }
+
 let changeBizPropertyIdx = null;
 
 function openChangeBusinessModal(idx) {
   changeBizPropertyIdx = idx;
-  const owned = state.ownedProperties[idx];
+  const owned    = state.ownedProperties[idx];
   const allProps = Object.values(ALL_PROPERTIES).flat();
-  const p = allProps.find(x => x.id === owned.propertyId);
-  if (!p || p.type !== "commercial") {
-    showToast("Bu əmlak üçün biznes dəyişdirilə bilməz");
-    return;
-  }
-  selectedPropertyId = p.id; // confirmREModal-da düzgün əmlakın istifadə olunması üçün
+  const p        = allProps.find(x => x.id === owned.propertyId);
+  if (!p || p.type !== "commercial") { showToast("Bu əmlak üçün biznes dəyişdirilə bilməz"); return; }
+  selectedPropertyId = p.id;
 
   const overlay = document.getElementById("re-modal-overlay");
   document.getElementById("re-modal-title").textContent = "Biznesi dəyiş";
-  document.getElementById("re-modal-sub").textContent = p.name;
+  document.getElementById("re-modal-sub").textContent   = p.name;
   document.getElementById("re-modal-cost-label").textContent = "Yeni biznes seç";
-  document.getElementById("re-modal-cost").textContent = "—";
+  document.getElementById("re-modal-cost").textContent   = "—";
   document.getElementById("re-modal-income").textContent = "—";
   document.getElementById("re-modal-error").style.display = "none";
 
-  // Trade-modal-dakı biznes grid-i deyil, re-modal daxilinə dinamik grid əlavə edirik
   let gridWrap = document.getElementById("re-modal-biz-grid-wrap");
   if (!gridWrap) {
     gridWrap = document.createElement("div");
@@ -1005,22 +1283,21 @@ function openChangeBusinessModal(idx) {
     gridWrap.className = "re-business-grid";
     gridWrap.style.padding = "10px 0 0";
     document.querySelector("#re-modal-overlay .trade-modal").insertBefore(
-      gridWrap,
-      document.getElementById("re-modal-error")
+      gridWrap, document.getElementById("re-modal-error")
     );
   }
   gridWrap.style.display = "grid";
-   gridWrap.innerHTML = BUSINESS_TYPES.map(biz => {
-     const incomeData = calcPropertyIncome(p, "business", biz.id);
-     const isCurrent = biz.id === owned.businessTypeId;
-     return `
-       <div class="re-biz-card ${isCurrent ? "selected" : ""}" data-biz="${biz.id}">
-         <div class="re-biz-icon">${biz.icon}</div>
-         <div class="re-biz-name">${biz.name}</div>
-         <div class="re-biz-income">${fmtMoney(incomeData.min)}–${fmtMoney(incomeData.max)}/həftə</div>
-         <div class="re-biz-setup" style="color:#E8A33D;font-size:10px;">Quraşdırma: ${fmtMoney(biz.setupCost)}</div>
-       </div>`;
-   }).join("");
+  gridWrap.innerHTML = BUSINESS_TYPES.map(biz => {
+    const incomeData = calcPropertyIncome(p, "business", biz.id);
+    const isCurrent  = biz.id === owned.businessTypeId;
+    return `
+      <div class="re-biz-card ${isCurrent ? "selected" : ""}" data-biz="${biz.id}">
+        <div class="re-biz-icon">${biz.icon}</div>
+        <div class="re-biz-name">${biz.name}</div>
+        <div class="re-biz-income">${fmtMoney(incomeData.min)}–${fmtMoney(incomeData.max)}/həftə</div>
+        <div class="re-biz-setup" style="color:#E8A33D;font-size:10px;">Quraşdırma: ${fmtMoney(biz.setupCost)}</div>
+      </div>`;
+  }).join("");
 
   gridWrap.querySelectorAll(".re-biz-card").forEach(card => {
     card.addEventListener("click", () => {
@@ -1033,7 +1310,6 @@ function openChangeBusinessModal(idx) {
     });
   });
 
-  // İlkin görünüş: hazırkı seçili (və ya heç biri) üçün xərc/gəlir göstər
   const initialSelected = gridWrap.querySelector(".re-biz-card.selected");
   if (initialSelected) {
     const biz = BUSINESS_TYPES.find(b => b.id === initialSelected.dataset.biz);
@@ -1046,6 +1322,7 @@ function openChangeBusinessModal(idx) {
   reModalAction = "change_business";
   overlay.classList.add("active");
 }
+
 function openPropertyDetail(propId) {
   selectedPropertyId = propId;
   const allProps = Object.values(ALL_PROPERTIES).flat();
@@ -1058,9 +1335,10 @@ function openPropertyDetail(propId) {
   document.getElementById("re-detail-sub").textContent = `${p.m2} m² · ${AREA_MULTIPLIERS[p.area].label}`;
   document.getElementById("re-detail-img").textContent = p.icon;
 
-  const areaMult = AREA_MULTIPLIERS[p.area];
+  const areaMult  = AREA_MULTIPLIERS[p.area];
   const rentIncome = Math.round(p.rentPrice * areaMult.revenueMult);
-  const deposit = p.rentPrice * p.depositMonths;
+  const deposit   = p.rentPrice * p.depositMonths;
+  const bal       = getPrimaryBalance();
 
   document.getElementById("re-detail-info").innerHTML = `
     <div class="re-detail-info-grid">
@@ -1073,9 +1351,8 @@ function openPropertyDetail(propId) {
     </div>
     <div class="re-di-desc">${p.desc}</div>`;
 
-  // Hərəkət düymələri
-  const canBuy   = state.bankBalance >= p.buyPrice;
-  const canRent  = state.bankBalance >= deposit;
+  const canBuy  = bal >= p.buyPrice;
+  const canRent = bal >= deposit;
 
   document.getElementById("re-detail-actions").innerHTML = `
     <button class="btn-re-action${canBuy ? "" : " disabled"}" id="btn-re-buy" ${canBuy ? "" : "disabled"}>
@@ -1085,7 +1362,6 @@ function openPropertyDetail(propId) {
       Kirayə götür — ${fmtMoney(p.rentPrice)}/ay (dep: ${fmtMoney(deposit)})
     </button>`;
 
-  // Biznes bölməsi (yalnız kommersiya)
   const bizSection = document.getElementById("re-business-section");
   if (p.type === "commercial") {
     bizSection.style.display = "block";
@@ -1100,7 +1376,6 @@ function openPropertyDetail(propId) {
           <div class="re-biz-desc">${biz.desc}</div>
         </div>`;
     }).join("");
-
     grid.querySelectorAll(".re-biz-card").forEach(card => {
       card.addEventListener("click", () => {
         grid.querySelectorAll(".re-biz-card").forEach(c => c.classList.remove("selected"));
@@ -1111,27 +1386,23 @@ function openPropertyDetail(propId) {
     bizSection.style.display = "none";
   }
 
-  // Düymə eventləri
-  document.getElementById("btn-re-buy").onclick  = () => openREModal("buy", p);
+  document.getElementById("btn-re-buy").onclick  = () => openREModal("buy",  p);
   document.getElementById("btn-re-rent").onclick = () => openREModal("rent", p);
 }
 
 function openREModal(action, property) {
   reModalAction = action;
-  const areaMult = AREA_MULTIPLIERS[property.area];
   const overlay = document.getElementById("re-modal-overlay");
+  const bal     = getPrimaryBalance();
 
   if (action === "buy") {
     document.getElementById("re-modal-title").textContent = "Əmlak al";
     document.getElementById("re-modal-sub").textContent   = property.name;
     document.getElementById("re-modal-cost-label").textContent = "Satış qiyməti";
     document.getElementById("re-modal-cost").textContent  = fmtMoney(property.buyPrice);
-
-    // Kirayəyə vermə gəliri
     const rentIncome = calcPropertyIncome(property, "rent_out");
     document.getElementById("re-modal-income").textContent = `${fmtMoney(rentIncome)}/həftə (kirayəyə versən)`;
-
-    const canAfford = state.bankBalance >= property.buyPrice;
+    const canAfford = bal >= property.buyPrice;
     document.getElementById("re-modal-error").style.display = canAfford ? "none" : "block";
     document.getElementById("btn-re-modal-confirm").disabled = !canAfford;
   } else {
@@ -1141,34 +1412,29 @@ function openREModal(action, property) {
     document.getElementById("re-modal-cost-label").textContent = `Depozit (${property.depositMonths} ay)`;
     document.getElementById("re-modal-cost").textContent  = fmtMoney(deposit);
     document.getElementById("re-modal-income").textContent = `${fmtMoney(property.rentPrice)}/ay kirayə`;
-
-    const canAfford = state.bankBalance >= deposit;
+    const canAfford = bal >= deposit;
     document.getElementById("re-modal-error").style.display = canAfford ? "none" : "block";
     document.getElementById("btn-re-modal-confirm").disabled = !canAfford;
   }
-
   overlay.classList.add("active");
 }
 
 function closeREModal() {
   document.getElementById("re-modal-overlay").classList.remove("active");
 }
+
 function sellProperty(ownedIdx) {
   const owned = state.ownedProperties[ownedIdx];
   if (!owned) return;
-
   const allProps = Object.values(ALL_PROPERTIES).flat();
   const p = allProps.find(x => x.id === owned.propertyId);
   if (!p) return;
-
-  // Satış qiyməti: alış qiymətinin 85%-i (bazar komissiyası)
-  const salePrice = Math.round(p.buyPrice * 0.85);
+  const salePrice    = Math.round(p.buyPrice * 0.85);
   const debtDeduction = owned.debt || 0;
-  const netReturn = Math.max(salePrice - debtDeduction, 0);
-
-  state.bankBalance += netReturn;
+  const netReturn    = Math.max(salePrice - debtDeduction, 0);
+  const card         = getPrimaryCard();
+  if (card) card.balance += netReturn;
   state.ownedProperties.splice(ownedIdx, 1);
-
   addTransaction(`${p.name} satıldı`, netReturn, "in", "REALESTATE");
   showToast(`🏷️ ${p.name} satıldı — ${fmtMoney(netReturn)}`);
   saveState();
@@ -1176,90 +1442,70 @@ function sellProperty(ownedIdx) {
   renderREOwned();
   renderREListings();
 }
+
 function confirmREModal() {
   const allProps = Object.values(ALL_PROPERTIES).flat();
   const p = allProps.find(x => x.id === selectedPropertyId);
   if (!p) return;
-
-  const areaMult = AREA_MULTIPLIERS[p.area];
+  const card = getPrimaryCard();
+  const bal  = getPrimaryBalance();
 
   if (reModalAction === "buy") {
-    if (state.bankBalance < p.buyPrice) return;
-    state.bankBalance -= p.buyPrice;
+    if (bal < p.buyPrice) return;
+    card.balance -= p.buyPrice;
 
-    // Biznes seçildi mi?
     const selectedBiz = document.querySelector("#re-business-grid .re-biz-card.selected");
     let ownershipType = "rent_out";
     let businessTypeId = null;
     let monthlyIncome;
 
     if (selectedBiz && p.type === "commercial") {
-      ownershipType = "business";
+      ownershipType  = "business";
       businessTypeId = selectedBiz.dataset.biz;
-      monthlyIncome = calcPropertyIncome(p, "business", businessTypeId);
+      monthlyIncome  = calcPropertyIncome(p, "business", businessTypeId);
     } else {
       monthlyIncome = calcPropertyIncome(p, "rent_out");
     }
 
-state.ownedProperties.push({
-      propertyId: p.id,
-      ownershipType,
-      businessTypeId,
-      monthlyIncome,
-      active: true,            // biznes/kirayə aktiv işləyir mi
-      lastPaymentDay: state.day,   // son ödənişin (və ya alışın) günü
-      unpaidCycles: 0,          // neçə ödəniş dövrü gecikib
-      debt: 0                   // yığılmış borc (cərimə daxil)
+    state.ownedProperties.push({
+      propertyId: p.id, ownershipType, businessTypeId, monthlyIncome,
+      active: true, lastPaymentDay: state.day, unpaidCycles: 0, debt: 0
     });
     addTransaction(`${p.name} alındı`, p.buyPrice, "out", "REALESTATE");
     showToast(`🏠 ${p.name} alındı!`);
-     
-} else if (reModalAction === "change_business") {
+
+  } else if (reModalAction === "change_business") {
     const selectedBiz = document.querySelector("#re-modal-biz-grid-wrap .re-biz-card.selected");
     if (!selectedBiz) { showToast("Biznes seç"); return; }
-    const newBizId = selectedBiz.dataset.biz;
-    const biz = BUSINESS_TYPES.find(b => b.id === newBizId);
+    const newBizId  = selectedBiz.dataset.biz;
+    const biz       = BUSINESS_TYPES.find(b => b.id === newBizId);
     const setupCost = biz.setupCost || 0;
-
-    if (state.bankBalance < setupCost) {
-      showToast(`Kifayət qədər balans yoxdur — lazım: ${fmtMoney(setupCost)}`);
-      return;
-    }
-
+    if (bal < setupCost) { showToast(`Kifayət qədər balans yoxdur — lazım: ${fmtMoney(setupCost)}`); return; }
     const owned = state.ownedProperties[changeBizPropertyIdx];
-    state.bankBalance -= setupCost;
+    card.balance -= setupCost;
     owned.businessTypeId = newBizId;
-    owned.ownershipType = "business";
-    owned.monthlyIncome = calcPropertyIncome(p, "business", newBizId);
-    owned.lastPaymentDay = state.day; // yeni biznes üçün ödəniş dövrü sıfırlanır
-    owned.unpaidCycles = 0;
-    owned.debt = 0;
-
+    owned.ownershipType  = "business";
+    owned.monthlyIncome  = calcPropertyIncome(p, "business", newBizId);
+    owned.lastPaymentDay = state.day;
+    owned.unpaidCycles   = 0;
+    owned.debt           = 0;
     addTransaction(`${biz.name} quruluşu: ${p.name}`, setupCost, "out", "REALESTATE");
     showToast(`${biz.name} quruldu — xərc: ${fmtMoney(setupCost)}`);
-
-    saveState();
-    closeREModal();
-    renderHome();
-    renderREOwned();
+    saveState(); closeREModal(); renderHome(); renderREOwned();
     return;
+
   } else {
-     
     const deposit = p.rentPrice * p.depositMonths;
-    if (state.bankBalance < deposit) return;
-    state.bankBalance -= deposit;
+    if (bal < deposit) return;
+    card.balance -= deposit;
     state.ownedProperties.push({
-      propertyId: p.id,
-      ownershipType: "rented",
-      businessTypeId: null,
-      monthlyIncome: 0,
-      rentMonthly: p.rentPrice,
-      depositPaid: deposit
+      propertyId: p.id, ownershipType: "rented", businessTypeId: null,
+      monthlyIncome: 0, rentMonthly: p.rentPrice, depositPaid: deposit
     });
     addTransaction(`${p.name} kirayə depoziti`, deposit, "out", "REALESTATE");
     showToast(`🔑 ${p.name} kirayə götürüldü!`);
   }
-   
+
   saveState();
   renderHome();
   closeREModal();
@@ -1267,120 +1513,94 @@ state.ownedProperties.push({
   renderREListings();
   renderREOwned();
 }
+
 /* ──────────────────────────────────────────────────────────
-   REALESTATE — HƏFTƏLİK XƏRC HESABLAMALARI
+   REALESTATE — XƏRC HESABLAMALARI
 ────────────────────────────────────────────────────────── */
 function calcWeeklyUtility(property, businessTypeId) {
-  const areaMult = AREA_MULTIPLIERS[property.area];
-  const biz = BUSINESS_TYPES.find(b => b.id === businessTypeId);
-  const utilFactor = biz ? biz.utilityFactor : 1.2; // rent_out üçün default əmsal
+  const areaMult  = AREA_MULTIPLIERS[property.area];
+  const biz       = BUSINESS_TYPES.find(b => b.id === businessTypeId);
+  const utilFactor = biz ? biz.utilityFactor : 1.2;
   return property.m2 * RE_EXPENSE_CONFIG.baseUtilityPerM2Weekly * utilFactor * areaMult.revenueMult;
 }
 
 function calcWeeklyNetIncomeEstimate(owned, property) {
-  // monthlyIncome həftəlik kimi işlədilir — birbaşa istifadə et
   let weeklyAvg;
   if (typeof owned.monthlyIncome === "object" && owned.monthlyIncome !== null) {
-    weeklyAvg = owned.monthlyIncome.avg ??
-      ((owned.monthlyIncome.min + owned.monthlyIncome.max) / 2);
+    weeklyAvg = owned.monthlyIncome.avg ?? ((owned.monthlyIncome.min + owned.monthlyIncome.max) / 2);
   } else {
     weeklyAvg = owned.monthlyIncome || 0;
   }
-  return weeklyAvg; // artıq həftəlik
+  return weeklyAvg;
 }
 
 function calcWeeklyExpense(owned, property) {
-  const utility = calcWeeklyUtility(property, owned.businessTypeId);
+  const utility    = calcWeeklyUtility(property, owned.businessTypeId);
   const grossWeekly = calcWeeklyNetIncomeEstimate(owned, property);
-  const taxable = Math.max(grossWeekly - utility, 0);
-  const tax = taxable * RE_EXPENSE_CONFIG.taxRate;
+  const taxable    = Math.max(grossWeekly - utility, 0);
+  const tax        = taxable * RE_EXPENSE_CONFIG.taxRate;
   return { utility, tax, total: utility + tax, grossWeekly };
 }
-/* ──────────────────────────────────────────────────────────
-   PASSIV GƏLİR — Hər günün sonunda hesabla
-   advanceDay() funksiyası içində çağırılır
-────────────────────────────────────────────────────────── */
+
 function processPropertyExpenses() {
   if (!state.ownedProperties || state.ownedProperties.length === 0) return;
-
   const allProps = Object.values(ALL_PROPERTIES).flat();
   const toRemove = [];
+  const card     = getPrimaryCard();
 
   state.ownedProperties.forEach(owned => {
-    // Yalnız BUSINESS və RENT_OUT mülklər üçün xərc tələb olunur
     if (owned.ownershipType !== "business" && owned.ownershipType !== "rent_out") return;
-    if (!owned.active) return; // bağlı/deaktiv mülkdən xərc tutulmur
-
+    if (!owned.active) return;
     const property = allProps.find(x => x.id === owned.propertyId);
     if (!property) return;
-
     const daysSincePayment = state.day - owned.lastPaymentDay;
-    if (daysSincePayment < RE_EXPENSE_CONFIG.paymentCycleDays) return; // hələ vaxtı çatmayıb
-
-    // Bir dövr keçib — xərc hesabla və borc yarat (əgər artıq ödənməyibsə)
+    if (daysSincePayment < RE_EXPENSE_CONFIG.paymentCycleDays) return;
     const expense = calcWeeklyExpense(owned, property);
-
-    // Avtomatik ödəmə cəhdi: bank balansından tutmağa çalış
-    if (state.bankBalance >= expense.total + owned.debt) {
-      state.bankBalance -= (expense.total + owned.debt);
+    if (card && card.balance >= expense.total + owned.debt) {
+      card.balance -= (expense.total + owned.debt);
       addTransaction(`${property.name} — həftəlik xərc`, expense.total + owned.debt, "out", "REALESTATE");
-      owned.debt = 0;
-      owned.unpaidCycles = 0;
-      owned.lastPaymentDay = state.day;
+      owned.debt = 0; owned.unpaidCycles = 0; owned.lastPaymentDay = state.day;
     } else {
-      // Ödənilmədi — borc və gecikmə sayğacı artır
       owned.debt += expense.total;
       owned.unpaidCycles += 1;
-      owned.lastPaymentDay = state.day; // növbəti dövrü hesablamaq üçün sıfırlanır
-
-      if (owned.unpaidCycles === 1) {
-        showToast(`⚠️ ${property.name}: ödəniş gecikdi, cərimə başladı`);
-      } else if (owned.unpaidCycles === 2) {
-        showToast(`⚠️ ${property.name}: 2-ci gecikmə! Son xəbərdarlıq`);
-      } else if (owned.unpaidCycles >= 3) {
-        toRemove.push({ owned, property });
-      }
+      owned.lastPaymentDay = state.day;
+      if (owned.unpaidCycles === 1) showToast(`⚠️ ${property.name}: ödəniş gecikdi, cərimə başladı`);
+      else if (owned.unpaidCycles === 2) showToast(`⚠️ ${property.name}: 2-ci gecikmə! Son xəbərdarlıq`);
+      else if (owned.unpaidCycles >= 3) toRemove.push({ owned, property });
     }
-
-    // Gecikmiş borca gündəlik cərimə əlavə et (hər gün, borc varsa)
     if (owned.debt > 0 && owned.unpaidCycles > 0) {
       owned.debt += owned.debt * RE_EXPENSE_CONFIG.lateFeeDailyRate;
     }
   });
 
-  // 3-cü dövr də ödənməyən mülkləri sat
   toRemove.forEach(({ owned, property }) => {
-    const saleValue = Math.round(property.buyPrice * 0.7); // bazar dəyərinin 70%-i ilə məcburi satış
+    const saleValue = Math.round(property.buyPrice * 0.7);
     const netReturn = Math.max(saleValue - owned.debt, 0);
-    state.bankBalance += netReturn;
+    if (card) card.balance += netReturn;
     state.ownedProperties = state.ownedProperties.filter(o => o !== owned);
     addTransaction(`${property.name} borc üzündən satıldı`, netReturn, "in", "REALESTATE");
     showToast(`🚨 ${property.name} borc üzündən əldən getdi! Qalan: ${fmtMoney(netReturn)}`);
   });
 }
+
 function processPropertyIncome() {
   if (!state.ownedProperties || state.ownedProperties.length === 0) return;
-
+  const card = getPrimaryCard();
   let totalIncome = 0;
   state.ownedProperties.forEach(owned => {
     if (!owned.monthlyIncome) return;
-    if (owned.ownershipType === "rented") return; // kirayədə yaşayan xərc ödəyir, gəlir yox
-
-    // aylıq gəliri HƏFTƏLİK kimi qəbul et, sonra günə böl
+    if (owned.ownershipType === "rented") return;
     let weeklyIncome = 0;
     if (typeof owned.monthlyIncome === "object") {
-      const avg = owned.monthlyIncome.avg ??
-        ((owned.monthlyIncome.min + owned.monthlyIncome.max) / 2);
-      weeklyIncome = avg; // aylıq yazılıb amma həftəlik kimi işlət
+      const avg = owned.monthlyIncome.avg ?? ((owned.monthlyIncome.min + owned.monthlyIncome.max) / 2);
+      weeklyIncome = avg;
     } else {
       weeklyIncome = owned.monthlyIncome;
     }
-    const dailyIncome = weeklyIncome / 7;
-    totalIncome += dailyIncome;
+    totalIncome += weeklyIncome / 7;
   });
-
-  if (totalIncome > 0.01) {
-    state.bankBalance += totalIncome;
+  if (totalIncome > 0.01 && card) {
+    card.balance += totalIncome;
     addTransaction("Əmlak gəliri", totalIncome, "in", "REALESTATE");
   }
 }
@@ -1401,11 +1621,11 @@ function advanceDay() {
   state.day = result.day;
   state.engineState = Engine.getState();
 
-  // Margin call yoxlama
+  // Margin call
   const toClose = [];
   state.positions.forEach(pos=>{
     const pnl = calcPosPnl(pos);
-    if (pnl <= -pos.margin * 0.9) toClose.push(pos);  // 90% itki = likvidasiya
+    if (pnl <= -pos.margin * 0.9) toClose.push(pos);
   });
   toClose.forEach(pos=>{
     state.positions = state.positions.filter(p=>p.id!==pos.id);
@@ -1413,12 +1633,23 @@ function advanceDay() {
     showToast(`⚠️ ${pos.ticker} mövqəsi likvidə edildi!`);
   });
 
+  // Wallet: həftəlik limit sıfırla
+  resetWeeklyLimitsIfNeeded();
 
-// Əmlak həftəlik xərcləri (vergi+kommunal), cərimə və satış
+  // Wallet: həftə başladı mı?
+  const currentWeek = getWeekNumber(state.day);
+  const prevWeek    = getWeekNumber(state.day - 1);
+  if (currentWeek > prevWeek) {
+    processWeeklyCardEvents(currentWeek);
+  }
+
+  // Wallet: vault yoxlama
+  processVaultMaturity();
+
+  // Əmlak xərcləri və gəlir
   processPropertyExpenses();
-
-  // Əmlakdan passiv gəlir
   processPropertyIncome();
+
   saveState();
   renderAll();
   showToast("Gün " + state.day + " başladı");
@@ -1427,7 +1658,7 @@ function advanceDay() {
 function renderAll() {
   renderHome();
   renderAssetList();
-  renderBank();
+  renderWallet();
   renderNewsFeed();
   if (currentDetailAssetId) renderAssetDetail();
   if (activeInvTab==="portfolio") renderPortfolio();
@@ -1437,16 +1668,16 @@ function renderAll() {
    HADİSƏ DİNLƏYİCİLƏRİ
 ────────────────────────────────────────────────────────── */
 function setupEventListeners() {
-  // App açılışı
+  // App ikonları
   document.querySelectorAll(".app-icon-wrap").forEach(el=>{
     el.addEventListener("click", ()=>{
       const app = el.dataset.app;
-      if (app === "travel") { openTravel(); return; }
+      if (app === "travel")     { openTravel();     return; }
       if (app === "realestate") { openRealEstate(); return; }
       navigateTo(app==="invested"?"invested":app);
-      if(app==="invested") renderAssetList();
-      if(app==="bmb") renderBank();
-      if(app==="news") renderNewsFeed();
+      if (app==="invested") renderAssetList();
+      if (app==="bmb")      renderWallet();
+      if (app==="news")     renderNewsFeed();
     });
   });
 
@@ -1455,7 +1686,7 @@ function setupEventListeners() {
     el.addEventListener("click", ()=>navigateTo(el.dataset.back));
   });
 
-  // INVESTED — Bazar filter tabları
+  // INVESTED — filter tabları
   document.querySelectorAll(".inv-tab").forEach(tab=>{
     tab.addEventListener("click", ()=>{
       document.querySelectorAll(".inv-tab").forEach(t=>t.classList.remove("active"));
@@ -1465,7 +1696,7 @@ function setupEventListeners() {
     });
   });
 
-  // INVESTED — Market / Portfolio əsas tabları
+  // INVESTED — market/portfolio tabları
   document.querySelectorAll(".inv-main-tab").forEach(tab=>{
     tab.addEventListener("click", ()=>switchInvTab(tab.dataset.mainTab));
   });
@@ -1473,18 +1704,18 @@ function setupEventListeners() {
   // Növbəti gün
   document.getElementById("btn-advance-day").addEventListener("click", advanceDay);
 
-  // Trade butonları
-  document.getElementById("btn-open-buy").addEventListener("click",    ()=>openTradeModal("buy_long"));
-  document.getElementById("btn-open-sell").addEventListener("click",   ()=>openTradeModal("sell_long"));
-  document.getElementById("btn-open-short").addEventListener("click",  ()=>openTradeModal("open_short"));
+  // Trade düymələri
+  document.getElementById("btn-open-buy").addEventListener("click",     ()=>openTradeModal("buy_long"));
+  document.getElementById("btn-open-sell").addEventListener("click",    ()=>openTradeModal("sell_long"));
+  document.getElementById("btn-open-short").addEventListener("click",   ()=>openTradeModal("open_short"));
   document.getElementById("btn-open-long-lev").addEventListener("click",()=>openTradeModal("open_long_lev"));
 
   // Trade modal
-  document.getElementById("btn-modal-cancel").addEventListener("click", closeTradeModal);
+  document.getElementById("btn-modal-cancel").addEventListener("click",  closeTradeModal);
   document.getElementById("btn-modal-confirm").addEventListener("click", confirmTrade);
   document.getElementById("tm-quantity-input").addEventListener("input", updateTradeTotal);
 
-  // Leverage düymələri
+  // Leverage
   document.querySelectorAll(".lev-btn").forEach(btn=>{
     btn.addEventListener("click", ()=>{
       document.querySelectorAll(".lev-btn").forEach(b=>b.classList.remove("active"));
@@ -1494,29 +1725,63 @@ function setupEventListeners() {
     });
   });
 
-  // Mövqə bağlama modal
-  document.getElementById("btn-close-pos-cancel").addEventListener("click", closeClosePosModal);
+  // Mövqə bağlama
+  document.getElementById("btn-close-pos-cancel").addEventListener("click",  closeClosePosModal);
   document.getElementById("btn-close-pos-confirm").addEventListener("click", confirmClosePos);
 
-  // Transfer modal
-  document.getElementById("btn-transfer-to-invested").addEventListener("click", ()=>openTransferModal("toInvested"));
-  document.getElementById("btn-transfer-to-bank").addEventListener("click",     ()=>openTransferModal("toBank"));
-  document.getElementById("btn-transfer-cancel").addEventListener("click",  closeTransferModal);
-  document.getElementById("btn-transfer-confirm").addEventListener("click", confirmTransfer);
+  // ── WALLET listener-ları ──
+  document.getElementById("btn-wallet-transfer").addEventListener("click", openWalletTransferModal);
+  document.getElementById("btn-wallet-vault").addEventListener("click",    openVaultModal);
+  document.getElementById("btn-wallet-set-primary").addEventListener("click", () => {
+    const card = state.cards[walletActiveCardIndex];
+    if (card) {
+      state.primaryCardId = card.id;
+      saveState();
+      renderWalletCarousel();
+      showToast("⭐ Əsas kart dəyişdirildi");
+    }
+  });
+  document.getElementById("btn-add-card").addEventListener("click",        openAddCardModal);
+  document.getElementById("btn-addcard-cancel").addEventListener("click",  () =>
+    document.getElementById("wallet-addcard-overlay").classList.remove("active"));
+  document.getElementById("btn-addcard-confirm").addEventListener("click", confirmAddCard);
+
+  document.getElementById("btn-wt-cancel").addEventListener("click",  () =>
+    document.getElementById("wallet-transfer-overlay").classList.remove("active"));
+  document.getElementById("btn-wt-confirm").addEventListener("click", confirmWalletTransfer);
+
+  document.getElementById("btn-vault-cancel").addEventListener("click",  () =>
+    document.getElementById("wallet-vault-overlay").classList.remove("active"));
+  document.getElementById("btn-vault-confirm").addEventListener("click", confirmVault);
+
+  // Vault müddət seçimi
+  document.querySelectorAll(".vault-dur-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".vault-dur-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      vaultSelectedDays = parseInt(btn.dataset.days);
+      updateVaultPreview();
+    });
+  });
+
+  // Transfer selector dəyişəndə komisya yenilə
+  document.getElementById("wt-from-select").addEventListener("change", updateTransferFeePreview);
+  document.getElementById("wt-amount-input").addEventListener("input", updateTransferFeePreview);
+
+  // Vault məbləğ dəyişəndə preview yenilə
+  document.getElementById("vault-amount-input").addEventListener("input", updateVaultPreview);
 
   // Travel — köç düyməsi
   document.getElementById("btn-travel-move").addEventListener("click", () => {
     if (!selectedCityId) return;
     const city = CITIES.find(c => c.id === selectedCityId);
     if (!city) return;
-
     const totalCost = city.visaCost + city.moveCost;
-    if (state.bankBalance < city.minBalance + totalCost) return;
-
-    state.bankBalance -= totalCost;
+    const card      = getPrimaryCard();
+    if (!card || getPrimaryBalance() < city.minBalance + totalCost) return;
+    card.balance -= totalCost;
     state.currentCity = city.id;
     addTransaction(`${city.name}-ə köçmə xərci`, totalCost, "out", "TRAVEL");
-
     saveState();
     renderHome();
     showToast(`🌍 ${city.name}-ə köçdün! -${fmtMoney(totalCost)}`);
@@ -1526,11 +1791,11 @@ function setupEventListeners() {
     renderCityList();
   });
 
-  // RealEstate — modal
-  document.getElementById("btn-re-modal-cancel").addEventListener("click", closeREModal);
+  // RealEstate modal
+  document.getElementById("btn-re-modal-cancel").addEventListener("click",  closeREModal);
   document.getElementById("btn-re-modal-confirm").addEventListener("click", confirmREModal);
 
-  // RealEstate — tab / filter
+  // RealEstate tab/filter
   document.querySelectorAll(".re-tab").forEach(tab => {
     tab.addEventListener("click", () => {
       document.querySelectorAll(".re-tab").forEach(t => t.classList.remove("active"));
@@ -1557,13 +1822,39 @@ function setupEventListeners() {
 ────────────────────────────────────────────────────────── */
 function start() {
   const loaded = loadState();
-  if (!loaded || !state.priceHistory || Object.keys(state.priceHistory).length===0) {
+  if (!loaded || !state.priceHistory || Object.keys(state.priceHistory).length === 0) {
     initFreshState();
   } else {
     Engine.init(state.engineState);
-    if (!state.positions) state.positions = [];
-    if (!state.currentCity) state.currentCity = "baku";
+    if (!state.positions)       state.positions = [];
+    if (!state.currentCity)     state.currentCity = "baku";
     if (!state.ownedProperties) state.ownedProperties = [];
+    // Köhnə state-dən migration: bankBalance → cards
+    if (state.bankBalance !== undefined && !state.cards) {
+      state.cards = [{
+        id: "kapitan_standard_" + Date.now(),
+        bankId: "kapitan",
+        tier: "standard",
+        balance: state.bankBalance,
+        vault: null,
+        weeklyTransferUsed: 0,
+        lastWeekNumber: getWeekNumber(state.day),
+        subscriptionPaidUntilWeek: null
+      }];
+      state.primaryCardId = state.cards[0].id;
+      delete state.bankBalance;
+    }
+    if (!state.cards || !state.cards.length) {
+      state.cards = [{
+        id: "kapitan_standard_" + Date.now(),
+        bankId: "kapitan", tier: "standard",
+        balance: 0, vault: null,
+        weeklyTransferUsed: 0,
+        lastWeekNumber: getWeekNumber(state.day),
+        subscriptionPaidUntilWeek: null
+      }];
+    }
+    if (!state.primaryCardId) state.primaryCardId = state.cards[0].id;
   }
   setupEventListeners();
   renderAll();
