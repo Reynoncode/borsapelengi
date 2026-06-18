@@ -1167,7 +1167,6 @@ body {
 }
 
 .re-owned-card {
-  display: flex; align-items: center; gap: 12px;
   padding: 14px;
   background: var(--c-surface);
   border: 1px solid var(--c-border);
