@@ -1312,3 +1312,122 @@ body {
   border-color: var(--c-gold);
   color: var(--c-gold);
 }
+/* ── RE Owned Cards ── */
+.re-owned-card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 14px;
+  padding: 14px;
+  margin: 0 12px 10px;
+  transition: border-color .15s;
+}
+.re-owned-card.has-debt {
+  border-color: var(--c-down);
+  background: color-mix(in srgb, var(--c-down) 6%, var(--c-surface));
+}
+.re-oc-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.re-oc-icon-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.re-oc-icon { font-size: 24px; }
+.re-oc-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text-primary);
+}
+.re-oc-type {
+  font-size: 11px;
+  color: var(--c-text-secondary);
+  margin-top: 1px;
+}
+.re-oc-income-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #1FD67A;
+  background: rgba(31,214,122,0.1);
+  border: 1px solid rgba(31,214,122,0.2);
+  border-radius: 8px;
+  padding: 3px 8px;
+  white-space: nowrap;
+}
+.re-oc-expense {
+  font-size: 11px;
+  color: var(--c-text-tertiary);
+  margin-bottom: 8px;
+}
+.re-oc-debt {
+  font-size: 11px;
+  color: var(--c-down);
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+.re-oc-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--c-border);
+}
+.re-oc-btns {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.re-oc-toggle {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid var(--c-border);
+  background: transparent;
+  color: var(--c-text-secondary);
+}
+.re-oc-toggle.on {
+  border-color: rgba(31,214,122,0.4);
+  color: #1FD67A;
+  background: rgba(31,214,122,0.08);
+}
+.re-oc-toggle.off {
+  border-color: rgba(255,76,94,0.4);
+  color: var(--c-down);
+  background: rgba(255,76,94,0.06);
+}
+.re-oc-change-biz {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid var(--c-border);
+  background: transparent;
+  color: var(--c-text-secondary);
+}
+.re-oc-change-biz:hover { color: var(--c-text-primary); }
+.re-oc-sell {
+  font-size: 11px;
+  padding: 5px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid rgba(232,163,61,0.4);
+  background: rgba(232,163,61,0.08);
+  color: #E8A33D;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.re-oc-sell:hover {
+  background: rgba(232,163,61,0.15);
+}
+.re-empty {
+  text-align: center;
+  padding: 40px 16px;
+  color: var(--c-text-secondary);
+  font-size: 13px;
+}
