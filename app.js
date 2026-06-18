@@ -950,6 +950,7 @@ function openChangeBusinessModal(idx) {
     showToast("Bu əmlak üçün biznes dəyişdirilə bilməz");
     return;
   }
+  selectedPropertyId = p.id; // confirmREModal-da düzgün əmlakın istifadə olunması üçün
 
   const overlay = document.getElementById("re-modal-overlay");
   document.getElementById("re-modal-title").textContent = "Biznesi dəyiş";
@@ -979,7 +980,8 @@ function openChangeBusinessModal(idx) {
       <div class="re-biz-card ${isCurrent ? "selected" : ""}" data-biz="${biz.id}">
         <div class="re-biz-icon">${biz.icon}</div>
         <div class="re-biz-name">${biz.name}</div>
-        <div class="re-biz-income">${fmtMoney(incomeData.min)}–${fmtMoney(incomeData.max)}/ay</div>
+        <div class="re-biz-income">${fmtMoney(incomeData.min)}–${fmtMoney(incomeData.max)}/həftə</div>
+        <div class="re-biz-setup">Quraşdırma: ${fmtMoney(biz.setupCost)}</div>
       </div>`;
   }).join("");
 
@@ -987,8 +989,22 @@ function openChangeBusinessModal(idx) {
     card.addEventListener("click", () => {
       gridWrap.querySelectorAll(".re-biz-card").forEach(c => c.classList.remove("selected"));
       card.classList.add("selected");
+      const biz = BUSINESS_TYPES.find(b => b.id === card.dataset.biz);
+      document.getElementById("re-modal-cost").textContent = fmtMoney(biz.setupCost);
+      const incomeData = calcPropertyIncome(p, "business", biz.id);
+      document.getElementById("re-modal-income").textContent = `${fmtMoney(incomeData.min)}–${fmtMoney(incomeData.max)}/həftə`;
     });
   });
+
+  // İlkin görünüş: hazırkı seçili (və ya heç biri) üçün xərc/gəlir göstər
+  const initialSelected = gridWrap.querySelector(".re-biz-card.selected");
+  if (initialSelected) {
+    const biz = BUSINESS_TYPES.find(b => b.id === initialSelected.dataset.biz);
+    document.getElementById("re-modal-cost").textContent = fmtMoney(biz.setupCost);
+    const incomeData = calcPropertyIncome(p, "business", biz.id);
+    document.getElementById("re-modal-income").textContent = `${fmtMoney(incomeData.min)}–${fmtMoney(incomeData.max)}/həftə`;
+  }
+  document.getElementById("re-modal-cost-label").textContent = "Quraşdırma xərci";
 
   reModalAction = "change_business";
   overlay.classList.add("active");
@@ -1076,7 +1092,7 @@ function openREModal(action, property) {
 
     // Kirayəyə vermə gəliri
     const rentIncome = calcPropertyIncome(property, "rent_out");
-    document.getElementById("re-modal-income").textContent = `${fmtMoney(rentIncome)}/ay (kirayəyə versən)`;
+    document.getElementById("re-modal-income").textContent = `${fmtMoney(rentIncome)}/həftə (kirayəyə versən)`;
 
     const canAfford = state.bankBalance >= property.buyPrice;
     document.getElementById("re-modal-error").style.display = canAfford ? "none" : "block";
@@ -1113,7 +1129,7 @@ function confirmREModal() {
     state.bankBalance -= p.buyPrice;
 
     // Biznes seçildi mi?
-    const selectedBiz = document.querySelector(".re-biz-card.selected");
+    const selectedBiz = document.querySelector("#re-business-grid .re-biz-card.selected");
     let ownershipType = "rent_out";
     let businessTypeId = null;
     let monthlyIncome;
