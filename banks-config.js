@@ -22,7 +22,6 @@ const BANKS = [
         name: "KapitanBank Standart",
         weeklyFreeLimit: 10000,
         overLimitFeeRate: 0.005,      // 0.5%
-        feeWaiveMinBalance: 5000,     // bu balansı saxlasa komisya silinir
         weeklyInterestRate: 0.0015,   // 0.15% həftəlik, cüzi
         vaultMonthlyRate: 0.10,       // xəzinə üçün aylıq 10%
         subscriptionFee: 0
@@ -34,7 +33,7 @@ const BANKS = [
         subscriptionFee: 25,          // həftəlik
         weeklyFreeLimit: 50000,
         overLimitFeeRate: 0.003,
-        feeWaiveMinBalance: 20000,
+        feeWaiveMinBalance: 200000,
         weeklyInterestRate: 0.006,
         vaultMonthlyRate: 0.12
       },
@@ -62,7 +61,6 @@ const BANKS = [
         name: "LoeBank Standart",
         weeklyFreeLimit: 8000,
         overLimitFeeRate: 0.006,
-        feeWaiveMinBalance: 6000,
         weeklyInterestRate: 0.001,
         vaultMonthlyRate: 0.10,
         subscriptionFee: 0
@@ -74,7 +72,7 @@ const BANKS = [
         subscriptionFee: 20,
         weeklyFreeLimit: 45000,
         overLimitFeeRate: 0.0025,
-        feeWaiveMinBalance: 18000,
+        feeWaiveMinBalance: 180000,
         weeklyInterestRate: 0.007,
         vaultMonthlyRate: 0.13
       },
@@ -102,7 +100,6 @@ const BANKS = [
         name: "AAB Standart",
         weeklyFreeLimit: 12000,
         overLimitFeeRate: 0.004,
-        feeWaiveMinBalance: 4000,
         weeklyInterestRate: 0.002,
         vaultMonthlyRate: 0.11,
         subscriptionFee: 0
@@ -114,7 +111,7 @@ const BANKS = [
         subscriptionFee: 22,
         weeklyFreeLimit: 55000,
         overLimitFeeRate: 0.002,
-        feeWaiveMinBalance: 22000,
+        feeWaiveMinBalance: 220000,
         weeklyInterestRate: 0.0065,
         vaultMonthlyRate: 0.12
       },
@@ -142,14 +139,14 @@ const BANKS = [
       standard: {
         tier: "standard", name: "BayPal Standart",
         weeklyFreeLimit: 11000, overLimitFeeRate: 0.005,
-        feeWaiveMinBalance: 5500, weeklyInterestRate: 0.0018,
+        weeklyInterestRate: 0.0018,
         vaultMonthlyRate: 0.105, subscriptionFee: 0
       },
       gold: {
         tier: "gold", name: "BayPal Gold",
         requiredNetWorth: 100000, subscriptionFee: 24,
         weeklyFreeLimit: 52000, overLimitFeeRate: 0.0028,
-        feeWaiveMinBalance: 21000, weeklyInterestRate: 0.0068,
+        feeWaiveMinBalance: 210000, weeklyInterestRate: 0.0068,
         vaultMonthlyRate: 0.125
       },
       lux: {
@@ -170,14 +167,14 @@ const BANKS = [
       standard: {
         tier: "standard", name: "Barklis Standart",
         weeklyFreeLimit: 9500, overLimitFeeRate: 0.0055,
-        feeWaiveMinBalance: 5800, weeklyInterestRate: 0.0017,
+        weeklyInterestRate: 0.0017,
         vaultMonthlyRate: 0.108, subscriptionFee: 0
       },
       gold: {
         tier: "gold", name: "Barklis Gold",
         requiredNetWorth: 100000, subscriptionFee: 23,
         weeklyFreeLimit: 48000, overLimitFeeRate: 0.0027,
-        feeWaiveMinBalance: 19000, weeklyInterestRate: 0.0066,
+        feeWaiveMinBalance: 190000, weeklyInterestRate: 0.0066,
         vaultMonthlyRate: 0.122
       },
       lux: {
@@ -198,7 +195,7 @@ const BANKS = [
       standard: {
         tier: "standard", name: "TokyuBank Standart",
         weeklyFreeLimit: 10500, overLimitFeeRate: 0.0045,
-        feeWaiveMinBalance: 5200, weeklyInterestRate: 0.0016,
+        weeklyInterestRate: 0.0016,
         vaultMonthlyRate: 0.102, subscriptionFee: 0
       },
       gold: {
