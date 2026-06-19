@@ -499,7 +499,13 @@ function renderAssetNewsHistory(assetId) {
   const relevant = state.newsFeed.filter(n=>n.assetId===assetId).slice(0,5);
   const c = document.getElementById("detail-news-list");
   if (relevant.length===0) { c.innerHTML='<div class="empty-state">Bu aktivlə bağlı hələ xəbər yoxdur</div>'; return; }
-  c.innerHTML = relevant.map(n=>renderNewsCard(n,(Math.abs(hashCode(n.title+n.day))%5)+1)).join("");
+  c.innerHTML = relevant.map(n=>{
+    const daysAgo = state.day - n.day;
+    const daysAgoLabel = daysAgo === 0 ? "Bu gün" : daysAgo === 1 ? "1 gün əvvəl" : `${daysAgo} gün əvvəl`;
+    const baseCard = renderNewsCard(n,(Math.abs(hashCode(n.title+n.day))%5)+1);
+    // Insert days-ago badge before closing tag of first div
+    return baseCard.replace(/(<div class="news-card [^"]+">)/, `$1<div class="nc-days-ago">${daysAgoLabel}</div>`);
+  }).join("");
 }
 
 /* ──────────────────────────────────────────────────────────
@@ -994,12 +1000,24 @@ function renderNewsCard(newsItem, tNum) {
 function renderNewsFeed() {
   const c = document.getElementById("news-feed");
   if (state.newsFeed.length===0) { c.innerHTML='<div class="empty-state">Hələ xəbər yoxdur. "İrəli ▶" basaraq başla.</div>'; return; }
+
+  // Yalnız son 5 günün xəbərləri
+  const cutoffDay = state.day - 5;
+  const recentNews = state.newsFeed.filter(n => n.day > cutoffDay);
+
+  if (recentNews.length === 0) {
+    c.innerHTML = '<div class="empty-state">Son 5 gündə xəbər yoxdur.</div>';
+    return;
+  }
+
   const byDay={};
-  state.newsFeed.forEach(n=>{ if(!byDay[n.day]) byDay[n.day]=[]; byDay[n.day].push(n); });
+  recentNews.forEach(n=>{ if(!byDay[n.day]) byDay[n.day]=[]; byDay[n.day].push(n); });
   const days=Object.keys(byDay).map(Number).sort((a,b)=>b-a);
   let html="";
   days.forEach(day=>{
-    html+=`<div class="day-divider">Gün ${day}</div>`;
+    const daysAgo = state.day - day;
+    const daysAgoLabel = daysAgo === 0 ? "Bu gün" : daysAgo === 1 ? "1 gün əvvəl" : `${daysAgo} gün əvvəl`;
+    html+=`<div class="day-divider">Gün ${day} <span class="day-ago-badge">${daysAgoLabel}</span></div>`;
     byDay[day].forEach(n=>{ html+=renderNewsCard(n,(Math.abs(hashCode(n.title+n.day))%5)+1); });
   });
   c.innerHTML=html;
@@ -1610,15 +1628,19 @@ function processPropertyIncome() {
 ────────────────────────────────────────────────────────── */
 function advanceDay() {
   Engine.init(state.engineState);
-  const todaysNews = Engine.publishDailyNews(ASSETS, NEWS);
-  todaysNews.forEach(n=>{ state.newsFeed.unshift({...n, day:state.day, applied:false}); });
-  state.unseenNewsCount += todaysNews.length;
+
+  // 1. Əvvəlcə mövcud effektləri tətbiq edib qiyməti irəlilət (köhnə xəbərlərin növbəti gün təsiri)
   const result = Engine.advanceDay(ASSETS, state.priceHistory, state.day);
   result.activatedNews.forEach(a=>{
     const m = state.newsFeed.find(n=>n.title===a.title && !n.applied && n.assetId===a.assetId);
     if(m) m.applied=true;
   });
   state.day = result.day;
+
+  // 2. Sonra YENİ günün xəbərlərini yayımla (növbəti günə qədər pending qalacaq)
+  const todaysNews = Engine.publishDailyNews(ASSETS, NEWS);
+  todaysNews.forEach(n=>{ state.newsFeed.unshift({...n, day:state.day, applied:false}); });
+  state.unseenNewsCount += todaysNews.length;
   state.engineState = Engine.getState();
 
   // Margin call
