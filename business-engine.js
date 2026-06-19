@@ -328,5 +328,22 @@ function _cleanupUnitsIfDone(biz, ap) {
 const BusinessEngine = {
   processDay: function(state) {
     tickProjects(state);
+  },
+  processWeeklyIncome: function(state) {
+    // tickProjects artıq həftəlik income-u idarə edir
+    // bu çağırış əlavə bir şey etmir, sadəcə xəta verməsin
+  },
+  getTotalInvested: function(state) {
+    if (!state.businesses) return 0;
+    let total = 0;
+    for (const biz of state.businesses) {
+      const type = getType(biz.typeId);
+      if (type) total += type.unlockCost;
+      for (const ap of biz.activeProjects) {
+        const proj = type && type.projects.find(p => p.id === ap.projectId);
+        if (proj) total += proj.costToBuild;
+      }
+    }
+    return total;
   }
 };
