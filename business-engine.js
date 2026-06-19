@@ -1,274 +1,326 @@
-/* ============================================================
-   BUSINESS-ENGINE.JS — Biznes Mühərriki
-   ============================================================
-   state.businesses = [
-     {
-       id: unique,
-       typeId: "construction",
-       unlockedDay: 3,
-       activeProjects: [
-         {
-           id: unique,
-           projectId: "c_cottage",
-           startDay: 5,
-           endDay: 19,
-           costPaid: 50000,
-           status: "building" | "ready" | "completed",
-           // deliverable=units xüsusiyyətləri:
-           units: [
-             { id, status: "unsold"|"sold"|"rented", weeklyRent: 0 }
-           ]
-         }
-       ],
-       // deliverable=income üçün aktiv gəlir mənbələri:
-       incomeStreams: [
-         { projectId: "u_online", weeklyIncome: 50000, startDay: 20 }
-       ]
-     }
-   ]
-============================================================ */
+// business-engine.js
+// Tələb: business-data.js əvvəlcədən yüklənmiş olmalıdır (BIZ_COMPANY_TYPES mövcud olmalıdır)
 
-const BusinessEngine = (() => {
+// ─── Köməkçi: tip tapma ─────────────────────────────────────────────────────
+function getType(typeId) {
+  return BIZ_COMPANY_TYPES.find(t => t.id === typeId) || null;
+}
 
-  /* ──────────────────────────────────────────────────────────
-     KÖMƏKÇİLƏR
-  ────────────────────────────────────────────────────────── */
-  function uid() {
-    return "biz_" + Date.now() + "_" + Math.floor(Math.random() * 100000);
+// ─── Köməkçi: timestamp-dən gün hesabı ────────────────────────────────────
+function daysBetween(tsA, tsB) {
+  return (tsB - tsA) / (1000 * 60 * 60 * 24);
+}
+
+// ─── Biznes açma ───────────────────────────────────────────────────────────
+/**
+ * primary = oyun state-i (primary.balance, primary.businesses = [])
+ * typeId  = açılacaq biznes tipi
+ */
+function unlockBusiness(primary, typeId) {
+  const type = getType(typeId);
+  if (!type) return { ok: false, msg: "Bilinməyən biznes tipi" };
+
+  // Artıq açıqdır?
+  if (primary.businesses && primary.businesses.find(b => b.typeId === typeId)) {
+    return { ok: false, msg: "Bu biznes artıq açıqdır" };
   }
 
-  function getType(typeId) {
-     return BIZ_COMPANY_TYPES.find(t => t.id === typeId);
-   }
-   
-  function getProject(typeId, projectId) {
-    const t = getType(typeId);
-    return t ? t.projects.find(p => p.id === projectId) : null;
+  // Balans yoxlaması (unlockCost)
+  if (primary.balance < type.unlockCost) {
+    return { ok: false, msg: "Açılış üçün kifayət qədər balans yoxdur" };
   }
 
-  /* ──────────────────────────────────────────────────────────
-     BİZNES UNLOCK
-  ────────────────────────────────────────────────────────── */
-  function unlockBusiness(state, typeId) {
-    const type = getType(typeId);
-    if (!type) return { ok: false, msg: "Bilinməyən biznes tipi" };
-    if (state.businesses.some(b => b.typeId === typeId))
-      return { ok: false, msg: "Bu biznes artıq açılıb" };
-
-    const primary = getPrimaryCard(); // app.js funksiyası
-    if (primary.balance < type.unlockCost)
-      return { ok: false, msg: "Kifayət qədər balans yoxdur" };
-
-    primary.balance -= type.unlockCost;
-    addTransaction(`${type.name} açıldı`, type.unlockCost, "out", "BUSINESS");
-
-    state.businesses.push({
-      id: uid(),
-      typeId,
-      unlockedDay: state.day,
-      activeProjects: [],
-      incomeStreams: []
-    });
-
-    return { ok: true };
+  // Tələb olunan minimum balans yoxlaması
+  if (primary.balance < type.requiredBalance) {
+    return { ok: false, msg: "Kifayət qədər bank balansı yoxdur" };
   }
 
-  /* ──────────────────────────────────────────────────────────
-     PROYEKT BAŞLAT
-  ────────────────────────────────────────────────────────── */
-  function startProject(state, businessId, projectId) {
-    const biz = state.businesses.find(b => b.id === businessId);
-    if (!biz) return { ok: false, msg: "Biznes tapılmadı" };
+  primary.balance -= type.unlockCost;
 
-    const proj = getProject(biz.typeId, projectId);
-    if (!proj) return { ok: false, msg: "Proyekt tapılmadı" };
+  if (!primary.businesses) primary.businesses = [];
+  primary.businesses.push({
+    typeId,
+    name: type.name,
+    unlockedAt: Date.now(),
+    activeProjects: [],   // { projectId, startedAt, deliverable, ... }
+    completedPlatforms: [] // course_platform deliverable üçün
+  });
 
-    const primary = getPrimaryCard();
-    if (primary.balance < proj.costToBuild)
-      return { ok: false, msg: "Kifayət qədər balans yoxdur" };
+  return { ok: true, msg: `${type.name} uğurla açıldı` };
+}
 
-    primary.balance -= proj.costToBuild;
-    addTransaction(`${proj.name} başladıldı`, proj.costToBuild, "out", "BUSINESS");
+// ─── Proyekt başlatma ───────────────────────────────────────────────────────
+/**
+ * primary   = oyun state-i
+ * typeId    = biznes tipi id-si
+ * projectId = proyekt id-si
+ */
+function startProject(primary, typeId, projectId) {
+  const type = getType(typeId);
+  if (!type) return { ok: false, msg: "Bilinməyən biznes tipi" };
 
-    const endDay = state.day + proj.durationDays;
+  const biz = primary.businesses && primary.businesses.find(b => b.typeId === typeId);
+  if (!biz) return { ok: false, msg: "Bu biznes açılmayıb" };
 
-    const entry = {
-      id: uid(),
-      projectId: proj.id,
-      startDay: state.day,
-      endDay,
-      costPaid: proj.costToBuild,
-      status: "building"
-    };
+  const proj = type.projects.find(p => p.id === projectId);
+  if (!proj) return { ok: false, msg: "Bilinməyən proyekt" };
 
-    // Units deliverable üçün
-    if (proj.deliverable === "units") {
-      entry.units = Array.from({ length: proj.unitCount }, (_, i) => ({
-        id: uid(),
-        idx: i + 1,
-        status: "unsold"
-      }));
+  // Limit yoxlaması (enerji şirkəti üçün limit yoxdur)
+  if (!type.noProjectLimit) {
+    const alreadyRunning = biz.activeProjects.filter(ap => ap.projectId === projectId);
+    if (alreadyRunning.length > 0) {
+      return { ok: false, msg: "Bu proyekt artıq davam edir" };
     }
-
-    biz.activeProjects.push(entry);
-    return { ok: true, endDay };
   }
 
-  /* ──────────────────────────────────────────────────────────
-     PROYEKT SATIŞI (sell deliverable)
-  ────────────────────────────────────────────────────────── */
-  function sellProject(state, businessId, projectEntryId) {
-    const biz = state.businesses.find(b => b.id === businessId);
-    if (!biz) return { ok: false, msg: "Tapılmadı" };
-    const entry = biz.activeProjects.find(e => e.id === projectEntryId);
-    if (!entry || entry.status !== "ready") return { ok: false, msg: "Proyekt hazır deyil" };
-
-    const proj = getProject(biz.typeId, entry.projectId);
-    const primary = getPrimaryCard();
-    primary.balance += proj.sellValue;
-    addTransaction(`${proj.name} satıldı`, proj.sellValue, "in", "BUSINESS");
-
-    entry.status = "completed";
-    biz.activeProjects = biz.activeProjects.filter(e => e.id !== projectEntryId);
-    return { ok: true, earned: proj.sellValue };
+  if (primary.balance < proj.costToBuild) {
+    return { ok: false, msg: "Proyekt üçün kifayət qədər balans yoxdur" };
   }
 
-  /* ──────────────────────────────────────────────────────────
-     UNIT SAT (units deliverable)
-  ────────────────────────────────────────────────────────── */
-  function sellUnit(state, businessId, projectEntryId, unitId) {
-    const biz = state.businesses.find(b => b.id === businessId);
-    const entry = biz?.activeProjects.find(e => e.id === projectEntryId);
-    const unit = entry?.units?.find(u => u.id === unitId);
-    if (!unit || unit.status !== "unsold") return { ok: false, msg: "Unit satıla bilməz" };
-    if (entry.status !== "ready") return { ok: false, msg: "Proyekt hələ hazır deyil" };
+  primary.balance -= proj.costToBuild;
 
-    const proj = getProject(biz.typeId, entry.projectId);
-    const primary = getPrimaryCard();
-    primary.balance += proj.unitSellValue;
-    addTransaction(`${proj.name} — Unit #${unit.idx} satıldı`, proj.unitSellValue, "in", "BUSINESS");
+  biz.activeProjects.push({
+    projectId,
+    name: proj.name,
+    deliverable: proj.deliverable,
+    startedAt: Date.now(),
+    durationMs: proj.durationDays * 24 * 60 * 60 * 1000,
+    // sell
+    sellValue: proj.sellValue || null,
+    // income
+    weeklyIncome: proj.weeklyIncome || null,
+    lastIncomeCollected: proj.deliverable === "income" ? Date.now() : null,
+    // units
+    unitCount: proj.unitCount || null,
+    unitSellValue: proj.unitSellValue || null,
+    unitRentalWeekly: proj.unitRentalWeekly || null,
+    canTransferToRE: proj.canTransferToRE || false,
+    // course_platform
+    maxCourses: proj.maxCourses || null,
+    courseConfig: proj.courseConfig || null,
+    completed: false
+  });
 
-    unit.status = "sold";
-    _checkAllUnitsComplete(biz, entry, proj);
-    return { ok: true, earned: proj.unitSellValue };
-  }
+  return { ok: true, msg: `${proj.name} başladıldı` };
+}
 
-  /* ──────────────────────────────────────────────────────────
-     UNIT KİRAYƏ VER (units deliverable)
-  ────────────────────────────────────────────────────────── */
-  function rentUnit(state, businessId, projectEntryId, unitId) {
-    const biz = state.businesses.find(b => b.id === businessId);
-    const entry = biz?.activeProjects.find(e => e.id === projectEntryId);
-    const unit = entry?.units?.find(u => u.id === unitId);
-    if (!unit || unit.status !== "unsold") return { ok: false, msg: "Unit kirayə verilə bilməz" };
-    if (entry.status !== "ready") return { ok: false, msg: "Proyekt hələ hazır deyil" };
+// ─── Proyekti tamamla / satış al ────────────────────────────────────────────
+/**
+ * Hər oyun tick-ında (məsələn timer ilə) çağırılır.
+ * Tamamlanmış proyektləri işləyir.
+ */
+function tickProjects(primary) {
+  if (!primary.businesses) return;
+  const now = Date.now();
 
-    const proj = getProject(biz.typeId, entry.projectId);
-    unit.status = "rented";
-    unit.weeklyRent = proj.unitRentalWeekly;
+  for (const biz of primary.businesses) {
+    const type = getType(biz.typeId);
 
-    // incomeStream əlavə et
-    biz.incomeStreams.push({
-      id: uid(),
-      label: `${proj.name} — Unit #${unit.idx} kirayə`,
-      weeklyIncome: proj.unitRentalWeekly,
-      startDay: state.day,
-      sourceType: "unit",
-      projectEntryId,
-      unitId
-    });
+    // Active proyektlər
+    for (const ap of biz.activeProjects) {
+      const elapsed = now - ap.startedAt;
 
-    addTransaction(`${proj.name} — Unit #${unit.idx} kirayəyə verildi`, 0, "in", "BUSINESS");
-    _checkAllUnitsComplete(biz, entry, proj);
-    return { ok: true };
-  }
+      if (!ap.completed && elapsed >= ap.durationMs) {
+        ap.completed = true;
 
-  function _checkAllUnitsComplete(biz, entry, proj) {
-    if (!entry.units) return;
-    const allDone = entry.units.every(u => u.status !== "unsold");
-    if (allDone) entry.status = "completed";
-  }
-
-  /* ──────────────────────────────────────────────────────────
-     GÜN KEÇ — proyektləri yoxla, gəlir ver
-  ────────────────────────────────────────────────────────── */
-  function processDay(state) {
-    if (!state.businesses) return;
-
-    state.businesses.forEach(biz => {
-      // Building → Ready
-      biz.activeProjects.forEach(entry => {
-        if (entry.status === "building" && state.day >= entry.endDay) {
-          entry.status = "ready";
-          const proj = getProject(biz.typeId, entry.projectId);
-          const type = getType(biz.typeId);
-          showToast(`✅ ${type.name}: ${proj.name} hazırdır!`);
-
-          // income deliverable → dərhal incomeStream başlat
-          if (proj.deliverable === "income") {
-            biz.incomeStreams.push({
-              id: uid(),
-              label: proj.name,
-              weeklyIncome: proj.weeklyIncome,
-              startDay: state.day,
-              sourceType: "project",
-              projectEntryId: entry.id
-            });
-            entry.status = "completed"; // auto-complete
-            biz.activeProjects = biz.activeProjects.filter(e => e.id !== entry.id);
-          }
+        if (ap.deliverable === "sell") {
+          // Birdəfəlik satış
+          primary.balance += ap.sellValue;
+          // Bu proyekti active listdən sil
+          _removeActiveProject(biz, ap);
         }
-      });
-    });
-  }
+        else if (ap.deliverable === "units") {
+          // unit sistemi — tamamlandı, satış/kirayə seçimi player-a verilir
+          ap.completedAt = now;
+        }
+        else if (ap.deliverable === "income") {
+          // income-generatingdır — silinmir, hər həftə qazanc verir
+          ap.completedAt = now;
+        }
+        else if (ap.deliverable === "course_platform") {
+          // Kurs platforması tamamlandı — completedPlatforms-a əlavə et
+          biz.completedPlatforms.push({
+            projectId: ap.projectId,
+            name: ap.name,
+            completedAt: now,
+            maxCourses: ap.maxCourses,
+            courseConfig: ap.courseConfig,
+            activeCourses: [],   // { courseId, startedAt, durationMs, revenue, collected }
+            finishedCourses: []  // bitmiş, qazancı alınmamış kurslar
+          });
+          _removeActiveProject(biz, ap);
+        }
+      }
 
-  /* ──────────────────────────────────────────────────────────
-     HƏFTƏLIK GƏLİR
-  ────────────────────────────────────────────────────────── */
-  function processWeeklyIncome(state) {
-    if (!state.businesses) return;
-    let totalEarned = 0;
+      // Income toplama (hər həftə)
+      if (ap.deliverable === "income" && ap.completed) {
+        const weekMs = 7 * 24 * 60 * 60 * 1000;
+        const weeksPassed = Math.floor((now - ap.lastIncomeCollected) / weekMs);
+        if (weeksPassed > 0) {
+          primary.balance += ap.weeklyIncome * weeksPassed;
+          ap.lastIncomeCollected += weeksPassed * weekMs;
+        }
+      }
 
-    state.businesses.forEach(biz => {
-      biz.incomeStreams.forEach(stream => {
-        const primary = getPrimaryCard();
-        primary.balance += stream.weeklyIncome;
-        addTransaction(stream.label + " (həftəlik)", stream.weeklyIncome, "in", "BUSINESS");
-        totalEarned += stream.weeklyIncome;
-      });
-    });
+      // Units kirayə toplama
+      if (ap.deliverable === "units" && ap.completed && ap.unitsRented) {
+        const weekMs = 7 * 24 * 60 * 60 * 1000;
+        if (!ap.lastRentalCollected) ap.lastRentalCollected = ap.completedAt;
+        const weeksPassed = Math.floor((now - ap.lastRentalCollected) / weekMs);
+        if (weeksPassed > 0) {
+          const rentedCount = ap.unitsRented || 0;
+          primary.balance += rentedCount * ap.unitRentalWeekly * weeksPassed;
+          ap.lastRentalCollected += weeksPassed * weekMs;
+        }
+      }
+    }
 
-    if (totalEarned > 0) {
-      showToast(`💼 Biznes gəliri: +${fmtMoney(totalEarned)}`);
+    // Tamamlanmış platformlardakı kurslar
+    for (const platform of biz.completedPlatforms) {
+      const finishedNow = [];
+      for (const course of platform.activeCourses) {
+        const elapsed = now - course.startedAt;
+        if (elapsed >= course.durationMs && !course.finished) {
+          course.finished = true;
+          finishedNow.push(course);
+        }
+      }
+      // Bitmiş kursları finishedCourses-a daşı
+      for (const fc of finishedNow) {
+        platform.activeCourses = platform.activeCourses.filter(c => c.courseId !== fc.courseId);
+        platform.finishedCourses.push(fc);
+      }
     }
   }
+}
 
-  /* ──────────────────────────────────────────────────────────
-     STATS
-  ────────────────────────────────────────────────────────── */
-  function getTotalWeeklyIncome(state) {
-    if (!state.businesses) return 0;
-    return state.businesses.reduce((sum, biz) =>
-      sum + biz.incomeStreams.reduce((s, st) => s + st.weeklyIncome, 0), 0);
+// ─── Units: satış ──────────────────────────────────────────────────────────
+function sellUnits(primary, typeId, projectInstanceIndex, count) {
+  const biz = _getBiz(primary, typeId);
+  if (!biz) return { ok: false, msg: "Biznes tapılmadı" };
+
+  const ap = biz.activeProjects.filter(p => p.deliverable === "units")[projectInstanceIndex];
+  if (!ap || !ap.completed) return { ok: false, msg: "Proyekt tamamlanmayıb" };
+
+  const available = ap.unitCount - (ap.unitsSold || 0) - (ap.unitsRented || 0);
+  if (count > available) return { ok: false, msg: "Kifayət qədər unit yoxdur" };
+
+  primary.balance += count * ap.unitSellValue;
+  ap.unitsSold = (ap.unitsSold || 0) + count;
+  _cleanupUnitsIfDone(biz, ap);
+
+  return { ok: true, msg: `${count} unit satıldı` };
+}
+
+// ─── Units: kirayəyə ver ────────────────────────────────────────────────────
+function rentUnits(primary, typeId, projectInstanceIndex, count) {
+  const biz = _getBiz(primary, typeId);
+  if (!biz) return { ok: false, msg: "Biznes tapılmadı" };
+
+  const ap = biz.activeProjects.filter(p => p.deliverable === "units")[projectInstanceIndex];
+  if (!ap || !ap.completed) return { ok: false, msg: "Proyekt tamamlanmayıb" };
+
+  const available = ap.unitCount - (ap.unitsSold || 0) - (ap.unitsRented || 0);
+  if (count > available) return { ok: false, msg: "Kifayət qədər unit yoxdur" };
+
+  ap.unitsRented = (ap.unitsRented || 0) + count;
+  ap.lastRentalCollected = Date.now();
+
+  return { ok: true, msg: `${count} unit kirayəyə verildi` };
+}
+
+// ─── Kurs əlavə et ─────────────────────────────────────────────────────────
+/**
+ * typeId      = biznes tipi (university)
+ * platformIdx = completedPlatforms massivindəki index
+ */
+function addCourse(primary, typeId, platformIdx) {
+  const biz = _getBiz(primary, typeId);
+  if (!biz) return { ok: false, msg: "Biznes tapılmadı" };
+
+  const platform = biz.completedPlatforms[platformIdx];
+  if (!platform) return { ok: false, msg: "Platform tapılmadı" };
+
+  const cfg = platform.courseConfig;
+  const activeCount = platform.activeCourses.length;
+  const finishedUncollected = platform.finishedCourses.length;
+
+  if (activeCount + finishedUncollected >= platform.maxCourses) {
+    return { ok: false, msg: `Maksimum kurs limitinə çatıldı (${platform.maxCourses})` };
   }
 
-  function getTotalInvested(state) {
-    if (!state.businesses) return 0;
-    return state.businesses.reduce((sum, biz) =>
-      sum + biz.activeProjects.reduce((s, e) => s + (e.status === "building" ? e.costPaid : 0), 0), 0);
+  if (primary.balance < cfg.courseCost) {
+    return { ok: false, msg: "Kurs üçün kifayət qədər balans yoxdur" };
   }
 
-  return {
-    unlockBusiness,
-    startProject,
-    sellProject,
-    sellUnit,
-    rentUnit,
-    processDay,
-    processWeeklyIncome,
-    getTotalWeeklyIncome,
-    getTotalInvested,
-    getType,
-    getProject
-  };
-})();
+  primary.balance -= cfg.courseCost;
+
+  const courseId = `course_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+  platform.activeCourses.push({
+    courseId,
+    startedAt: Date.now(),
+    durationMs: cfg.courseDuration * 24 * 60 * 60 * 1000,
+    revenue: cfg.courseRevenue,
+    finished: false
+  });
+
+  return { ok: true, msg: "Kurs əlavə edildi", courseId };
+}
+
+// ─── Bitmiş kursun qazancını al ─────────────────────────────────────────────
+function collectCourseRevenue(primary, typeId, platformIdx, courseId) {
+  const biz = _getBiz(primary, typeId);
+  if (!biz) return { ok: false, msg: "Biznes tapılmadı" };
+
+  const platform = biz.completedPlatforms[platformIdx];
+  if (!platform) return { ok: false, msg: "Platform tapılmadı" };
+
+  const courseIdx = platform.finishedCourses.findIndex(c => c.courseId === courseId);
+  if (courseIdx === -1) return { ok: false, msg: "Kurs tapılmadı və ya hələ bitməyib" };
+
+  const course = platform.finishedCourses[courseIdx];
+  primary.balance += course.revenue;
+  platform.finishedCourses.splice(courseIdx, 1);
+
+  return { ok: true, msg: `Kurs qazancı alındı: ${course.revenue.toLocaleString()} ₼` };
+}
+
+// ─── Biznes statusu ─────────────────────────────────────────────────────────
+function getBusinessStatus(primary, typeId) {
+  const biz = _getBiz(primary, typeId);
+  if (!biz) return null;
+  const type = getType(typeId);
+  return { biz, type };
+}
+
+// ─── Bütün bizneslərin özeti ─────────────────────────────────────────────────
+function getAllBusinessSummary(primary) {
+  if (!primary.businesses || primary.businesses.length === 0) return [];
+  return primary.businesses.map(biz => {
+    const type = getType(biz.typeId);
+    return {
+      typeId: biz.typeId,
+      name: biz.name,
+      activeProjectCount: biz.activeProjects.length,
+      completedPlatformCount: biz.completedPlatforms.length
+    };
+  });
+}
+
+// ─── İçi köməkçilər ────────────────────────────────────────────────────────
+function _getBiz(primary, typeId) {
+  return primary.businesses && primary.businesses.find(b => b.typeId === typeId);
+}
+
+function _removeActiveProject(biz, ap) {
+  biz.activeProjects = biz.activeProjects.filter(p => p !== ap);
+}
+
+function _cleanupUnitsIfDone(biz, ap) {
+  const total = ap.unitCount;
+  const sold = ap.unitsSold || 0;
+  const rented = ap.unitsRented || 0;
+  if (sold + rented >= total) {
+    _removeActiveProject(biz, ap);
+  }
+}
