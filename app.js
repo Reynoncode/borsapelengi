@@ -1147,40 +1147,98 @@ function getPropertiesForCurrentCity() {
   return ALL_PROPERTIES[state.currentCity] || [];
 }
 
+// Həftəlik rotasiya üçün seeded shuffle
+function seededShuffle(arr, seed) {
+  const a = [...arr];
+  let s = seed;
+  for (let i = a.length - 1; i > 0; i--) {
+    s = (s * 1664525 + 1013904223) & 0xffffffff;
+    const j = Math.abs(s) % (i + 1);
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function getWeeklyListingsForCity() {
+  const allProps = getPropertiesForCurrentCity();
+  const weekNum  = Math.floor((state.day - 1) / 7);
+  const seed     = weekNum * 31 + state.currentCity.split("").reduce((h, c) => h * 31 + c.charCodeAt(0), 7);
+
+  const residential = allProps.filter(p => p.type === "residential");
+  const commercial  = allProps.filter(p => p.type === "commercial");
+
+  const shuffledRes = seededShuffle(residential, seed);
+  const shuffledCom = seededShuffle(commercial,  seed + 1);
+
+  return [
+    ...shuffledRes.slice(0, 5),
+    ...shuffledCom.slice(0, 10)
+  ];
+}
+
 function renderREListings() {
-  const props = getPropertiesForCurrentCity().filter(p => {
-    const alreadyOwned = state.ownedProperties.some(o => o.propertyId === p.id);
-    if (alreadyOwned) return false;
+  const weeklyProps = getWeeklyListingsForCity();
+  const ownedIds    = new Set(state.ownedProperties.map(o => o.propertyId));
+
+  let filtered = weeklyProps.filter(p => {
+    if (ownedIds.has(p.id)) return false;
     if (reActiveFilter === "all") return true;
     return p.type === reActiveFilter;
   });
 
   const container = document.getElementById("re-listings-list");
-  if (props.length === 0) {
-    container.innerHTML = `<div style="text-align:center;padding:40px 16px;color:var(--c-text-secondary);font-size:13px;">Bu kateqoriyada əlçatan əmlak yoxdur.</div>`;
+
+  const weekNum   = Math.floor((state.day - 1) / 7) + 1;
+  const nextRotate = 7 - ((state.day - 1) % 7);
+  const weekHeader = `<div class="re-week-header">📅 Həftə ${weekNum} siyahısı · <span>${nextRotate} gün sonra yenilənir</span></div>`;
+
+  if (filtered.length === 0) {
+    container.innerHTML = weekHeader + `<div style="text-align:center;padding:40px 16px;color:var(--c-text-secondary);font-size:13px;">Bu kateqoriyada əlçatan əmlak yoxdur.</div>`;
     return;
   }
 
-  container.innerHTML = props.map(p => {
-    const areaMult = AREA_MULTIPLIERS[p.area];
-    const income   = p.type === "residential"
-      ? `${fmtMoney(p.rentPrice)}/ay`
-      : `${fmtMoney(Math.round(p.m2 * 15 * areaMult.revenueMult))}-${fmtMoney(Math.round(p.m2 * 25 * areaMult.revenueMult))}/ay`;
-    return `
-      <div class="re-listing-card" data-prop-id="${p.id}">
-        <div class="re-lc-icon">${p.icon}</div>
-        <div class="re-lc-info">
-          <div class="re-lc-name">${p.name}</div>
-          <div class="re-lc-desc">${p.desc}</div>
-          <div class="re-lc-tags">
-            <span class="re-tag">${p.m2} m²</span>
-            <span class="re-tag">${AREA_MULTIPLIERS[p.area].label}</span>
-            <span class="re-tag re-tag-income">↑ ${income}</span>
+  const residentialFiltered = filtered.filter(p => p.type === "residential");
+  const commercialFiltered  = filtered.filter(p => p.type === "commercial");
+
+  function buildCards(list) {
+    return list.map(p => {
+      const areaMult = AREA_MULTIPLIERS[p.area];
+      const income   = p.type === "residential"
+        ? `${fmtMoney(p.rentPrice)}/ay`
+        : `${fmtMoney(Math.round(p.m2 * 15 * areaMult.revenueMult))}–${fmtMoney(Math.round(p.m2 * 25 * areaMult.revenueMult))}/ay`;
+      return `
+        <div class="re-listing-card" data-prop-id="${p.id}">
+          <div class="re-lc-icon">${p.icon}</div>
+          <div class="re-lc-info">
+            <div class="re-lc-name">${p.name}</div>
+            <div class="re-lc-desc">${p.desc}</div>
+            <div class="re-lc-tags">
+              <span class="re-tag">${p.m2} m²</span>
+              <span class="re-tag">${AREA_MULTIPLIERS[p.area].label}</span>
+              <span class="re-tag re-tag-income">↑ ${income}</span>
+            </div>
           </div>
-        </div>
-        <div class="re-lc-price">${fmtMoney(p.buyPrice)}</div>
-      </div>`;
-  }).join("");
+          <div class="re-lc-price">${fmtMoney(p.buyPrice)}</div>
+        </div>`;
+    }).join("");
+  }
+
+  let html = weekHeader;
+
+  if (reActiveFilter === "all" || reActiveFilter === "residential") {
+    if (residentialFiltered.length > 0) {
+      html += `<div class="re-section-title">🏠 Evlər (${residentialFiltered.length})</div>`;
+      html += buildCards(residentialFiltered);
+    }
+  }
+  if (reActiveFilter === "all" || reActiveFilter === "commercial") {
+    if (commercialFiltered.length > 0) {
+      html += `<div class="re-section-title">🏪 Obyektlər (${commercialFiltered.length})</div>`;
+      html += buildCards(commercialFiltered);
+    }
+  }
+
+  container.innerHTML = html;
 
   container.querySelectorAll(".re-listing-card").forEach(card => {
     card.addEventListener("click", () => openPropertyDetail(card.dataset.propId));
