@@ -2053,33 +2053,29 @@ function renderAll() {
   if (activeInvTab==="portfolio") renderPortfolio();
 }
 
-/* ──────────────────────────────────────────────────────────
-   HADİSƏ DİNLƏYİCİLƏRİ
-────────────────────────────────────────────────────────── */
-document.querySelectorAll(".app-icon-wrap").forEach(el=>{
-  el.addEventListener("click", ()=>{
-    const app = el.dataset.app;
-    if (app === "travel")       { openTravel();     return; }
-    if (app === "realestate")   { openRealEstate(); return; }
-    if (app === "leaderboard")  {
-      Leaderboard.updateForDay(state.day);
-      renderLeaderboard();
-      navigateTo("leaderboard");
-      return;
-    }
-    navigateTo(app==="invested"?"invested":app);
-    if (app==="invested") renderAssetList();
-    if (app==="bmb")      renderWallet();
-    if (app==="news")     renderNewsFeed();
+function setupEventListeners() {
+  document.querySelectorAll(".app-icon-wrap").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      const app = el.dataset.app;
+      if (app === "travel")       { openTravel();     return; }
+      if (app === "realestate")   { openRealEstate(); return; }
+      if (app === "leaderboard")  {
+        Leaderboard.updateForDay(state.day);
+        renderLeaderboard();
+        navigateTo("leaderboard");
+        return;
+      }
+      navigateTo(app==="invested"?"invested":app);
+      if (app==="invested") renderAssetList();
+      if (app==="bmb")      renderWallet();
+      if (app==="news")     renderNewsFeed();
+    });
   });
-});
 
-  // Geri düymələri
   document.querySelectorAll(".btn-back").forEach(el=>{
     el.addEventListener("click", ()=>navigateTo(el.dataset.back));
   });
 
-  // INVESTED — filter tabları
   document.querySelectorAll(".inv-tab").forEach(tab=>{
     tab.addEventListener("click", ()=>{
       document.querySelectorAll(".inv-tab").forEach(t=>t.classList.remove("active"));
@@ -2089,26 +2085,21 @@ document.querySelectorAll(".app-icon-wrap").forEach(el=>{
     });
   });
 
-  // INVESTED — market/portfolio tabları
   document.querySelectorAll(".inv-main-tab").forEach(tab=>{
     tab.addEventListener("click", ()=>switchInvTab(tab.dataset.mainTab));
   });
 
-  // Növbəti gün
   document.getElementById("btn-advance-day").addEventListener("click", advanceDay);
 
-  // Trade düymələri
   document.getElementById("btn-open-buy").addEventListener("click",     ()=>openTradeModal("buy_long"));
   document.getElementById("btn-open-sell").addEventListener("click",    ()=>openTradeModal("sell_long"));
   document.getElementById("btn-open-short").addEventListener("click",   ()=>openTradeModal("open_short"));
   document.getElementById("btn-open-long-lev").addEventListener("click",()=>openTradeModal("open_long_lev"));
 
-  // Trade modal
   document.getElementById("btn-modal-cancel").addEventListener("click",  closeTradeModal);
   document.getElementById("btn-modal-confirm").addEventListener("click", confirmTrade);
   document.getElementById("tm-quantity-input").addEventListener("input", updateTradeTotal);
 
-  // Leverage
   document.querySelectorAll(".lev-btn").forEach(btn=>{
     btn.addEventListener("click", ()=>{
       document.querySelectorAll(".lev-btn").forEach(b=>b.classList.remove("active"));
@@ -2118,11 +2109,9 @@ document.querySelectorAll(".app-icon-wrap").forEach(el=>{
     });
   });
 
-  // Mövqə bağlama
   document.getElementById("btn-close-pos-cancel").addEventListener("click",  closeClosePosModal);
   document.getElementById("btn-close-pos-confirm").addEventListener("click", confirmClosePos);
 
-  // ── WALLET ──
   document.getElementById("btn-wallet-transfer").addEventListener("click", openWalletTransferModal);
   document.getElementById("btn-wallet-vault").addEventListener("click",    openVaultModal);
   document.getElementById("btn-wallet-set-primary").addEventListener("click", () => {
@@ -2160,7 +2149,6 @@ document.querySelectorAll(".app-icon-wrap").forEach(el=>{
   document.getElementById("wt-amount-input").addEventListener("input", updateTransferFeePreview);
   document.getElementById("vault-amount-input").addEventListener("input", updateVaultPreview);
 
-  // Travel — köç düyməsi
   document.getElementById("btn-travel-move").addEventListener("click", () => {
     if (!selectedCityId) return;
     const city = CITIES.find(c => c.id === selectedCityId);
@@ -2180,11 +2168,9 @@ document.querySelectorAll(".app-icon-wrap").forEach(el=>{
     renderCityList();
   });
 
-  // RealEstate modal
   document.getElementById("btn-re-modal-cancel").addEventListener("click",  closeREModal);
   document.getElementById("btn-re-modal-confirm").addEventListener("click", confirmREModal);
 
-  // RealEstate tab/filter
   document.querySelectorAll(".re-tab").forEach(tab => {
     tab.addEventListener("click", () => {
       document.querySelectorAll(".re-tab").forEach(t => t.classList.remove("active"));
@@ -2205,6 +2191,7 @@ document.querySelectorAll(".app-icon-wrap").forEach(el=>{
     });
   });
 }
+
 initLeaderboard();
 /* ──────────────────────────────────────────────────────────
    BAŞLANĞIC
