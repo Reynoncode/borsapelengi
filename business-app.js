@@ -1,414 +1,291 @@
-/* ============================================================
-   BUSINESS-APP.JS — Business App UI Loqikası
-   ============================================================
-   Bu fayl app.js-ə əlavə olaraq işləyir.
-   app.js-dəki state, saveState, addTransaction, fmtMoney,
-   getPrimaryCard, showToast funksiyalarını istifadə edir.
-============================================================ */
+// business-app.js
+// Tələb: business-data.js və business-engine.js əvvəlcədən yüklənmiş olmalıdır
 
-/* ── UI state ── */
-let bizActiveTab     = "market";   // "market" | "mybiz"
-let bizSelectedTypeId = null;
-let bizSelectedBizId  = null;
-let bizSelectedEntryId = null;
-let bizProjectModalAction = null;  // "sell" | "unit_sell" | "unit_rent"
-let bizSelectedUnitId = null;
+// ─── Ana render: Biz Marketi ─────────────────────────────────────────────────
+function renderBizMarket(primary, containerSelector) {
+  const container = document.querySelector(containerSelector);
+  if (!container) return;
 
-/* ──────────────────────────────────────────────────────────
-   OPEN BUSINESS APP
-────────────────────────────────────────────────────────── */
-function openBusiness() {
-  navigateTo("business");
-  renderBusiness();
-}
+  let html = `<div class="biz-market">
+    <h2>🏢 Biznes Marketi</h2>
+    <div class="biz-types-grid">`;
 
-/* ──────────────────────────────────────────────────────────
-   MAIN RENDER
-────────────────────────────────────────────────────────── */
-function renderBusiness() {
-  renderBizStats();
-  if (bizActiveTab === "market") renderBizMarket();
-  else renderBizMy();
-}
+  for (const type of BIZ_COMPANY_TYPES) {
+    const owned = primary.businesses && primary.businesses.find(b => b.typeId === type.id);
+    const canAfford = primary.balance >= type.unlockCost;
+    const meetsBalance = primary.balance >= type.requiredBalance;
 
-/* ── Statistika bölməsi ── */
-function renderBizStats() {
-  const weeklyIncome = BusinessEngine.getTotalWeeklyIncome(state);
-  const invested     = BusinessEngine.getTotalInvested(state);
-  const bizCount     = (state.businesses || []).length;
-
-  document.getElementById("biz-stat-count").textContent    = bizCount;
-  document.getElementById("biz-stat-weekly").textContent   = fmtMoney(weeklyIncome) + "/həftə";
-  document.getElementById("biz-stat-invested").textContent = fmtMoney(invested);
-}
-
-/* ── Market tab: unlock ediləcək bizneslər ── */
-function renderBizMarket() {
-  const container = document.getElementById("biz-market-list");
-  const owned = new Set((state.businesses || []).map(b => b.typeId));
-
-  container.innerHTML = BIZ_COMPANY_TYPES.map(type => {
-    const isOwned = owned.has(type.id);
-    return `
-    <div class="biz-type-card ${isOwned ? "biz-owned" : ""}" data-type-id="${type.id}">
-      <div class="btc-icon" style="background:${type.color}22;color:${type.color}">${type.icon}</div>
-      <div class="btc-info">
-        <div class="btc-name">${type.name}</div>
-        <div class="btc-desc">${type.description}</div>
-        <div class="btc-projects">${type.projects.length} proyekt növü</div>
-      </div>
-      <div class="btc-right">
-        ${isOwned
-          ? `<div class="btc-badge owned">Açıq ✓</div>`
-          : `<div class="btc-cost">${fmtMoney(type.unlockCost)}</div>
-             <div class="btc-badge unlock">Aç</div>`
-        }
-      </div>
-    </div>`;
-  }).join("");
-
-  container.querySelectorAll(".biz-type-card").forEach(el => {
-    el.addEventListener("click", () => {
-      bizSelectedTypeId = el.dataset.typeId;
-      openBizTypeDetail(bizSelectedTypeId);
-    });
-  });
-}
-
-/* ── My Biz tab: sahib olunan bizneslər ── */
-function renderBizMy() {
-  const container = document.getElementById("biz-my-list");
-  const businesses = state.businesses || [];
-
-  if (businesses.length === 0) {
-    container.innerHTML = `<div class="biz-empty">Hələ heç bir biznes yoxdur.<br>Bazar bölməsindən birini aç!</div>`;
-    return;
-  }
-
-  container.innerHTML = businesses.map(biz => {
-    const type    = BusinessEngine.getType(biz.typeId);
-    const active  = biz.activeProjects.filter(e => e.status === "building").length;
-    const ready   = biz.activeProjects.filter(e => e.status === "ready").length;
-    const streams = biz.incomeStreams.length;
-    const weekly  = biz.incomeStreams.reduce((s, st) => s + st.weeklyIncome, 0);
-    return `
-    <div class="biz-my-card" data-biz-id="${biz.id}">
-      <div class="bmc-icon" style="background:${type.color}22;color:${type.color}">${type.icon}</div>
-      <div class="bmc-info">
-        <div class="bmc-name">${type.name}</div>
-        <div class="bmc-row">
-          <span class="bmc-tag building">${active} tikinti</span>
-          ${ready > 0 ? `<span class="bmc-tag ready">${ready} hazır ⚡</span>` : ""}
-          ${streams > 0 ? `<span class="bmc-tag income">${fmtMoney(weekly)}/həf</span>` : ""}
+    html += `
+      <div class="biz-card ${owned ? 'biz-owned' : ''}" data-type-id="${type.id}">
+        <div class="biz-card-header">
+          <span class="biz-name">${type.name}</span>
+          ${owned ? '<span class="biz-badge">✅ Açıq</span>' : ''}
         </div>
-      </div>
-      <div class="bmc-arrow">›</div>
-    </div>`;
-  }).join("");
+        <div class="biz-card-info">
+          <div>Açılış xərci: <strong>${formatMoney(type.unlockCost)}</strong></div>
+          <div>Min. balans: <strong>${formatMoney(type.requiredBalance)}</strong></div>
+        </div>`;
 
-  container.querySelectorAll(".biz-my-card").forEach(el => {
-    el.addEventListener("click", () => {
-      bizSelectedBizId = el.dataset.bizId;
-      openBizDetail(bizSelectedBizId);
-    });
-  });
-}
+    if (!owned) {
+      const btnDisabled = (!canAfford || !meetsBalance) ? 'disabled' : '';
+      let tooltip = '';
+      if (!meetsBalance) tooltip = 'Kifayət qədər bank balansı yoxdur';
+      else if (!canAfford) tooltip = 'Açılış xərci kifayət etmir';
 
-/* ──────────────────────────────────────────────────────────
-   BİZNES TİPİ DETAYı (unlock + proyekt seçimi)
-────────────────────────────────────────────────────────── */
-function openBizTypeDetail(typeId) {
-  const type  = BusinessEngine.getType(typeId);
-  const isOwned = (state.businesses || []).some(b => b.typeId === typeId);
+      html += `
+        <button class="biz-unlock-btn" ${btnDisabled}
+          onclick="onUnlockBusiness('${type.id}')"
+          title="${tooltip}">
+          ${btnDisabled ? '🔒 Kifayət etmir' : '🔓 Aç'}
+        </button>`;
+    } else {
+      html += `
+        <button class="biz-manage-btn" onclick="onManageBusiness('${type.id}')">
+          ⚙️ İdarə Et
+        </button>`;
+    }
 
-  document.getElementById("biz-detail-icon").textContent   = type.icon;
-  document.getElementById("biz-detail-icon").style.color   = type.color;
-  document.getElementById("biz-detail-name").textContent   = type.name;
-  document.getElementById("biz-detail-desc").textContent   = type.description;
-
-  const unlockBtn = document.getElementById("btn-biz-unlock");
-  if (isOwned) {
-    unlockBtn.textContent = "Açılıb ✓";
-    unlockBtn.disabled    = true;
-    unlockBtn.className   = "btn-biz-unlock disabled";
-  } else {
-    unlockBtn.textContent = `Aç — ${fmtMoney(type.unlockCost)}`;
-    unlockBtn.disabled    = false;
-    unlockBtn.className   = "btn-biz-unlock";
-    unlockBtn.onclick     = () => doUnlockBusiness(typeId);
+    html += `</div>`;
   }
 
-  // Proyektlər siyahısı
-  const pList = document.getElementById("biz-project-types-list");
-  pList.innerHTML = type.projects.map(proj => {
-    const roiPct = proj.sellValue
-      ? (((proj.sellValue - proj.costToBuild) / proj.costToBuild) * 100).toFixed(0)
-      : null;
-    const incomeInfo = proj.deliverable === "income"
-      ? `<div class="bpt-income">Həftəlik: ${fmtMoney(proj.weeklyIncome)}</div>`
-      : "";
-    const unitsInfo = proj.deliverable === "units"
-      ? `<div class="bpt-income">${proj.unitCount} unit × ${fmtMoney(proj.unitSellValue)}</div>`
-      : "";
-    const sellInfo = proj.deliverable === "sell"
-      ? `<div class="bpt-sell">Satış: ${fmtMoney(proj.sellValue)} <span class="bpt-roi">+${roiPct}% ROI</span></div>`
-      : "";
+  html += `</div></div>`;
+  container.innerHTML = html;
+}
 
-    return `
-    <div class="biz-proj-type-card ${isOwned ? "clickable" : "locked"}" data-proj-id="${proj.id}">
-      <div class="bptc-top">
-        <span class="bptc-icon">${proj.icon}</span>
-        <span class="bptc-name">${proj.name}</span>
-        ${isOwned ? `<button class="btn-start-proj" data-proj-id="${proj.id}">Başlat</button>` : ""}
-      </div>
-      <div class="bptc-desc">${proj.description}</div>
-      <div class="bptc-meta">
-        <span>💰 ${fmtMoney(proj.costToBuild)}</span>
-        <span>⏱ ${proj.durationDays} gün</span>
-        ${sellInfo}${incomeInfo}${unitsInfo}
-      </div>
-    </div>`;
-  }).join("");
+// ─── Biznes İdarəetmə Paneli ─────────────────────────────────────────────────
+function renderBizManagePanel(primary, typeId, containerSelector) {
+  const container = document.querySelector(containerSelector);
+  if (!container) return;
 
-  if (isOwned) {
-    pList.querySelectorAll(".btn-start-proj").forEach(btn => {
-      btn.addEventListener("click", e => {
-        e.stopPropagation();
-        const biz = state.businesses.find(b => b.typeId === typeId);
-        if (biz) doStartProject(biz.id, btn.dataset.projId);
-      });
-    });
+  const type = getType(typeId);
+  const biz = primary.businesses && primary.businesses.find(b => b.typeId === typeId);
+  if (!type || !biz) return;
+
+  let html = `<div class="biz-manage-panel">
+    <h2>${type.name} — İdarəetmə</h2>
+
+    <section class="biz-projects-section">
+      <h3>📋 Proyektlər</h3>
+      <div class="biz-projects-grid">`;
+
+  for (const proj of type.projects) {
+    const isRunning = biz.activeProjects.find(ap => ap.projectId === proj.id && !ap.completed);
+    const isCompleted = biz.activeProjects.find(ap => ap.projectId === proj.id && ap.completed);
+    const canStart = primary.balance >= proj.costToBuild && !isRunning;
+
+    html += `
+      <div class="biz-proj-card">
+        <div class="biz-proj-name">${proj.name}</div>
+        <div class="biz-proj-details">
+          <span>💰 Xərc: ${formatMoney(proj.costToBuild)}</span>
+          <span>📅 Müddət: ${proj.durationDays} gün</span>
+          ${proj.sellValue ? `<span>🏷️ Satış: ${formatMoney(proj.sellValue)}</span>` : ''}
+          ${proj.weeklyIncome ? `<span>📈 Həftəlik: ${formatMoney(proj.weeklyIncome)}</span>` : ''}
+          ${proj.deliverable === 'units' ? `<span>🏠 ${proj.unitCount} unit | Satış: ${formatMoney(proj.unitSellValue)} | Kirayə/həftə: ${formatMoney(proj.unitRentalWeekly)}</span>` : ''}
+          ${proj.deliverable === 'course_platform' ? `<span>🎓 Max ${proj.maxCourses} kurs</span>` : ''}
+        </div>`;
+
+    if (isRunning) {
+      const elapsed = Date.now() - isRunning.startedAt;
+      const total = isRunning.durationMs;
+      const pct = Math.min(100, Math.round((elapsed / total) * 100));
+      html += `
+        <div class="biz-progress-bar">
+          <div class="biz-progress-fill" style="width:${pct}%"></div>
+        </div>
+        <div class="biz-progress-label">${pct}% tamamlandı</div>`;
+    } else if (isCompleted && proj.deliverable === 'units') {
+      const sold = isCompleted.unitsSold || 0;
+      const rented = isCompleted.unitsRented || 0;
+      const remaining = isCompleted.unitCount - sold - rented;
+      html += `
+        <div class="biz-units-info">
+          Qalan: ${remaining} unit |
+          Satılan: ${sold} | Kirayədə: ${rented}
+        </div>
+        <div class="biz-units-actions">
+          <button onclick="onSellUnit('${typeId}','${proj.id}',1)">1 Unit Sat</button>
+          <button onclick="onRentUnit('${typeId}','${proj.id}',1)">1 Unit Kirayəyə Ver</button>
+        </div>`;
+    } else {
+      const btnDisabled = canStart ? '' : 'disabled';
+      html += `
+        <button class="biz-start-btn" ${btnDisabled}
+          onclick="onStartProject('${typeId}','${proj.id}')">
+          ${isRunning ? '⏳ Davam Edir' : (canStart ? '▶️ Başlat' : '🔒 Kifayət Etmir')}
+        </button>`;
+    }
+
+    html += `</div>`;
   }
 
-  navigateTo("business-type-detail");
-}
+  html += `</div></section>`;
 
-/* ──────────────────────────────────────────────────────────
-   BİZNES DETAYı (aktiv proyektlər + gəlir axınları)
-────────────────────────────────────────────────────────── */
-function openBizDetail(bizId) {
-  const biz  = (state.businesses || []).find(b => b.id === bizId);
-  if (!biz) return;
-  const type = BusinessEngine.getType(biz.typeId);
+  // ─── Universitet Kampus/Platform UI ───────────────────────────────────────
+  if (typeId === 'university' && biz.completedPlatforms.length > 0) {
+    html += `<section class="biz-university-section">
+      <h3>🎓 Tamamlanmış Platformlar / Kampuslar</h3>`;
 
-  document.getElementById("biz-mgmt-icon").textContent = type.icon;
-  document.getElementById("biz-mgmt-icon").style.color = type.color;
-  document.getElementById("biz-mgmt-name").textContent = type.name;
+    biz.completedPlatforms.forEach((platform, pIdx) => {
+      const cfg = platform.courseConfig;
+      const activeCount = platform.activeCourses.length;
+      const finishedCount = platform.finishedCourses.length;
+      const totalSlots = platform.maxCourses;
+      const usedSlots = activeCount + finishedCount;
+      const canAddCourse = usedSlots < totalSlots && primary.balance >= cfg.courseCost;
 
-  renderBizProjectList(biz);
-  renderBizIncomeStreams(biz);
+      html += `
+        <div class="biz-platform-card">
+          <div class="biz-platform-header">
+            <strong>${platform.name}</strong>
+            <span class="biz-platform-slots">${usedSlots}/${totalSlots} kurs</span>
+          </div>
 
-  navigateTo("business-mgmt");
-}
+          <div class="biz-platform-courseinfo">
+            Kurs xərci: ${formatMoney(cfg.courseCost)} |
+            Müddət: ${cfg.courseDuration} gün |
+            Qazanc: ${formatMoney(cfg.courseRevenue)}
+          </div>
 
-function renderBizProjectList(biz) {
-  const container = document.getElementById("biz-active-projects");
+          <button class="biz-add-course-btn" ${canAddCourse ? '' : 'disabled'}
+            onclick="onAddCourse('${typeId}', ${pIdx})">
+            ➕ Dərs Əlavə Et
+          </button>`;
 
-  if (biz.activeProjects.length === 0) {
-    container.innerHTML = `<div class="biz-empty small">Aktiv proyekt yoxdur.<br>Yeni proyekt başlatmaq üçün "Yeni Proyekt" düyməsinə bas.</div>`;
-  } else {
-    container.innerHTML = biz.activeProjects.map(entry => {
-      const proj     = BusinessEngine.getProject(biz.typeId, entry.projectId);
-      const isReady  = entry.status === "ready";
-      const progress = isReady ? 100 : Math.min(100,
-        Math.round(((state.day - entry.startDay) / (entry.endDay - entry.startDay)) * 100));
-      const daysLeft = Math.max(0, entry.endDay - state.day);
-
-      let actionHtml = "";
-      if (isReady) {
-        if (proj.deliverable === "sell") {
-          actionHtml = `<button class="btn-biz-action sell" data-action="sell" data-entry-id="${entry.id}">Sat (${fmtMoney(proj.sellValue)})</button>`;
-        } else if (proj.deliverable === "units") {
-          const unsold = entry.units.filter(u => u.status === "unsold").length;
-          const rented = entry.units.filter(u => u.status === "rented").length;
-          const sold   = entry.units.filter(u => u.status === "sold").length;
-          actionHtml = `
-            <div class="biz-units-row">
-              <span class="biz-unit-stat">Satılmamış: ${unsold}</span>
-              <span class="biz-unit-stat rented">Kirayə: ${rented}</span>
-              <span class="biz-unit-stat sold">Satılmış: ${sold}</span>
-            </div>
-            <div class="biz-unit-grid">
-              ${entry.units.map(u => `
-                <div class="biz-unit-btn ${u.status}" data-unit-id="${u.id}" data-entry-id="${entry.id}">
-                  #${u.idx}<br><span>${u.status === "unsold" ? "→" : u.status === "rented" ? "🔒" : "✓"}</span>
-                </div>
-              `).join("")}
+      // Aktiv kurslar — progress bar
+      if (platform.activeCourses.length > 0) {
+        html += `<div class="biz-courses-active"><h4>⏳ Aktiv Dərslər</h4>`;
+        for (const course of platform.activeCourses) {
+          const elapsed = Date.now() - course.startedAt;
+          const pct = Math.min(100, Math.round((elapsed / course.durationMs) * 100));
+          const daysLeft = Math.ceil((course.durationMs - elapsed) / (24 * 60 * 60 * 1000));
+          html += `
+            <div class="biz-course-item">
+              <div class="biz-course-meta">
+                <span>📚 Kurs</span>
+                <span>${pct}% — ${daysLeft > 0 ? daysLeft + ' gün qaldı' : 'Tamamlanır...'}</span>
+              </div>
+              <div class="biz-progress-bar">
+                <div class="biz-progress-fill" style="width:${pct}%"></div>
+              </div>
             </div>`;
         }
+        html += `</div>`;
       }
 
-      return `
-      <div class="biz-proj-entry ${isReady ? "ready" : "building"}">
-        <div class="bpe-header">
-          <span class="bpe-icon">${proj.icon}</span>
-          <span class="bpe-name">${proj.name}</span>
-          <span class="bpe-status ${isReady ? "ready" : ""}">${isReady ? "HAZIR ✅" : `${daysLeft} gün`}</span>
-        </div>
-        ${!isReady ? `
-        <div class="bpe-progress-wrap">
-          <div class="bpe-progress-bar" style="width:${progress}%"></div>
-        </div>
-        <div class="bpe-meta">Gün ${entry.startDay} → ${entry.endDay} · ${progress}%</div>
-        ` : ""}
-        ${actionHtml}
-      </div>`;
-    }).join("");
+      // Bitmiş kurslar — qazanc alma düyməsi
+      if (platform.finishedCourses.length > 0) {
+        html += `<div class="biz-courses-finished"><h4>✅ Bitmiş Dərslər (Qazanc Al)</h4>`;
+        for (const course of platform.finishedCourses) {
+          html += `
+            <div class="biz-course-item biz-course-done">
+              <span>🎉 Kurs Tamamlandı — Qazanc: ${formatMoney(course.revenue)}</span>
+              <button class="biz-collect-btn"
+                onclick="onCollectCourse('${typeId}', ${pIdx}, '${course.courseId}')">
+                💵 Al
+              </button>
+            </div>`;
+        }
+        html += `</div>`;
+      }
 
-    // Event listeners
-    container.querySelectorAll(".btn-biz-action[data-action='sell']").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const biz = state.businesses.find(b => b.id === bizSelectedBizId);
-        const res = BusinessEngine.sellProject(state, bizSelectedBizId, btn.dataset.entryId);
-        if (res.ok) { saveState(); renderBizProjectList(biz); renderBizStats(); showToast(`✅ Satıldı! +${fmtMoney(res.earned)}`); }
-        else showToast("❌ " + res.msg);
-      });
+      html += `</div>`; // biz-platform-card
     });
 
-    container.querySelectorAll(".biz-unit-btn.unsold").forEach(btn => {
-      btn.addEventListener("click", () => {
-        bizSelectedEntryId = btn.dataset.entryId;
-        bizSelectedUnitId  = btn.dataset.unitId;
-        openUnitModal(bizSelectedBizId, bizSelectedEntryId, bizSelectedUnitId);
-      });
-    });
+    html += `</section>`;
   }
 
-  // "Yeni Proyekt" düyməsi
-  document.getElementById("btn-biz-new-project").onclick = () => {
-    openBizTypeDetail(state.businesses.find(b => b.id === bizSelectedBizId).typeId);
-  };
+  html += `</div>`; // biz-manage-panel
+  container.innerHTML = html;
 }
 
-function renderBizIncomeStreams(biz) {
-  const container = document.getElementById("biz-income-streams");
-  if (biz.incomeStreams.length === 0) {
-    container.innerHTML = `<div class="biz-empty small">Aktiv gəlir axını yoxdur.</div>`;
-    return;
-  }
-  const total = biz.incomeStreams.reduce((s, st) => s + st.weeklyIncome, 0);
-  container.innerHTML = `
-    <div class="biz-stream-total">Cəmi həftəlik: ${fmtMoney(total)}</div>
-    ${biz.incomeStreams.map(st => `
-    <div class="biz-stream-row">
-      <span class="bsr-label">${st.label}</span>
-      <span class="bsr-amount">${fmtMoney(st.weeklyIncome)}/həf</span>
-    </div>`).join("")}`;
+// ─── Callback-lər (oyun kodu tərəfindən implement ediləcək) ─────────────────
+
+function onUnlockBusiness(typeId) {
+  const result = unlockBusiness(getGameState(), typeId);
+  showToast(result.msg);
+  saveGame();
+  refreshUI();
 }
 
-/* ──────────────────────────────────────────────────────────
-   UNIT MODAL (sat / kirayə ver)
-────────────────────────────────────────────────────────── */
-function openUnitModal(bizId, entryId, unitId) {
-  const biz   = state.businesses.find(b => b.id === bizId);
-  const entry = biz.activeProjects.find(e => e.id === entryId);
-  const unit  = entry.units.find(u => u.id === unitId);
-  const proj  = BusinessEngine.getProject(biz.typeId, entry.projectId);
-  const type  = BusinessEngine.getType(biz.typeId);
-
-  document.getElementById("unit-modal-title").textContent = `${proj.icon} Unit #${unit.idx}`;
-  document.getElementById("unit-modal-sell-price").textContent = fmtMoney(proj.unitSellValue);
-  document.getElementById("unit-modal-rent-price").textContent = fmtMoney(proj.unitRentalWeekly) + "/həf";
-
-  // canTransferToRE
-  const reBtn = document.getElementById("btn-unit-transfer-re");
-  reBtn.style.display = proj.canTransferToRE ? "flex" : "none";
-
-  document.getElementById("biz-unit-modal-overlay").style.display = "flex";
+function onManageBusiness(typeId) {
+  renderBizManagePanel(getGameState(), typeId, '#biz-manage-container');
+  showSection('biz-manage-container');
 }
 
-function closeUnitModal() {
-  document.getElementById("biz-unit-modal-overlay").style.display = "none";
+function onStartProject(typeId, projectId) {
+  const result = startProject(getGameState(), typeId, projectId);
+  showToast(result.msg);
+  saveGame();
+  refreshUI();
 }
 
-/* ──────────────────────────────────────────────────────────
-   ACTION FUNKSIYALARI
-────────────────────────────────────────────────────────── */
-function doUnlockBusiness(typeId) {
-  const res = BusinessEngine.unlockBusiness(state, typeId);
-  if (res.ok) {
-    saveState();
-    showToast("✅ Biznes açıldı!");
-    renderBusiness();
-    // type detail-i yenidən aç
-    openBizTypeDetail(typeId);
+function onSellUnit(typeId, projectId, count) {
+  const biz = getGameState().businesses.find(b => b.typeId === typeId);
+  const idx = biz.activeProjects.filter(p => p.deliverable === 'units')
+                                .findIndex(p => p.projectId === projectId);
+  const result = sellUnits(getGameState(), typeId, idx, count);
+  showToast(result.msg);
+  saveGame();
+  refreshUI();
+}
+
+function onRentUnit(typeId, projectId, count) {
+  const biz = getGameState().businesses.find(b => b.typeId === typeId);
+  const idx = biz.activeProjects.filter(p => p.deliverable === 'units')
+                                .findIndex(p => p.projectId === projectId);
+  const result = rentUnits(getGameState(), typeId, idx, count);
+  showToast(result.msg);
+  saveGame();
+  refreshUI();
+}
+
+function onAddCourse(typeId, platformIdx) {
+  const result = addCourse(getGameState(), typeId, platformIdx);
+  showToast(result.msg);
+  saveGame();
+  refreshUI();
+}
+
+function onCollectCourse(typeId, platformIdx, courseId) {
+  const result = collectCourseRevenue(getGameState(), typeId, platformIdx, courseId);
+  showToast(result.msg);
+  saveGame();
+  refreshUI();
+}
+
+// ─── Köməkçi: pul formatı ───────────────────────────────────────────────────
+function formatMoney(amount) {
+  if (!amount && amount !== 0) return '—';
+  return amount.toLocaleString('az-AZ') + ' ₼';
+}
+
+// ─── Köməkçi: toast mesaj (əgər oyunda yoxdursa, sadə alert) ───────────────
+function showToast(msg) {
+  if (typeof window.gameShowToast === 'function') {
+    window.gameShowToast(msg);
   } else {
-    showToast("❌ " + res.msg);
+    console.log('[BizApp]', msg);
   }
 }
 
-function doStartProject(bizId, projId) {
-  const biz  = state.businesses.find(b => b.id === bizId);
-  const proj = BusinessEngine.getProject(biz.typeId, projId);
-  const res  = BusinessEngine.startProject(state, bizId, projId);
-  if (res.ok) {
-    saveState();
-    showToast(`🚀 ${proj.name} başladıldı! ${proj.durationDays} günə hazır olacaq`);
-    renderBusiness();
-  } else {
-    showToast("❌ " + res.msg);
+// ─── Köməkçi: oyun state-i al (oyun koduna uyğunlaşdır) ─────────────────────
+function getGameState() {
+  // Bunu öz oyununun state getter-inə uyğunlaşdır
+  if (typeof window.getPrimaryState === 'function') return window.getPrimaryState();
+  return window.gameState || window.primary || {};
+}
+
+// ─── Köməkçi: UI yenilə ─────────────────────────────────────────────────────
+function refreshUI() {
+  if (typeof window.gameRefreshUI === 'function') {
+    window.gameRefreshUI();
   }
 }
 
-/* ──────────────────────────────────────────────────────────
-   SETUP — event listenerlar
-────────────────────────────────────────────────────────── */
-function setupBusinessListeners() {
-  // Tab switch
-  document.querySelectorAll(".biz-main-tab").forEach(tab => {
-    tab.addEventListener("click", () => {
-      document.querySelectorAll(".biz-main-tab").forEach(t => t.classList.remove("active"));
-      tab.classList.add("active");
-      bizActiveTab = tab.dataset.bizTab;
-      document.getElementById("biz-market-list").style.display = bizActiveTab === "market" ? "block" : "none";
-      document.getElementById("biz-my-list").style.display     = bizActiveTab === "mybiz"  ? "block" : "none";
-      renderBusiness();
-    });
-  });
-
-  // Unit modal düymələri
-  document.getElementById("btn-unit-sell").addEventListener("click", () => {
-    const res = BusinessEngine.sellUnit(state, bizSelectedBizId, bizSelectedEntryId, bizSelectedUnitId);
-    if (res.ok) {
-      saveState(); closeUnitModal();
-      const biz = state.businesses.find(b => b.id === bizSelectedBizId);
-      renderBizProjectList(biz); renderBizStats();
-      showToast(`✅ Satıldı! +${fmtMoney(res.earned)}`);
-    } else showToast("❌ " + res.msg);
-  });
-
-  document.getElementById("btn-unit-rent").addEventListener("click", () => {
-    const res = BusinessEngine.rentUnit(state, bizSelectedBizId, bizSelectedEntryId, bizSelectedUnitId);
-    if (res.ok) {
-      saveState(); closeUnitModal();
-      const biz = state.businesses.find(b => b.id === bizSelectedBizId);
-      renderBizProjectList(biz); renderBizIncomeStreams(biz); renderBizStats();
-      showToast("✅ Kirayəyə verildi!");
-    } else showToast("❌ " + res.msg);
-  });
-
-  document.getElementById("btn-unit-modal-cancel").addEventListener("click", closeUnitModal);
-
-  // Transfer to RE (placeholder — ileridə genişləndiriləcək)
-  document.getElementById("btn-unit-transfer-re").addEventListener("click", () => {
-    closeUnitModal();
-    showToast("🏠 RealEstate transferi tezliklə əlavə ediləcək");
-  });
+// ─── Köməkçi: section göstər ────────────────────────────────────────────────
+function showSection(id) {
+  if (typeof window.gameShowSection === 'function') {
+    window.gameShowSection(id);
+  }
 }
-
-/* ──────────────────────────────────────────────────────────
-   renderAll və advanceDay ilə inteqrasiya
-  (Bu funksiyaları app.js-dəki ilgili yerə əlavə et)
-────────────────────────────────────────────────────────── */
-// app.js-dəki advanceDay() funksiyasında bu sətirləri əlavə et:
-//   BusinessEngine.processDay(state);
-//   (həftəlik prosesdə:) BusinessEngine.processWeeklyIncome(state);
-
-// app.js-dəki calcNetWorth() funksiyasına əlavə et:
-//   + BusinessEngine.getTotalInvested(state)
-
-// app.js-dəki initFreshState()-ə əlavə et:
-//   state.businesses = [];
-
-// app.js-dəki renderAll()-a əlavə et:
-//   if (document.getElementById("screen-business").classList.contains("active")) renderBusiness();
