@@ -60,6 +60,11 @@
           <div class="app-icon leaderboard">🏆</div>
           <div class="app-label">RANKS</div>
         </div>
+         <div class="app-icon-wrap" data-app="business">
+          <div class="app-icon business">💼</div>
+          <div class="app-label">BUSINESS</div>
+          <div class="badge" id="business-badge" style="display:none;">!</div>
+        </div>
       </div>
 
       <div class="next-day-widget">
@@ -361,6 +366,126 @@
  
   </div>
 </div>
+
+    
+ 
+<!-- ============================================================
+     BUSINESS APP — Ana siyahı
+============================================================ -->
+<div class="screen-view" id="screen-business">
+  <div class="app-header">
+    <div class="btn-back" data-back="home">←</div>
+    <div class="app-title">BUSINESS<small>Şirkətlər &amp; Proyektlər</small></div>
+  </div>
+  <div class="app-body" style="padding:0;">
+ 
+    <!-- Stats bant -->
+    <div class="biz-stats-bar">
+      <div class="biz-stat">
+        <div class="bsb-label">Bizneslər</div>
+        <div class="bsb-value" id="biz-stat-count">0</div>
+      </div>
+      <div class="biz-stat">
+        <div class="bsb-label">Həftəlik gəlir</div>
+        <div class="bsb-value up" id="biz-stat-weekly">$0/həftə</div>
+      </div>
+      <div class="biz-stat">
+        <div class="bsb-label">Cari investisiya</div>
+        <div class="bsb-value" id="biz-stat-invested">$0</div>
+      </div>
+    </div>
+ 
+    <!-- Tablar -->
+    <div class="biz-main-tabs">
+      <div class="biz-main-tab active" data-biz-tab="market">Bazar</div>
+      <div class="biz-main-tab" data-biz-tab="mybiz">Mənim Bizneslər</div>
+    </div>
+ 
+    <!-- Bazar siyahısı -->
+    <div id="biz-market-list" style="overflow-y:auto;max-height:calc(100% - 130px);"></div>
+    <!-- Mənim siyahısı -->
+    <div id="biz-my-list"     style="display:none;overflow-y:auto;max-height:calc(100% - 130px);"></div>
+  </div>
+</div>
+ 
+<!-- ============================================================
+     BUSINESS — Biznes tipi detalı (unlock + proyektlər)
+============================================================ -->
+<div class="screen-view" id="screen-business-type-detail">
+  <div class="app-header">
+    <div class="btn-back" data-back="business">←</div>
+    <div class="app-title" id="biz-detail-name">—<small>Biznes detalı</small></div>
+  </div>
+  <div class="app-body">
+ 
+    <div class="biz-detail-hero">
+      <div class="bdh-icon" id="biz-detail-icon">🏗️</div>
+      <div class="bdh-desc" id="biz-detail-desc">—</div>
+      <button class="btn-biz-unlock" id="btn-biz-unlock">Aç</button>
+    </div>
+ 
+    <div class="section-title" style="padding:12px 16px 8px;font-size:12px;font-weight:700;color:var(--c-text-secondary);text-transform:uppercase;">Proyekt Növləri</div>
+    <div id="biz-project-types-list"></div>
+  </div>
+</div>
+ 
+<!-- ============================================================
+     BUSINESS — Aktif biznes idarəetmə
+============================================================ -->
+<div class="screen-view" id="screen-business-mgmt">
+  <div class="app-header">
+    <div class="btn-back" data-back="business">←</div>
+    <div class="app-title">
+      <span id="biz-mgmt-icon">💼</span>
+      <span id="biz-mgmt-name">—</span>
+      <small>İdarəetmə</small>
+    </div>
+  </div>
+  <div class="app-body" style="padding:0;">
+ 
+    <!-- Aktiv proyektlər -->
+    <div style="padding:12px 16px 6px;">
+      <div class="biz-section-header">
+        <span class="section-title" style="font-size:12px;font-weight:700;color:var(--c-text-secondary);text-transform:uppercase;">Aktiv Proyektlər</span>
+        <button class="btn-biz-new-project" id="btn-biz-new-project">+ Yeni</button>
+      </div>
+    </div>
+    <div id="biz-active-projects" style="padding:0 16px;"></div>
+ 
+    <!-- Gəlir axınları -->
+    <div style="padding:16px 16px 6px;">
+      <div class="section-title" style="font-size:12px;font-weight:700;color:var(--c-text-secondary);text-transform:uppercase;">Gəlir Axınları</div>
+    </div>
+    <div id="biz-income-streams" style="padding:0 16px;"></div>
+ 
+    <div style="height:24px;"></div>
+  </div>
+</div>
+ 
+<!-- ============================================================
+     UNIT MODAL (sat / kirayə ver)
+============================================================ -->
+<div class="modal-overlay" id="biz-unit-modal-overlay" style="display:none;">
+  <div class="trade-modal">
+    <div class="tm-title" id="unit-modal-title">Unit</div>
+    <div class="biz-unit-modal-options">
+      <div class="bumo-row">
+        <span>Satış qiyməti:</span>
+        <span id="unit-modal-sell-price" class="bumo-price sell">—</span>
+      </div>
+      <div class="bumo-row">
+        <span>Kirayə gəliri:</span>
+        <span id="unit-modal-rent-price" class="bumo-price rent">—</span>
+      </div>
+    </div>
+    <div class="tm-actions" style="flex-direction:column;gap:8px;">
+      <button class="btn-modal-confirm buy" id="btn-unit-sell" style="width:100%;">💵 Sat</button>
+      <button class="btn-modal-confirm" id="btn-unit-rent" style="width:100%;background:linear-gradient(135deg,#5AA9FF,#3a7bd5);">🔒 Kirayəyə ver</button>
+      <button class="btn-modal-confirm" id="btn-unit-transfer-re" style="width:100%;background:linear-gradient(135deg,#E8A33D,#c07d20);display:none;">🏠 RealEstate-ə transfer et</button>
+      <button class="btn-modal-cancel" id="btn-unit-modal-cancel" style="width:100%;">İmtina</button>
+    </div>
+  </div>
+</div>
  
 <!-- ============================================================
      TRAVEL APP
@@ -641,6 +766,9 @@
 </div>
 <script src="banks-config.js"></script>
 <script src="data.js"></script>
+<script src="business-data.js"></script>
+<script src="business-engine.js"></script>
+<script src="business-app.js"></script>
 <script src="engine.js"></script>
 <script src="leaderboard.js"></script>
 <script src="app.js"></script>
