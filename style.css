@@ -753,6 +753,34 @@ body {
   background: var(--c-border);
 }
 
+/* Neçə gün əvvəl etiketi — xəbər proqramında bölücü yanında */
+.day-ago-badge {
+  font-size: 10px;
+  font-family: var(--f-mono);
+  font-weight: 600;
+  color: var(--c-accent);
+  background: rgba(90, 169, 255, 0.1);
+  border: 1px solid rgba(90, 169, 255, 0.2);
+  border-radius: 20px;
+  padding: 1px 7px;
+  white-space: nowrap;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* Neçə gün əvvəl etiketi — asset detail xəbər siyahısında kart içi */
+.nc-days-ago {
+  font-size: 10px;
+  font-family: var(--f-mono);
+  font-weight: 600;
+  color: var(--c-text-tertiary);
+  background: var(--c-surface-raised);
+  border-radius: 8px;
+  padding: 2px 7px;
+  display: inline-block;
+  margin-bottom: 6px;
+}
+
 /* --- Şablon 1: Standard kart --- */
 .news-card.t1 {
   background: var(--c-surface);
