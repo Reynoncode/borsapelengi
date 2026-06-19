@@ -1636,4 +1636,92 @@ body {
 }
 .re-section-title:first-of-type { border-top: none; margin-top: 0; }
 
+/* ============================================================
+   CHART YENİLƏMƏLƏRİ — style.css-in SONUNA ƏLAVƏ ET
+   ============================================================ */
 
+/* ── Chart container: daha hündür ──────────────────────────── */
+#detail-chart {
+  width: 100%;
+  overflow: visible;
+  margin: 0;
+  padding: 0;
+}
+
+#detail-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* ── Zaman seçici ───────────────────────────────────────────── */
+.chart-range-selector {
+  display: flex;
+  gap: 6px;
+  padding: 10px 16px 6px;
+  justify-content: flex-end;
+}
+
+.chart-range-btn {
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--c-border, rgba(255,255,255,0.1));
+  background: transparent;
+  color: var(--c-text-secondary, rgba(255,255,255,0.45));
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--f-body, sans-serif);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  letter-spacing: 0.3px;
+}
+
+.chart-range-btn:hover {
+  background: rgba(255,255,255,0.06);
+  color: var(--c-text-primary, #fff);
+}
+
+.chart-range-btn.active {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.25);
+  color: var(--c-text-primary, #fff);
+}
+
+/* ── "Hamısını Sat" düyməsi ────────────────────────────────── */
+#sell-all-wrapper {
+  padding: 0 16px 12px;
+}
+
+.btn-sell-all {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 76, 94, 0.35);
+  background: rgba(255, 76, 94, 0.08);
+  color: #FF4C5E;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--f-body, sans-serif);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  letter-spacing: 0.1px;
+}
+
+.btn-sell-all:hover {
+  background: rgba(255, 76, 94, 0.15);
+  border-color: rgba(255, 76, 94, 0.55);
+}
+
+.btn-sell-all:active {
+  background: rgba(255, 76, 94, 0.22);
+}
+
+.sell-all-amount {
+  font-family: var(--f-mono, monospace);
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.85;
+}
