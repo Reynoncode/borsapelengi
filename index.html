@@ -329,7 +329,39 @@
       </div>
     </div>
     <!-- Mövcud screen-instakg bağlanan yerdən SONRA əlavə et -->
-
+<!-- ============================================================
+     LEADERBOARD APP
+============================================================= -->
+<div class="screen-view" id="screen-leaderboard">
+  <div class="app-header">
+    <div class="btn-back" data-back="home">←</div>
+    <div class="app-title">RANKS<small>Dünya Zənginlər Siyahısı</small></div>
+  </div>
+  <div class="app-body" style="padding:0;">
+ 
+    <!-- Oyunçunun mövqeyi — yuxarı bant -->
+    <div class="lb-player-banner">
+      <div class="lb-pb-left">
+        <div class="lb-pb-label">Sənin mövqeyin</div>
+        <div class="lb-pb-rank" id="lb-player-rank">#— / 500</div>
+      </div>
+      <div class="lb-pb-right">
+        <div class="lb-pb-label">Var-dövlətin</div>
+        <div class="lb-pb-wealth" id="lb-player-wealth">$—</div>
+      </div>
+    </div>
+ 
+    <!-- Siyahı -->
+    <div class="lb-list-wrap">
+      <div id="lb-list"></div>
+      <div style="padding:12px 16px;">
+        <button id="lb-show-all" class="lb-show-all-btn">Hamısını göstər (500)</button>
+      </div>
+    </div>
+ 
+  </div>
+</div>
+ 
 <!-- ============================================================
      TRAVEL APP
 ============================================================= -->
