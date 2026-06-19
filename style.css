@@ -2153,3 +2153,193 @@ body {
 .bumo-price { font-family: var(--f-mono); font-weight: 700; font-size: 14px; }
 .bumo-price.sell { color: #1FD67A; }
 .bumo-price.rent { color: #5AA9FF; }
+/* business-style.css */
+
+/* ── Market grid ─────────────────────────────── */
+.biz-market { padding: 16px; }
+.biz-types-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.biz-card {
+  background: #1e2a38;
+  border: 1px solid #2e3f52;
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color 0.2s;
+}
+.biz-card:hover { border-color: #4a90d9; }
+.biz-card.biz-owned { border-color: #27ae60; }
+
+.biz-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.biz-name { font-size: 1rem; font-weight: bold; color: #e0e8f0; }
+.biz-badge { font-size: 0.75rem; color: #2ecc71; background: #1a3a28; padding: 2px 8px; border-radius: 10px; }
+
+.biz-card-info { font-size: 0.82rem; color: #8ca8c0; display: flex; flex-direction: column; gap: 4px; }
+.biz-card-info strong { color: #c8dff0; }
+
+.biz-unlock-btn, .biz-manage-btn {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: bold;
+  transition: opacity 0.2s;
+}
+.biz-unlock-btn { background: #2980b9; color: #fff; }
+.biz-unlock-btn:disabled { background: #3a3a3a; color: #666; cursor: not-allowed; }
+.biz-manage-btn { background: #27ae60; color: #fff; }
+.biz-manage-btn:hover { opacity: 0.85; }
+
+/* ── Manage panel ────────────────────────────── */
+.biz-manage-panel { padding: 16px; }
+.biz-manage-panel h2 { color: #e0e8f0; margin-bottom: 12px; }
+.biz-manage-panel h3 { color: #8ca8c0; font-size: 0.95rem; margin: 16px 0 8px; }
+
+.biz-projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.biz-proj-card {
+  background: #162330;
+  border: 1px solid #2a3a4a;
+  border-radius: 8px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.biz-proj-name { font-weight: bold; color: #d0e4f5; font-size: 0.95rem; }
+.biz-proj-details { font-size: 0.78rem; color: #7a9ab0; display: flex; flex-direction: column; gap: 3px; }
+
+.biz-start-btn {
+  padding: 7px 12px;
+  border: none;
+  border-radius: 6px;
+  background: #1a6fa0;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: bold;
+  margin-top: auto;
+}
+.biz-start-btn:disabled { background: #2a2a2a; color: #555; cursor: not-allowed; }
+.biz-start-btn:not(:disabled):hover { background: #2180c0; }
+
+/* ── Progress bar ────────────────────────────── */
+.biz-progress-bar {
+  height: 8px;
+  background: #1a2a3a;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.biz-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1a6fa0, #2ecc71);
+  border-radius: 4px;
+  transition: width 0.5s;
+}
+.biz-progress-label { font-size: 0.75rem; color: #6a8aa0; text-align: right; }
+
+/* ── Units ───────────────────────────────────── */
+.biz-units-info { font-size: 0.8rem; color: #8ab0c8; }
+.biz-units-actions { display: flex; gap: 8px; }
+.biz-units-actions button {
+  flex: 1;
+  padding: 6px;
+  border: none;
+  border-radius: 5px;
+  background: #1a5a7a;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+.biz-units-actions button:hover { background: #2070a0; }
+
+/* ── University section ──────────────────────── */
+.biz-university-section { margin-top: 24px; }
+
+.biz-platform-card {
+  background: #12202e;
+  border: 1px solid #2a4060;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.biz-platform-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.biz-platform-header strong { color: #d0e8ff; font-size: 1rem; }
+.biz-platform-slots { font-size: 0.8rem; color: #6a90b0; background: #1a2a3a; padding: 2px 8px; border-radius: 10px; }
+
+.biz-platform-courseinfo { font-size: 0.8rem; color: #6a90b0; margin-bottom: 10px; }
+
+.biz-add-course-btn {
+  padding: 8px 16px;
+  background: #5b2d8e;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 0.88rem;
+  margin-bottom: 12px;
+}
+.biz-add-course-btn:disabled { background: #2a2a2a; color: #555; cursor: not-allowed; }
+.biz-add-course-btn:not(:disabled):hover { background: #7040b0; }
+
+.biz-courses-active h4, .biz-courses-finished h4 {
+  font-size: 0.85rem;
+  color: #8aa8c0;
+  margin: 10px 0 6px;
+}
+
+.biz-course-item {
+  background: #1a2c40;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+.biz-course-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #7090a8;
+  margin-bottom: 6px;
+}
+
+.biz-course-done {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #1a3020;
+}
+.biz-course-done span { font-size: 0.82rem; color: #50c080; }
+
+.biz-collect-btn {
+  padding: 6px 14px;
+  background: #27ae60;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 0.82rem;
+}
+.biz-collect-btn:hover { background: #2ecc71; }
