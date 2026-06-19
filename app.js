@@ -1560,7 +1560,7 @@ function openPropertyDetail(propId) {
   } else {
     bizSection.style.display = "none";
   }
-
+}
 function openREModal(action, property) {
   reModalAction = action;
   const overlay = document.getElementById("re-modal-overlay");
