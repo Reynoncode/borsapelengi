@@ -38,9 +38,9 @@ const BusinessEngine = (() => {
   }
 
   function getType(typeId) {
-    return BUSINESS_TYPES.find(t => t.id === typeId);
-  }
-
+     return BIZ_COMPANY_TYPES.find(t => t.id === typeId);
+   }
+   
   function getProject(typeId, projectId) {
     const t = getType(typeId);
     return t ? t.projects.find(p => p.id === projectId) : null;
