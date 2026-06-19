@@ -2,7 +2,7 @@
    BUSINESS-DATA.JS — Biznes növləri və proyektlər
    ============================================================ */
 
-const BUSINESS_TYPES = [
+const BIZ_COMPANY_TYPES = [
 
   /* ──── 1. TİKİNTİ ──── */
   {
