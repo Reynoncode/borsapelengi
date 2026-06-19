@@ -260,32 +260,31 @@ function formatMoney(amount) {
   return amount.toLocaleString('az-AZ') + ' ₼';
 }
 
-// ─── Köməkçi: toast mesaj (əgər oyunda yoxdursa, sadə alert) ───────────────
-function showToast(msg) {
-  if (typeof window.gameShowToast === 'function') {
-    window.gameShowToast(msg);
-  } else {
-    console.log('[BizApp]', msg);
+// ─── Köməkçilər: app.js state-inə uyğun ────────────────────────────────────
+function getGameState() { return state; }
+function refreshUI()    { renderAll(); }
+function showSection(id){ navigateTo(id); }
+
+// ─── app.js ilə inteqrasiya: çatışmayan 3 funksiya ──────────────────────────
+
+function openBusiness() {
+  renderBusiness();
+  navigateTo("business");
+}
+
+function setupBusinessListeners() {
+  const btnBack = document.getElementById("btn-business-mgmt-back");
+  if (btnBack) {
+    btnBack.addEventListener("click", () => navigateTo("business"));
   }
 }
 
-// ─── Köməkçi: oyun state-i al (oyun koduna uyğunlaşdır) ─────────────────────
-function getGameState() {
-  // Bunu öz oyununun state getter-inə uyğunlaşdır
-  if (typeof window.getPrimaryState === 'function') return window.getPrimaryState();
-  return window.gameState || window.primary || {};
+function renderBusiness() {
+  renderBizMarket(state, "#biz-market-container");
 }
 
-// ─── Köməkçi: UI yenilə ─────────────────────────────────────────────────────
-function refreshUI() {
-  if (typeof window.gameRefreshUI === 'function') {
-    window.gameRefreshUI();
-  }
-}
-
-// ─── Köməkçi: section göstər ────────────────────────────────────────────────
-function showSection(id) {
-  if (typeof window.gameShowSection === 'function') {
-    window.gameShowSection(id);
-  }
+// ─── onManageBusiness: state + navigateTo ilə ───────────────────────────────
+function onManageBusiness(typeId) {
+  renderBizManagePanel(state, typeId, '#biz-manage-container');
+  navigateTo("business-mgmt");
 }
