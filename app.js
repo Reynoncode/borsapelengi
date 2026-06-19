@@ -2038,7 +2038,7 @@ function advanceDay() {
   processVaultMaturity();
   processPropertyExpenses();
   processPropertyIncome();
-
+  Leaderboard.updateForDay(state.day); 
   saveState();
   renderAll();
   showToast("Gün " + state.day + " başladı");
@@ -2056,19 +2056,23 @@ function renderAll() {
 /* ──────────────────────────────────────────────────────────
    HADİSƏ DİNLƏYİCİLƏRİ
 ────────────────────────────────────────────────────────── */
-function setupEventListeners() {
-  // App ikonları
-  document.querySelectorAll(".app-icon-wrap").forEach(el=>{
-    el.addEventListener("click", ()=>{
-      const app = el.dataset.app;
-      if (app === "travel")     { openTravel();     return; }
-      if (app === "realestate") { openRealEstate(); return; }
-      navigateTo(app==="invested"?"invested":app);
-      if (app==="invested") renderAssetList();
-      if (app==="bmb")      renderWallet();
-      if (app==="news")     renderNewsFeed();
-    });
+document.querySelectorAll(".app-icon-wrap").forEach(el=>{
+  el.addEventListener("click", ()=>{
+    const app = el.dataset.app;
+    if (app === "travel")       { openTravel();     return; }
+    if (app === "realestate")   { openRealEstate(); return; }
+    if (app === "leaderboard")  {
+      Leaderboard.updateForDay(state.day);
+      renderLeaderboard();
+      navigateTo("leaderboard");
+      return;
+    }
+    navigateTo(app==="invested"?"invested":app);
+    if (app==="invested") renderAssetList();
+    if (app==="bmb")      renderWallet();
+    if (app==="news")     renderNewsFeed();
   });
+});
 
   // Geri düymələri
   document.querySelectorAll(".btn-back").forEach(el=>{
@@ -2201,10 +2205,11 @@ function setupEventListeners() {
     });
   });
 }
-
+initLeaderboard();
 /* ──────────────────────────────────────────────────────────
    BAŞLANĞIC
 ────────────────────────────────────────────────────────── */
+
 function start() {
   const loaded = loadState();
   if (!loaded || !state.priceHistory || Object.keys(state.priceHistory).length === 0) {
