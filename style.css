@@ -1838,3 +1838,318 @@ body {
 .lb-show-all-btn:active { background: rgba(255,255,255,0.05); }
 /* App icon */
 .app-icon.leaderboard { background: linear-gradient(135deg, #FFD700, #FF8C00); }
+/* ============================================================
+   BUSINESS APP — CSS (style.css-in SONUNA əlavə et)
+============================================================ */
+
+/* App icon */
+.app-icon.business { background: linear-gradient(135deg, #1a7a4a, #2dbe75); }
+
+/* ── Stats Bar ── */
+.biz-stats-bar {
+  display: flex;
+  background: rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  padding: 12px 0 10px;
+}
+.biz-stat {
+  flex: 1;
+  text-align: center;
+  border-right: 1px solid rgba(255,255,255,0.06);
+}
+.biz-stat:last-child { border-right: none; }
+.bsb-label {
+  font-size: 10px;
+  color: var(--c-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 3px;
+}
+.bsb-value {
+  font-family: var(--f-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--c-text-primary);
+}
+.bsb-value.up { color: #1FD67A; }
+
+/* ── Main Tabs ── */
+.biz-main-tabs {
+  display: flex;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.biz-main-tab {
+  flex: 1;
+  text-align: center;
+  padding: 11px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text-secondary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+.biz-main-tab.active {
+  color: #1FD67A;
+  border-bottom-color: #1FD67A;
+}
+
+/* ── Business Type Cards (market) ── */
+.biz-type-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.biz-type-card:active { background: rgba(255,255,255,0.04); }
+.biz-type-card.biz-owned { opacity: 0.8; }
+.btc-icon {
+  width: 46px; height: 46px;
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.btc-info { flex: 1; min-width: 0; }
+.btc-name { font-size: 14px; font-weight: 700; color: var(--c-text-primary); margin-bottom: 2px; }
+.btc-desc { font-size: 11px; color: var(--c-text-secondary); margin-bottom: 3px; }
+.btc-projects { font-size: 11px; color: rgba(255,255,255,0.3); }
+.btc-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+.btc-cost { font-family: var(--f-mono); font-size: 12px; color: #E8A33D; font-weight: 700; }
+.btc-badge {
+  font-size: 11px; font-weight: 700;
+  padding: 4px 10px; border-radius: 20px;
+  cursor: pointer;
+}
+.btc-badge.unlock { background: #1FD67A; color: #000; }
+.btc-badge.owned  { background: rgba(31,214,122,0.15); color: #1FD67A; }
+
+/* ── My Biz Cards ── */
+.biz-my-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.biz-my-card:active { background: rgba(255,255,255,0.04); }
+.bmc-icon {
+  width: 46px; height: 46px;
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.bmc-info { flex: 1; }
+.bmc-name { font-size: 14px; font-weight: 700; color: var(--c-text-primary); margin-bottom: 5px; }
+.bmc-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.bmc-tag {
+  font-size: 10px; font-weight: 600;
+  padding: 2px 8px; border-radius: 10px;
+}
+.bmc-tag.building { background: rgba(232,163,61,0.2); color: #E8A33D; }
+.bmc-tag.ready    { background: rgba(31,214,122,0.2); color: #1FD67A; }
+.bmc-tag.income   { background: rgba(90,169,255,0.2); color: #5AA9FF; }
+.bmc-arrow { color: rgba(255,255,255,0.3); font-size: 20px; }
+
+/* ── Empty state ── */
+.biz-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--c-text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.biz-empty.small { padding: 20px; font-size: 12px; }
+
+/* ── Business Type Detail hero ── */
+.biz-detail-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 16px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  gap: 8px;
+}
+.bdh-icon { font-size: 48px; }
+.bdh-desc { font-size: 13px; color: var(--c-text-secondary); text-align: center; }
+.btn-biz-unlock {
+  margin-top: 8px;
+  padding: 10px 24px;
+  background: linear-gradient(135deg, #1FD67A, #15a85f);
+  border: none; border-radius: 12px;
+  color: #000; font-size: 13px; font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.btn-biz-unlock.disabled { background: rgba(31,214,122,0.2); color: #1FD67A; cursor: default; }
+.btn-biz-unlock:active:not(.disabled) { opacity: 0.8; }
+
+/* ── Project type cards ── */
+.biz-proj-type-card {
+  margin: 0 16px 10px;
+  padding: 14px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.07);
+  transition: background 0.15s;
+}
+.biz-proj-type-card.locked { opacity: 0.55; }
+.biz-proj-type-card.clickable:active { background: rgba(255,255,255,0.07); }
+.bptc-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.bptc-icon { font-size: 18px; }
+.bptc-name { flex: 1; font-size: 13px; font-weight: 700; color: var(--c-text-primary); }
+.btn-start-proj {
+  padding: 5px 12px;
+  background: linear-gradient(135deg, #1FD67A, #15a85f);
+  border: none; border-radius: 8px;
+  color: #000; font-size: 11px; font-weight: 700;
+  cursor: pointer; flex-shrink: 0;
+}
+.btn-start-proj:active { opacity: 0.8; }
+.bptc-desc { font-size: 11px; color: var(--c-text-secondary); margin-bottom: 8px; }
+.bptc-meta { display: flex; gap: 10px; flex-wrap: wrap; font-size: 11px; color: rgba(255,255,255,0.5); }
+.bpt-sell { color: #1FD67A; }
+.bpt-roi  { color: #1FD67A; font-weight: 700; }
+.bpt-income { color: #5AA9FF; }
+
+/* ── Management screen ── */
+.biz-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.btn-biz-new-project {
+  font-size: 12px; font-weight: 700;
+  padding: 5px 12px;
+  background: rgba(31,214,122,0.15);
+  border: 1px solid rgba(31,214,122,0.3);
+  border-radius: 10px;
+  color: #1FD67A;
+  cursor: pointer;
+}
+.btn-biz-new-project:active { background: rgba(31,214,122,0.25); }
+
+/* ── Project entries ── */
+.biz-proj-entry {
+  background: rgba(255,255,255,0.04);
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.07);
+  padding: 12px;
+  margin-bottom: 10px;
+}
+.biz-proj-entry.ready { border-color: rgba(31,214,122,0.3); }
+.bpe-header {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+}
+.bpe-icon { font-size: 18px; }
+.bpe-name { flex: 1; font-size: 13px; font-weight: 700; color: var(--c-text-primary); }
+.bpe-status {
+  font-size: 11px; font-weight: 700;
+  color: #E8A33D;
+  font-family: var(--f-mono);
+}
+.bpe-status.ready { color: #1FD67A; }
+.bpe-progress-wrap {
+  height: 5px; background: rgba(255,255,255,0.1);
+  border-radius: 10px; overflow: hidden; margin-bottom: 5px;
+}
+.bpe-progress-bar {
+  height: 100%; background: linear-gradient(90deg, #E8A33D, #ffcc6e);
+  border-radius: 10px; transition: width 0.4s;
+}
+.bpe-meta { font-size: 10px; color: var(--c-text-secondary); margin-bottom: 6px; }
+
+.btn-biz-action {
+  width: 100%;
+  padding: 10px;
+  border: none; border-radius: 10px;
+  font-size: 13px; font-weight: 700;
+  cursor: pointer;
+  margin-top: 6px;
+}
+.btn-biz-action.sell { background: linear-gradient(135deg,#1FD67A,#15a85f); color: #000; }
+.btn-biz-action.sell:active { opacity: 0.85; }
+
+/* ── Unit grid ── */
+.biz-units-row {
+  display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;
+}
+.biz-unit-stat { font-size: 11px; color: var(--c-text-secondary); }
+.biz-unit-stat.rented { color: #5AA9FF; }
+.biz-unit-stat.sold   { color: #1FD67A; }
+.biz-unit-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+.biz-unit-btn {
+  aspect-ratio: 1;
+  border-radius: 10px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  line-height: 1.3;
+}
+.biz-unit-btn.unsold {
+  background: rgba(31,214,122,0.15);
+  border: 1px solid rgba(31,214,122,0.3);
+  color: #1FD67A;
+}
+.biz-unit-btn.rented {
+  background: rgba(90,169,255,0.15);
+  border: 1px solid rgba(90,169,255,0.25);
+  color: #5AA9FF;
+  cursor: default;
+}
+.biz-unit-btn.sold {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.3);
+  cursor: default;
+}
+
+/* ── Income Streams ── */
+.biz-stream-total {
+  font-family: var(--f-mono);
+  font-size: 15px; font-weight: 700;
+  color: #1FD67A;
+  margin-bottom: 10px;
+}
+.biz-stream-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.bsr-label { font-size: 12px; color: var(--c-text-secondary); }
+.bsr-amount { font-family: var(--f-mono); font-size: 12px; font-weight: 700; color: #5AA9FF; }
+
+/* ── Unit Modal ── */
+.biz-unit-modal-options {
+  margin: 12px 0 16px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 12px;
+  padding: 12px;
+}
+.bumo-row {
+  display: flex; justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 13px; color: var(--c-text-secondary);
+}
+.bumo-price { font-family: var(--f-mono); font-weight: 700; font-size: 14px; }
+.bumo-price.sell { color: #1FD67A; }
+.bumo-price.rent { color: #5AA9FF; }
