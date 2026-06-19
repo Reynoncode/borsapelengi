@@ -324,3 +324,9 @@ function _cleanupUnitsIfDone(biz, ap) {
     _removeActiveProject(biz, ap);
   }
 }
+// ─── app.js üçün namespace ───────────────────────────────────────────────────
+const BusinessEngine = {
+  processDay: function(state) {
+    tickProjects(state);
+  }
+};
