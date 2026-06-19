@@ -81,6 +81,7 @@ function initFreshState() {
   state.unseenNewsCount  = 0;
   state.currentCity      = "baku";
   state.ownedProperties  = [];
+   state.businesses       = [];
   ASSETS.forEach(a => {
     state.holdings[a.id]     = 0;
     state.priceHistory[a.id] = [a.basePrice];
@@ -164,6 +165,7 @@ function processWeeklyCardEvents(weekNum) {
       }
     }
   });
+     BusinessEngine.processWeeklyIncome(state);   // ← YENİ
 }
 
 function processVaultMaturity() {
@@ -219,7 +221,8 @@ function calcPosPnl(pos) {
 
 function calcNetWorth() {
   return getPrimaryBalance() + state.investedBalance
-    + calcSpotPortfolioValue() + calcPositionsPnl();
+    + calcSpotPortfolioValue() + calcPositionsPnl()
+    + BusinessEngine.getTotalInvested(state);   // ← YENİ
 }
 
 function showToast(msg) {
@@ -2038,6 +2041,7 @@ function advanceDay() {
   processVaultMaturity();
   processPropertyExpenses();
   processPropertyIncome();
+   BusinessEngine.processDay(state);   // ← YENİ
   Leaderboard.updateForDay(state.day); 
   saveState();
   renderAll();
@@ -2051,6 +2055,10 @@ function renderAll() {
   renderNewsFeed();
   if (currentDetailAssetId) renderAssetDetail();
   if (activeInvTab==="portfolio") renderPortfolio();
+    if (document.getElementById("screen-business")?.classList.contains("active") ||
+      document.getElementById("screen-business-mgmt")?.classList.contains("active")) {
+    renderBusiness();
+  }
 }
 
 function setupEventListeners() {
@@ -2059,6 +2067,7 @@ function setupEventListeners() {
       const app = el.dataset.app;
       if (app === "travel")       { openTravel();     return; }
       if (app === "realestate")   { openRealEstate(); return; }
+       if (app === "business")     { openBusiness();   return; }   // ← YENİ
       if (app === "leaderboard")  {
         Leaderboard.updateForDay(state.day);
         renderLeaderboard();
@@ -2206,6 +2215,7 @@ function start() {
     if (!state.positions)       state.positions = [];
     if (!state.currentCity)     state.currentCity = "baku";
     if (!state.ownedProperties) state.ownedProperties = [];
+    if (!state.businesses)      state.businesses = [];
     if (state.bankBalance !== undefined && !state.cards) {
       state.cards = [{
         id: "kapitan_standard_" + Date.now(),
@@ -2233,6 +2243,7 @@ function start() {
     if (!state.primaryCardId) state.primaryCardId = state.cards[0].id;
   }
   setupEventListeners();
+  setupBusinessListeners();   // ← YENİ 
   renderAll();
 }
 
