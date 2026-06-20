@@ -47,7 +47,7 @@ function renderBizMarket() {
   const container = document.getElementById("biz-market-list");
   const owned = new Set((state.businesses || []).map(b => b.typeId));
 
-  container.innerHTML = BIZ_COMPANY_TYPES.map(type => {
+  container.innerHTML = BUSINESS_TYPES.map(type => {
     const isOwned = owned.has(type.id);
     return `
     <div class="biz-type-card ${isOwned ? "biz-owned" : ""}" data-type-id="${type.id}">
