@@ -2154,4 +2154,338 @@ body {
 .bumo-price.sell { color: #1FD67A; }
 .bumo-price.rent { color: #5AA9FF; }
 
+/* ============================================================
+   MARKET APP — CSS (style.css-in SONUNA əlavə et)
+============================================================ */
 
+/* ── App Icon ── */
+.app-icon.market {
+  background: linear-gradient(135deg, #1a3a6e, #3A86FF);
+}
+
+/* ── Main Tabs ── */
+.market-main-tabs {
+  display: flex;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.market-main-tab {
+  flex: 1;
+  text-align: center;
+  padding: 11px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text-secondary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+.market-main-tab.active {
+  color: #3A86FF;
+  border-bottom-color: #3A86FF;
+}
+
+/* ── Mağaza kartları ── */
+.mkt-store-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.mkt-store-card:active,
+.mkt-store-card:hover { background: rgba(255,255,255,0.04); }
+
+.mkt-store-icon {
+  width: 48px; height: 48px;
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+.mkt-store-info { flex: 1; min-width: 0; }
+.mkt-store-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--c-text-primary);
+  margin-bottom: 3px;
+}
+.mkt-store-desc {
+  font-size: 11px;
+  color: var(--c-text-secondary);
+}
+.mkt-store-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+.mkt-owned-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 10px;
+  background: rgba(31,214,122,0.15);
+  color: #1FD67A;
+}
+.mkt-arrow {
+  font-size: 20px;
+  color: rgba(255,255,255,0.25);
+}
+
+/* ── Mağaza içi grid (2 sütun) ── */
+.mkt-store-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 16px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.mkt-store-header-icon { font-size: 28px; }
+.mkt-store-header-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--c-text-primary);
+}
+.mkt-store-header-desc {
+  font-size: 11px;
+  color: var(--c-text-secondary);
+}
+
+#market-store-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 14px;
+}
+
+.mkt-item-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s;
+}
+.mkt-item-card:active { transform: scale(0.97); background: rgba(255,255,255,0.07); }
+
+.mkt-item-img-wrap {
+  width: 100%;
+  aspect-ratio: 4/3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.mkt-item-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.mkt-item-info {
+  padding: 10px;
+}
+.mkt-item-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--c-text-primary);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mkt-item-brand {
+  font-size: 10px;
+  color: var(--c-text-secondary);
+  margin-bottom: 5px;
+}
+.mkt-item-price {
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--f-mono);
+  margin-bottom: 3px;
+}
+.mkt-item-appreciate {
+  font-size: 9px;
+  color: #1FD67A;
+  opacity: 0.7;
+}
+
+/* ── Satın alma popup ── */
+#mkt-item-popup-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  z-index: 9999;
+  align-items: flex-end;
+  justify-content: center;
+}
+.mkt-item-popup {
+  background: var(--c-surface, #141e2e);
+  border-radius: 20px 20px 0 0;
+  padding: 20px 20px 36px;
+  width: 100%;
+  max-width: 480px;
+  animation: slideUp 0.25s ease;
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+.mkt-popup-drag {
+  width: 36px; height: 4px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 2px;
+  margin: 0 auto 16px;
+}
+.mkt-popup-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.mkt-popup-icon-wrap {
+  width: 52px; height: 52px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.06);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px;
+  flex-shrink: 0;
+}
+#mkt-popup-img {
+  width: 100%;
+  border-radius: 12px;
+  margin-bottom: 14px;
+  max-height: 180px;
+  object-fit: cover;
+}
+.mkt-popup-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--c-text-primary);
+}
+.mkt-popup-brand {
+  font-size: 11px;
+  color: var(--c-text-secondary);
+  margin-top: 2px;
+}
+.mkt-popup-desc {
+  font-size: 12px;
+  color: var(--c-text-secondary);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+.mkt-popup-price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255,255,255,0.04);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+.mkt-popup-price-label { font-size: 12px; color: var(--c-text-secondary); }
+.mkt-popup-price-val {
+  font-size: 16px;
+  font-weight: 700;
+  font-family: var(--f-mono);
+  color: var(--c-text-primary);
+}
+.mkt-popup-balance-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 2px;
+  margin-bottom: 18px;
+}
+.mkt-popup-balance-label { font-size: 11px; color: var(--c-text-secondary); }
+.mkt-popup-balance-val {
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--f-mono);
+  color: #1FD67A;
+}
+#btn-mkt-buy {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  margin-bottom: 10px;
+}
+#btn-mkt-buy:active:not(:disabled) { opacity: 0.8; }
+#btn-mkt-buy:disabled { cursor: default; }
+#btn-mkt-popup-close {
+  width: 100%;
+  padding: 11px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  color: var(--c-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ── Sahib olduqlarım ── */
+.mkt-empty {
+  text-align: center;
+  padding: 50px 20px;
+  color: var(--c-text-secondary);
+  font-size: 14px;
+  line-height: 1.7;
+}
+.mkt-owned-group-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 14px 16px 6px;
+}
+.mkt-owned-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.mkt-owned-img {
+  width: 64px; height: 48px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.mkt-owned-img-placeholder {
+  width: 64px; height: 48px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.mkt-owned-info { flex: 1; min-width: 0; }
+.mkt-owned-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--c-text-primary);
+  margin-bottom: 2px;
+}
+.mkt-owned-meta {
+  font-size: 10px;
+  color: var(--c-text-secondary);
+  margin-bottom: 4px;
+}
+.mkt-owned-price-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+.mkt-owned-bought {
+  font-size: 10px;
+  color: var(--c-text-secondary);
+}
