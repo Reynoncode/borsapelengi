@@ -14,7 +14,7 @@
   <div class="phone-screen">
     <div class="notch"></div>
 
-    <!-- ============ STATUS BAR (bütün ekranlarda ortaq) ============ -->
+    <!-- ============ STATUS BAR ============ -->
     <div class="status-bar">
       <span class="day-label" id="status-day-label">GÜN 1</span>
       <span class="status-icons">📶 🔋</span>
@@ -60,10 +60,14 @@
           <div class="app-icon leaderboard">🏆</div>
           <div class="app-label">RANKS</div>
         </div>
-         <div class="app-icon-wrap" data-app="business">
+        <div class="app-icon-wrap" data-app="business">
           <div class="app-icon business">💼</div>
           <div class="app-label">BUSINESS</div>
           <div class="badge" id="business-badge" style="display:none;">!</div>
+        </div>
+        <div class="app-icon-wrap" data-app="market">
+          <div class="app-icon market">🛍️</div>
+          <div class="app-label">MARKET</div>
         </div>
       </div>
 
@@ -175,528 +179,55 @@
       </div>
     </div>
 
-   <div class="screen-view" id="screen-bmb">
-  <div class="app-header">
-    <div class="btn-back" data-back="home">←</div>
-    <div class="app-title">WALLET<small>Kartlar və Balanslar</small></div>
-  </div>
-  <div class="app-body" style="padding:0;">
-
-    <!-- INVESTED xülasəsi (yuxarı sabit bant) -->
-    <div class="wallet-invested-bar" id="wallet-invested-bar">
-      <div class="wib-label">INVESTED Balansı</div>
-      <div class="wib-value" id="wallet-inv-balance">$0.00</div>
-      <div class="wib-sub" id="wallet-inv-portfolio">Portfel: $0.00</div>
-    </div>
-
-    <!-- Kart carousel (üfüqi sürüşdürmə) -->
-    <div class="wallet-carousel-wrap">
-      <div class="wallet-cards-carousel" id="wallet-cards-carousel">
-        <!-- JS tərəfindən renderCard() ilə doldurulur -->
-      </div>
-      <!-- Yeni kart əlavə et düyməsi -->
-      <div class="wallet-add-card" id="btn-add-card">
-        <span>＋ Yeni kart</span>
-      </div>
-    </div>
-
-    <!-- Kart nöqtə indikatoru -->
-    <div class="wallet-dots" id="wallet-dots"></div>
-
-    <!-- Seçili kart detalları -->
-    <div class="wallet-card-detail" id="wallet-card-detail">
-      <div class="wcd-row">
-        <span class="wcd-label">Həftəlik limit</span>
-        <span class="wcd-value" id="wcd-limit">—</span>
-      </div>
-      <div class="wcd-row">
-        <span class="wcd-label">Bu həftə köçürüldü</span>
-        <span class="wcd-value" id="wcd-used">—</span>
-      </div>
-      <div class="wcd-row">
-        <span class="wcd-label">Limit aşım komisyası</span>
-        <span class="wcd-value" id="wcd-fee">—</span>
-      </div>
-      <div class="wcd-row">
-        <span class="wcd-label">Həftəlik faiz</span>
-        <span class="wcd-value" id="wcd-interest">—</span>
-      </div>
-      <div class="wcd-row" id="wcd-vault-row" style="display:none;">
-        <span class="wcd-label">Xəzinə</span>
-        <span class="wcd-value" id="wcd-vault">—</span>
-      </div>
-    </div>
-
-    <!-- Əməliyyat düymələri -->
-    <div class="wallet-actions">
-      <button class="btn-wallet-action" id="btn-wallet-transfer">↕ Transfer</button>
-      <button class="btn-wallet-action" id="btn-wallet-vault">🔒 Xəzinə</button>
-      <button class="btn-wallet-action" id="btn-wallet-set-primary">⭐ Əsas et</button>
-    </div>
-
-    <!-- Tranzaksiya tarixçəsi -->
-    <div class="tx-section" style="padding:0 16px;">
-      <div class="section-title" style="padding:12px 0 10px;font-size:12px;font-weight:700;color:var(--c-text-secondary);text-transform:uppercase;letter-spacing:0.05em;">Tranzaksiya Tarixçəsi</div>
-      <div id="tx-list"></div>
-    </div>
-
-  </div>
-</div>
-
-<!-- WALLET — Transfer Modal -->
-<div class="modal-overlay" id="wallet-transfer-overlay">
-  <div class="trade-modal">
-    <div class="tm-title">Transfer</div>
-    <div class="wallet-transfer-selectors">
-      <div class="wts-label">Mənbə</div>
-      <select id="wt-from-select" class="wallet-select"></select>
-      <div class="wts-arrow">↓</div>
-      <div class="wts-label">Təyinat</div>
-      <select id="wt-to-select" class="wallet-select"></select>
-    </div>
-    <div class="tm-input-row">
-      <span class="tm-unit">$</span>
-      <input type="number" id="wt-amount-input" placeholder="0.00" min="0" step="any">
-    </div>
-    <div class="wt-fee-preview" id="wt-fee-preview" style="font-size:12px;color:var(--c-text-secondary);padding:6px 0;">Komisya: $0.00</div>
-    <div class="tm-error" id="wt-error" style="display:none;">Kifayət qədər balans yoxdur</div>
-    <div class="tm-actions">
-      <button class="btn-modal-cancel" id="btn-wt-cancel">İmtina</button>
-      <button class="btn-modal-confirm buy" id="btn-wt-confirm">Köçür</button>
-    </div>
-  </div>
-</div>
-
-<!-- WALLET — Xəzinə Modal -->
-<div class="modal-overlay" id="wallet-vault-overlay">
-  <div class="trade-modal">
-    <div class="tm-title">🔒 Xəzinəyə Qoy</div>
-    <div class="tm-sub" id="vault-modal-sub">Pulu müddətli depozitə qoy</div>
-    <div class="tm-input-row">
-      <span class="tm-unit">$</span>
-      <input type="number" id="vault-amount-input" placeholder="0.00" min="0" step="any">
-    </div>
-    <div class="vault-duration-row">
-      <button class="vault-dur-btn active" data-days="7">7 gün</button>
-      <button class="vault-dur-btn" data-days="14">14 gün</button>
-      <button class="vault-dur-btn" data-days="28">28 gün</button>
-    </div>
-    <div class="vault-preview" id="vault-preview">
-      <!-- faiz hesablaması burda görünür -->
-    </div>
-    <div class="tm-error" id="vault-error" style="display:none;">Kifayət qədər balans yoxdur</div>
-    <div class="tm-actions">
-      <button class="btn-modal-cancel" id="btn-vault-cancel">İmtina</button>
-      <button class="btn-modal-confirm buy" id="btn-vault-confirm">Qoy</button>
-    </div>
-  </div>
-</div>
-
-<!-- WALLET — Kart əlavə et Modal -->
-<div class="modal-overlay" id="wallet-addcard-overlay">
-  <div class="trade-modal" style="max-height:80vh;overflow-y:auto;">
-    <div class="tm-title">Yeni Kart</div>
-    <div class="addcard-list" id="addcard-list">
-      <!-- JS tərəfindən doldurulur -->
-    </div>
-    <div class="tm-actions">
-      <button class="btn-modal-cancel" id="btn-addcard-cancel">İmtina</button>
-      <button class="btn-modal-confirm buy" id="btn-addcard-confirm">Əlavə et</button>
-    </div>
-  </div>
-</div>
-
     <!-- ============================================================
-         NEWS APP
+         BMB / WALLET APP
     ============================================================= -->
-    <div class="screen-view" id="screen-news">
+    <div class="screen-view" id="screen-bmb">
       <div class="app-header">
         <div class="btn-back" data-back="home">←</div>
-        <div class="app-title">NEWS<small>Bazar xəbərləri</small></div>
+        <div class="app-title">WALLET<small>Kartlar və Balanslar</small></div>
       </div>
-      <div class="app-body">
-        <div class="news-feed" id="news-feed"></div>
-      </div>
-    </div>
-
-    <!-- ============================================================
-         INSTAKG (placeholder)
-    ============================================================= -->
-    <div class="screen-view" id="screen-instakg">
-      <div class="app-header">
-        <div class="btn-back" data-back="home">←</div>
-        <div class="app-title">instakg<small>Sosial media</small></div>
-      </div>
-      <div class="instakg-placeholder">
-        <div class="ip-icon">📸</div>
-        <div class="ip-title">Tezliklə...</div>
-        <div class="ip-text">Bu app hələ hazırlanır. Sonradan başqa funksiya ilə əvəzlənəcək.</div>
-      </div>
-    </div>
-    <!-- Mövcud screen-instakg bağlanan yerdən SONRA əlavə et -->
-<!-- ============================================================
-     LEADERBOARD APP
-============================================================= -->
-<div class="screen-view" id="screen-leaderboard">
-  <div class="app-header">
-    <div class="btn-back" data-back="home">←</div>
-    <div class="app-title">RANKS<small>Dünya Zənginlər Siyahısı</small></div>
-  </div>
-  <div class="app-body" style="padding:0;">
- 
-    <!-- Oyunçunun mövqeyi — yuxarı bant -->
-    <div class="lb-player-banner">
-      <div class="lb-pb-left">
-        <div class="lb-pb-label">Sənin mövqeyin</div>
-        <div class="lb-pb-rank" id="lb-player-rank">#— / 500</div>
-      </div>
-      <div class="lb-pb-right">
-        <div class="lb-pb-label">Var-dövlətin</div>
-        <div class="lb-pb-wealth" id="lb-player-wealth">$—</div>
-      </div>
-    </div>
- 
-    <!-- Siyahı -->
-    <div class="lb-list-wrap">
-      <div id="lb-list"></div>
-      <div style="padding:12px 16px;">
-        <button id="lb-show-all" class="lb-show-all-btn">Hamısını göstər (500)</button>
-      </div>
-    </div>
- 
-  </div>
-</div>
-
-    
- 
-<!-- ============================================================
-     BUSINESS APP — Ana siyahı
-============================================================ -->
-<div class="screen-view" id="screen-business">
-  <div class="app-header">
-    <div class="btn-back" data-back="home">←</div>
-    <div class="app-title">BUSINESS<small>Şirkətlər &amp; Proyektlər</small></div>
-  </div>
-  <div class="app-body" style="padding:0;">
- 
-    <!-- Stats bant -->
-    <div class="biz-stats-bar">
-      <div class="biz-stat">
-        <div class="bsb-label">Bizneslər</div>
-        <div class="bsb-value" id="biz-stat-count">0</div>
-      </div>
-      <div class="biz-stat">
-        <div class="bsb-label">Həftəlik gəlir</div>
-        <div class="bsb-value up" id="biz-stat-weekly">$0/həftə</div>
-      </div>
-      <div class="biz-stat">
-        <div class="bsb-label">Cari investisiya</div>
-        <div class="bsb-value" id="biz-stat-invested">$0</div>
-      </div>
-    </div>
- 
-    <!-- Tablar -->
-    <div class="biz-main-tabs">
-      <div class="biz-main-tab active" data-biz-tab="market">Bazar</div>
-      <div class="biz-main-tab" data-biz-tab="mybiz">Mənim Bizneslər</div>
-    </div>
- 
-    <!-- Bazar siyahısı -->
-    <div id="biz-market-list" style="overflow-y:auto;max-height:calc(100% - 130px);"></div>
-    <!-- Mənim siyahısı -->
-    <div id="biz-my-list"     style="display:none;overflow-y:auto;max-height:calc(100% - 130px);"></div>
-  </div>
-</div>
- 
-<!-- ============================================================
-     BUSINESS — Biznes tipi detalı (unlock + proyektlər)
-============================================================ -->
-<div class="screen-view" id="screen-business-type-detail">
-  <div class="app-header">
-    <div class="btn-back" data-back="business">←</div>
-    <div class="app-title" id="biz-detail-name">—<small>Biznes detalı</small></div>
-  </div>
-  <div class="app-body">
- 
-    <div class="biz-detail-hero">
-      <div class="bdh-icon" id="biz-detail-icon">🏗️</div>
-      <div class="bdh-desc" id="biz-detail-desc">—</div>
-      <button class="btn-biz-unlock" id="btn-biz-unlock">Aç</button>
-    </div>
- 
-    <div class="section-title" style="padding:12px 16px 8px;font-size:12px;font-weight:700;color:var(--c-text-secondary);text-transform:uppercase;">Proyekt Növləri</div>
-    <div id="biz-project-types-list"></div>
-  </div>
-</div>
- 
-<!-- ============================================================
-     BUSINESS — Aktif biznes idarəetmə
-============================================================ -->
-<div class="screen-view" id="screen-business-mgmt">
-  <div class="app-header">
-    <div class="btn-back" data-back="business">←</div>
-    <div class="app-title">
-      <span id="biz-mgmt-icon">💼</span>
-      <span id="biz-mgmt-name">—</span>
-      <small>İdarəetmə</small>
-    </div>
-  </div>
-  <div class="app-body" style="padding:0;">
- 
-    <!-- Aktiv proyektlər -->
-    <div style="padding:12px 16px 6px;">
-      <div class="biz-section-header">
-        <span class="section-title" style="font-size:12px;font-weight:700;color:var(--c-text-secondary);text-transform:uppercase;">Aktiv Proyektlər</span>
-        <button class="btn-biz-new-project" id="btn-biz-new-project">+ Yeni</button>
-      </div>
-    </div>
-    <div id="biz-active-projects" style="padding:0 16px;"></div>
- 
-    <!-- Gəlir axınları -->
-    <div style="padding:16px 16px 6px;">
-      <div class="section-title" style="font-size:12px;font-weight:700;color:var(--c-text-secondary);text-transform:uppercase;">Gəlir Axınları</div>
-    </div>
-    <div id="biz-income-streams" style="padding:0 16px;"></div>
- 
-    <div style="height:24px;"></div>
-  </div>
-</div>
- 
-<!-- ============================================================
-     UNIT MODAL (sat / kirayə ver)
-============================================================ -->
-<div class="modal-overlay" id="biz-unit-modal-overlay" style="display:none;">
-  <div class="trade-modal">
-    <div class="tm-title" id="unit-modal-title">Unit</div>
-    <div class="biz-unit-modal-options">
-      <div class="bumo-row">
-        <span>Satış qiyməti:</span>
-        <span id="unit-modal-sell-price" class="bumo-price sell">—</span>
-      </div>
-      <div class="bumo-row">
-        <span>Kirayə gəliri:</span>
-        <span id="unit-modal-rent-price" class="bumo-price rent">—</span>
-      </div>
-    </div>
-    <div class="tm-actions" style="flex-direction:column;gap:8px;">
-      <button class="btn-modal-confirm buy" id="btn-unit-sell" style="width:100%;">💵 Sat</button>
-      <button class="btn-modal-confirm" id="btn-unit-rent" style="width:100%;background:linear-gradient(135deg,#5AA9FF,#3a7bd5);">🔒 Kirayəyə ver</button>
-      <button class="btn-modal-confirm" id="btn-unit-transfer-re" style="width:100%;background:linear-gradient(135deg,#E8A33D,#c07d20);display:none;">🏠 RealEstate-ə transfer et</button>
-      <button class="btn-modal-cancel" id="btn-unit-modal-cancel" style="width:100%;">İmtina</button>
-    </div>
-  </div>
-</div>
- 
-<!-- ============================================================
-     TRAVEL APP
-============================================================= -->
-<div class="screen-view" id="screen-travel">
-  <div class="app-header">
-    <div class="btn-back" data-back="home">←</div>
-    <div class="app-title">TRAVEL<small>Şəhər seç və köç</small></div>
-  </div>
-  <div class="app-body" style="padding:0;">
-
-    <!-- Aktiv şəhər banner -->
-    <div class="travel-current-city" id="travel-current-city-banner">
-      <div class="tcc-label">Hazırda yaşayırsan</div>
-      <div class="tcc-name" id="tcc-name">Bakı, Azərbaycan</div>
-      <div class="tcc-flag" id="tcc-flag">🇦🇿</div>
-    </div>
-
-    <!-- Xəritə (interaktiv SVG dünya) -->
-    <div class="travel-map-wrap" id="travel-map-wrap">
-      <svg id="travel-map-svg" viewBox="0 0 360 180" xmlns="http://www.w3.org/2000/svg">
-        <!-- Dəniz fonu -->
-        <rect width="360" height="180" fill="#0d2137" rx="12"/>
-        <!-- Sadə quru silueti -->
-        <ellipse cx="180" cy="90" rx="155" ry="72" fill="#1a3a2a" opacity="0.4"/>
-        <!-- Şəhər nöqtələri -->
-        <!-- Bakı -->
-        <circle id="map-dot-baku"    cx="218" cy="72"  r="6" fill="#1FD67A" stroke="#fff" stroke-width="1.5" class="map-city-dot" data-city="baku"/>
-        <!-- Dubai -->
-        <circle id="map-dot-dubai"   cx="228" cy="88"  r="6" fill="#E8A33D" stroke="#fff" stroke-width="1.5" class="map-city-dot" data-city="dubai"/>
-        <!-- London -->
-        <circle id="map-dot-london"  cx="155" cy="60"  r="6" fill="#5AA9FF" stroke="#fff" stroke-width="1.5" class="map-city-dot" data-city="london"/>
-        <!-- New York -->
-        <circle id="map-dot-newyork" cx="98"  cy="70"  r="6" fill="#C99CFF" stroke="#fff" stroke-width="1.5" class="map-city-dot" data-city="newyork"/>
-        <!-- Tokyo -->
-        <circle id="map-dot-tokyo"   cx="298" cy="72"  r="6" fill="#FF8C42" stroke="#fff" stroke-width="1.5" class="map-city-dot" data-city="tokyo"/>
-        <!-- Bali -->
-        <circle id="map-dot-bali"    cx="283" cy="112" r="6" fill="#FF4C5E" stroke="#fff" stroke-width="1.5" class="map-city-dot" data-city="bali"/>
-        <!-- Şəhər adları -->
-        <text x="218" y="65"  text-anchor="middle" font-size="7" fill="#fff" font-family="Inter,sans-serif">Bakı</text>
-        <text x="228" y="101" text-anchor="middle" font-size="7" fill="#fff" font-family="Inter,sans-serif">Dubai</text>
-        <text x="148" y="53"  text-anchor="middle" font-size="7" fill="#fff" font-family="Inter,sans-serif">London</text>
-        <text x="91"  y="63"  text-anchor="middle" font-size="7" fill="#fff" font-family="Inter,sans-serif">New York</text>
-        <text x="298" y="65"  text-anchor="middle" font-size="7" fill="#fff" font-family="Inter,sans-serif">Tokyo</text>
-        <text x="283" y="125" text-anchor="middle" font-size="7" fill="#fff" font-family="Inter,sans-serif">Bali</text>
-      </svg>
-    </div>
-
-    <!-- Şəhər kartları -->
-    <div class="travel-city-list" id="travel-city-list"></div>
-  </div>
-</div>
-
-<!-- ============================================================
-     TRAVEL — Şəhər detail + köçmə
-============================================================= -->
-<div class="screen-view" id="screen-travel-detail">
-  <div class="app-header">
-    <div class="btn-back" data-back="travel">←</div>
-    <div class="app-title" id="travel-detail-title">Şəhər<small id="travel-detail-sub">—</small></div>
-  </div>
-  <div class="app-body">
-    <div class="travel-detail-hero" id="travel-detail-hero">
-      <div class="tdh-flag" id="tdh-flag">🏙️</div>
-      <div class="tdh-name" id="tdh-name">—</div>
-      <div class="tdh-tag" id="tdh-tag">—</div>
-    </div>
-
-    <div class="travel-req-card" id="travel-req-card">
-      <div class="trc-title">Köçmə Tələbləri</div>
-      <div class="trc-row">
-        <span>Minimum bank balansı</span>
-        <span id="trc-min-balance">—</span>
-      </div>
-      <div class="trc-row">
-        <span>Viza &amp; sənəd xərci</span>
-        <span id="trc-visa-cost">—</span>
-      </div>
-      <div class="trc-row">
-        <span>Köçmə xərci (ümumi)</span>
-        <span id="trc-total-cost">—</span>
-      </div>
-      <div class="trc-row">
-        <span>Sənin bank balansın</span>
-        <span id="trc-your-balance">—</span>
-      </div>
-    </div>
-
-    <div class="travel-perks" id="travel-perks"></div>
-
-    <div id="travel-move-status" style="margin:14px 16px 0;font-size:13px;color:var(--c-down);display:none;"></div>
-
-    <div style="padding:16px;">
-      <button class="btn-travel-move" id="btn-travel-move">Bu şəhərə köç</button>
-    </div>
-  </div>
-</div>
-
-<!-- ============================================================
-     REALESTATE APP
-============================================================= -->
-<div class="screen-view" id="screen-realestate">
-  <div class="app-header">
-    <div class="btn-back" data-back="home">←</div>
-    <div class="app-title">REALESTATE<small id="re-city-sub">Bakı əmlak bazarı</small></div>
-  </div>
-  <div class="app-body" style="padding:0;">
-
-    <div class="re-tabs">
-      <div class="re-tab active" data-re-tab="listings">Elanlar</div>
-      <div class="re-tab" data-re-tab="owned">Mənim əmlakım</div>
-    </div>
-
-    <div class="re-panel" id="re-listings-panel">
-      <div class="re-filter-row">
-        <div class="re-filter active" data-re-filter="all">Hamısı</div>
-        <div class="re-filter" data-re-filter="residential">Ev</div>
-        <div class="re-filter" data-re-filter="commercial">Obyekt</div>
-      </div>
-      <div id="re-listings-list"></div>
-    </div>
-
-    <div class="re-panel" id="re-owned-panel" style="display:none;">
-      <div id="re-owned-list"></div>
-    </div>
-  </div>
-</div>
-
-<!-- ============================================================
-     REALESTATE — Əmlak detayı
-============================================================= -->
-<div class="screen-view" id="screen-realestate-detail">
-  <div class="app-header">
-    <div class="btn-back" data-back="realestate">←</div>
-    <div class="app-title" id="re-detail-title">Əmlak<small id="re-detail-sub">—</small></div>
-  </div>
-  <div class="app-body">
-    <div class="re-detail-img" id="re-detail-img">🏠</div>
-    <div class="re-detail-info" id="re-detail-info"></div>
-    <div class="re-detail-actions" id="re-detail-actions"></div>
-
-    <!-- Biznes seçimi (yalnız obyektlər üçün) -->
-    <div id="re-business-section" style="display:none;">
-      <div class="section-title" style="padding:12px 16px 8px;">Biznes növü seç</div>
-      <div class="re-business-grid" id="re-business-grid"></div>
-    </div>
-  </div>
-</div>
-
-<!-- ============================================================
-     REALESTATE — Satın alma / Kirayə modal
-============================================================= -->
-<div class="modal-overlay" id="re-modal-overlay">
-  <div class="trade-modal">
-    <div class="tm-title" id="re-modal-title">Əmlak al</div>
-    <div class="tm-sub" id="re-modal-sub">—</div>
-    <div class="tm-summary">
-      <span id="re-modal-cost-label">Məbləğ</span>
-      <span id="re-modal-cost">$0</span>
-    </div>
-    <div class="tm-summary" style="margin-top:6px;" id="re-modal-income-row">
-      <span id="re-modal-income-label">Həftəlik gəlir</span>
-      <span id="re-modal-income" style="color:#1FD67A;">$0/həftə</span>
-    </div>
-    <div class="tm-error" id="re-modal-error" style="display:none;">Kifayət qədər balans yoxdur</div>
-    <div class="tm-actions">
-      <button class="btn-modal-cancel" id="btn-re-modal-cancel">İmtina</button>
-      <button class="btn-modal-confirm buy" id="btn-re-modal-confirm">Təsdiqlə</button>
-    </div>
-  </div>
-</div>
-
-    <!-- ============================================================
-         TRADE MODAL (Al/Sat)
-    ============================================================= -->
-    <div class="modal-overlay" id="trade-modal-overlay">
-      <div class="trade-modal">
-        <div class="tm-title" id="tm-title">Al</div>
-        <div class="tm-sub" id="tm-sub">Trade balansından alış edilir</div>
-        <div class="tm-input-row">
-          <input type="number" id="tm-quantity-input" placeholder="0" min="0" step="any">
-          <span class="tm-unit" id="tm-unit-label">ədəd</span>
+      <div class="app-body" style="padding:0;">
+        <div class="wallet-invested-bar" id="wallet-invested-bar">
+          <div class="wib-label">INVESTED Balansı</div>
+          <div class="wib-value" id="wallet-inv-balance">$0.00</div>
+          <div class="wib-sub" id="wallet-inv-portfolio">Portfel: $0.00</div>
         </div>
-        <div class="tm-leverage-row" id="tm-leverage-row" style="display:none;">
-          <button class="lev-btn active" data-lev="1">1x</button>
-          <button class="lev-btn" data-lev="2">2x</button>
-          <button class="lev-btn" data-lev="5">5x</button>
-          <button class="lev-btn" data-lev="10">10x</button>
+        <div class="wallet-carousel-wrap">
+          <div class="wallet-cards-carousel" id="wallet-cards-carousel"></div>
+          <div class="wallet-add-card" id="btn-add-card"><span>＋ Yeni kart</span></div>
         </div>
-        <div class="tm-error" id="tm-error">Kifayət qədər balans yoxdur</div>
-        <div class="tm-summary">
-          <span id="tm-total-label">Cəmi məbləğ</span>
-          <span id="tm-total">$0.00</span>
+        <div class="wallet-dots" id="wallet-dots"></div>
+        <div class="wallet-card-detail" id="wallet-card-detail">
+          <div class="wcd-row">
+            <span class="wcd-label">Həftəlik limit</span>
+            <span class="wcd-value" id="wcd-limit">—</span>
+          </div>
+          <div class="wcd-row">
+            <span class="wcd-label">Bu həftə köçürüldü</span>
+            <span class="wcd-value" id="wcd-used">—</span>
+          </div>
+          <div class="wcd-row">
+            <span class="wcd-label">Limit aşım komisyası</span>
+            <span class="wcd-value" id="wcd-fee">—</span>
+          </div>
+          <div class="wcd-row">
+            <span class="wcd-label">Həftəlik faiz</span>
+            <span class="wcd-value" id="wcd-interest">—</span>
+          </div>
+          <div class="wcd-row" id="wcd-vault-row" style="display:none;">
+            <span class="wcd-label">Xəzinə</span>
+            <span class="wcd-value" id="wcd-vault">—</span>
+          </div>
         </div>
-        <div class="tm-actions">
-          <button class="btn-modal-cancel" id="btn-modal-cancel">İmtina</button>
-          <button class="btn-modal-confirm buy" id="btn-modal-confirm">Təsdiqlə</button>
+        <div class="wallet-actions">
+          <button class="btn-wallet-action" id="btn-wallet-transfer">↕ Transfer</button>
+          <button class="btn-wallet-action" id="btn-wallet-vault">🔒 Xəzinə</button>
+          <button class="btn-wallet-action" id="btn-wallet-set-primary">⭐ Əsas et</button>
         </div>
-      </div>
-    </div>
-
-<!-- ============================================================
-         CLOSE POSITION MODAL (Mövqə bağlama)
-    ============================================================= -->
-    <div class="modal-overlay" id="close-pos-overlay">
-      <div class="trade-modal">
-        <div class="tm-title" id="close-pos-title">Mövqə</div>
-        <div class="tm-sub" id="close-pos-detail">—</div>
-        <div class="tm-actions">
-          <button class="btn-modal-cancel" id="btn-close-pos-cancel">İmtina</button>
-          <button class="btn-modal-confirm sell" id="btn-close-pos-confirm">Mövqəni Bağla</button>
+        <div class="tx-section" style="padding:0 16px;">
+          <div class="section-title" style="padding:12px 0 10px;font-size:12px;font-weight:700;color:var(--c-text-secondary);text-transform:uppercase;letter-spacing:0.05em;">Tranzaksiya Tarixçəsi</div>
+          <div id="tx-list"></div>
         </div>
       </div>
     </div>
@@ -760,15 +291,411 @@
       </div>
     </div>
 
+    <!-- ============================================================
+         NEWS APP
+    ============================================================= -->
+    <div class="screen-view" id="screen-news">
+      <div class="app-header">
+        <div class="btn-back" data-back="home">←</div>
+        <div class="app-title">NEWS<small>Bazar xəbərləri</small></div>
+      </div>
+      <div class="app-body">
+        <div class="news-feed" id="news-feed"></div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         INSTAKG
+    ============================================================= -->
+    <div class="screen-view" id="screen-instakg">
+      <div class="app-header">
+        <div class="btn-back" data-back="home">←</div>
+        <div class="app-title">instakg<small>Sosial media</small></div>
+      </div>
+      <div class="instakg-placeholder">
+        <div class="ip-icon">📸</div>
+        <div class="ip-title">Tezliklə...</div>
+        <div class="ip-text">Bu app hələ hazırlanır.</div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         LEADERBOARD APP
+    ============================================================= -->
+    <div class="screen-view" id="screen-leaderboard">
+      <div class="app-header">
+        <div class="btn-back" data-back="home">←</div>
+        <div class="app-title">RANKS<small>Dünya Zənginlər Siyahısı</small></div>
+      </div>
+      <div class="app-body" style="padding:0;">
+        <div class="lb-player-banner">
+          <div class="lb-pb-left">
+            <div class="lb-pb-label">Sənin mövqeyin</div>
+            <div class="lb-pb-rank" id="lb-player-rank">#— / 500</div>
+          </div>
+          <div class="lb-pb-right">
+            <div class="lb-pb-label">Var-dövlətin</div>
+            <div class="lb-pb-wealth" id="lb-player-wealth">$—</div>
+          </div>
+        </div>
+        <div class="lb-list-wrap">
+          <div id="lb-list"></div>
+          <div style="padding:12px 16px;">
+            <button id="lb-show-all" class="lb-show-all-btn">Hamısını göstər (500)</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         BUSINESS APP — Ana siyahı
+    ============================================================ -->
+    <div class="screen-view" id="screen-business">
+      <div class="app-header">
+        <div class="btn-back" data-back="home">←</div>
+        <div class="app-title">BUSINESS<small>Şirkətlər &amp; Proyektlər</small></div>
+      </div>
+      <div class="app-body" style="padding:0;">
+        <div class="biz-stats-bar">
+          <div class="biz-stat">
+            <div class="bsb-label">Bizneslər</div>
+            <div class="bsb-value" id="biz-stat-count">0</div>
+          </div>
+          <div class="biz-stat">
+            <div class="bsb-label">Həftəlik gəlir</div>
+            <div class="bsb-value up" id="biz-stat-weekly">$0/həftə</div>
+          </div>
+          <div class="biz-stat">
+            <div class="bsb-label">Cari investisiya</div>
+            <div class="bsb-value" id="biz-stat-invested">$0</div>
+          </div>
+        </div>
+        <div class="biz-main-tabs">
+          <div class="biz-main-tab active" data-biz-tab="market">Bazar</div>
+          <div class="biz-main-tab" data-biz-tab="mybiz">Mənim Bizneslər</div>
+        </div>
+        <div id="biz-market-list" style="overflow-y:auto;max-height:calc(100% - 130px);"></div>
+        <div id="biz-my-list" style="display:none;overflow-y:auto;max-height:calc(100% - 130px);"></div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         BUSINESS — Biznes tipi detalı
+    ============================================================ -->
+    <div class="screen-view" id="screen-business-type-detail">
+      <div class="app-header">
+        <div class="btn-back" data-back="business">←</div>
+        <div class="app-title" id="biz-detail-name">—<small>Biznes detalı</small></div>
+      </div>
+      <div class="app-body">
+        <div class="biz-detail-hero">
+          <div class="bdh-icon" id="biz-detail-icon">🏗️</div>
+          <div class="bdh-desc" id="biz-detail-desc">—</div>
+          <button class="btn-biz-unlock" id="btn-biz-unlock">Aç</button>
+        </div>
+        <div class="section-title" style="padding:12px 16px 8px;font-size:12px;font-weight:700;color:var(--c-text-secondary);text-transform:uppercase;">Proyekt Növləri</div>
+        <div id="biz-project-types-list"></div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         BUSINESS — Aktif biznes idarəetmə
+    ============================================================ -->
+    <div class="screen-view" id="screen-business-mgmt">
+      <div class="app-header">
+        <div class="btn-back" data-back="business">←</div>
+        <div class="app-title">
+          <span id="biz-mgmt-icon">💼</span>
+          <span id="biz-mgmt-name">—</span>
+          <small>İdarəetmə</small>
+        </div>
+      </div>
+      <div class="app-body" style="padding:0;">
+        <div style="padding:12px 16px 6px;">
+          <div class="biz-section-header">
+            <span class="section-title" style="font-size:12px;font-weight:700;color:var(--c-text-secondary);text-transform:uppercase;">Aktiv Proyektlər</span>
+            <button class="btn-biz-new-project" id="btn-biz-new-project">+ Yeni</button>
+          </div>
+        </div>
+        <div id="biz-active-projects" style="padding:0 16px;"></div>
+        <div style="padding:16px 16px 6px;">
+          <div class="section-title" style="font-size:12px;font-weight:700;color:var(--c-text-secondary);text-transform:uppercase;">Gəlir Axınları</div>
+        </div>
+        <div id="biz-income-streams" style="padding:0 16px;"></div>
+        <div style="height:24px;"></div>
+      </div>
+    </div>
+
+    <!-- UNIT MODAL -->
+    <div class="modal-overlay" id="biz-unit-modal-overlay" style="display:none;">
+      <div class="trade-modal">
+        <div class="tm-title" id="unit-modal-title">Unit</div>
+        <div class="biz-unit-modal-options">
+          <div class="bumo-row">
+            <span>Satış qiyməti:</span>
+            <span id="unit-modal-sell-price" class="bumo-price sell">—</span>
+          </div>
+          <div class="bumo-row">
+            <span>Kirayə gəliri:</span>
+            <span id="unit-modal-rent-price" class="bumo-price rent">—</span>
+          </div>
+        </div>
+        <div class="tm-actions" style="flex-direction:column;gap:8px;">
+          <button class="btn-modal-confirm buy" id="btn-unit-sell" style="width:100%;">💵 Sat</button>
+          <button class="btn-modal-confirm" id="btn-unit-rent" style="width:100%;background:linear-gradient(135deg,#5AA9FF,#3a7bd5);">🔒 Kirayəyə ver</button>
+          <button class="btn-modal-confirm" id="btn-unit-transfer-re" style="width:100%;background:linear-gradient(135deg,#E8A33D,#c07d20);display:none;">🏠 RealEstate-ə transfer et</button>
+          <button class="btn-modal-cancel" id="btn-unit-modal-cancel" style="width:100%;">İmtina</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         TRAVEL APP
+    ============================================================= -->
+    <div class="screen-view" id="screen-travel">
+      <div class="app-header">
+        <div class="btn-back" data-back="home">←</div>
+        <div class="app-title">TRAVEL<small>Şəhər seç və köç</small></div>
+      </div>
+      <div class="app-body" style="padding:0;">
+        <div class="travel-current-city" id="travel-current-city-banner">
+          <div class="tcc-label">Hazırda yaşayırsan</div>
+          <div class="tcc-name" id="tcc-name">Bakı, Azərbaycan</div>
+          <div class="tcc-flag" id="tcc-flag">🇦🇿</div>
+        </div>
+        <div class="travel-map-wrap" id="travel-map-wrap">
+          <svg id="travel-map-svg" viewBox="0 0 360 180" xmlns="http://www.w3.org/2000/svg">
+            <rect width="360" height="180" fill="#0d2137" rx="12"/>
+            <ellipse cx="180" cy="90" rx="155" ry="72" fill="#1a3a2a" opacity="0.4"/>
+            <circle id="map-dot-baku"    cx="218" cy="72"  r="6" fill="#1FD67A" stroke="#fff" stroke-width="1.5" class="map-city-dot" data-city="baku"/>
+            <circle id="map-dot-dubai"   cx="228" cy="88"  r="6" fill="#E8A33D" stroke="#fff" stroke-width="1.5" class="map-city-dot" data-city="dubai"/>
+            <circle id="map-dot-london"  cx="155" cy="60"  r="6" fill="#5AA9FF" stroke="#fff" stroke-width="1.5" class="map-city-dot" data-city="london"/>
+            <circle id="map-dot-newyork" cx="98"  cy="70"  r="6" fill="#C99CFF" stroke="#fff" stroke-width="1.5" class="map-city-dot" data-city="newyork"/>
+            <circle id="map-dot-tokyo"   cx="298" cy="72"  r="6" fill="#FF8C42" stroke="#fff" stroke-width="1.5" class="map-city-dot" data-city="tokyo"/>
+            <circle id="map-dot-bali"    cx="283" cy="112" r="6" fill="#FF4C5E" stroke="#fff" stroke-width="1.5" class="map-city-dot" data-city="bali"/>
+            <text x="218" y="65"  text-anchor="middle" font-size="7" fill="#fff" font-family="Inter,sans-serif">Bakı</text>
+            <text x="228" y="101" text-anchor="middle" font-size="7" fill="#fff" font-family="Inter,sans-serif">Dubai</text>
+            <text x="148" y="53"  text-anchor="middle" font-size="7" fill="#fff" font-family="Inter,sans-serif">London</text>
+            <text x="91"  y="63"  text-anchor="middle" font-size="7" fill="#fff" font-family="Inter,sans-serif">New York</text>
+            <text x="298" y="65"  text-anchor="middle" font-size="7" fill="#fff" font-family="Inter,sans-serif">Tokyo</text>
+            <text x="283" y="125" text-anchor="middle" font-size="7" fill="#fff" font-family="Inter,sans-serif">Bali</text>
+          </svg>
+        </div>
+        <div class="travel-city-list" id="travel-city-list"></div>
+      </div>
+    </div>
+
+    <!-- TRAVEL — Şəhər detail -->
+    <div class="screen-view" id="screen-travel-detail">
+      <div class="app-header">
+        <div class="btn-back" data-back="travel">←</div>
+        <div class="app-title" id="travel-detail-title">Şəhər<small id="travel-detail-sub">—</small></div>
+      </div>
+      <div class="app-body">
+        <div class="travel-detail-hero" id="travel-detail-hero">
+          <div class="tdh-flag" id="tdh-flag">🏙️</div>
+          <div class="tdh-name" id="tdh-name">—</div>
+          <div class="tdh-tag" id="tdh-tag">—</div>
+        </div>
+        <div class="travel-req-card" id="travel-req-card">
+          <div class="trc-title">Köçmə Tələbləri</div>
+          <div class="trc-row"><span>Minimum bank balansı</span><span id="trc-min-balance">—</span></div>
+          <div class="trc-row"><span>Viza &amp; sənəd xərci</span><span id="trc-visa-cost">—</span></div>
+          <div class="trc-row"><span>Köçmə xərci (ümumi)</span><span id="trc-total-cost">—</span></div>
+          <div class="trc-row"><span>Sənin bank balansın</span><span id="trc-your-balance">—</span></div>
+        </div>
+        <div class="travel-perks" id="travel-perks"></div>
+        <div id="travel-move-status" style="margin:14px 16px 0;font-size:13px;color:var(--c-down);display:none;"></div>
+        <div style="padding:16px;">
+          <button class="btn-travel-move" id="btn-travel-move">Bu şəhərə köç</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         REALESTATE APP
+    ============================================================= -->
+    <div class="screen-view" id="screen-realestate">
+      <div class="app-header">
+        <div class="btn-back" data-back="home">←</div>
+        <div class="app-title">REALESTATE<small id="re-city-sub">Bakı əmlak bazarı</small></div>
+      </div>
+      <div class="app-body" style="padding:0;">
+        <div class="re-tabs">
+          <div class="re-tab active" data-re-tab="listings">Elanlar</div>
+          <div class="re-tab" data-re-tab="owned">Mənim əmlakım</div>
+        </div>
+        <div class="re-panel" id="re-listings-panel">
+          <div class="re-filter-row">
+            <div class="re-filter active" data-re-filter="all">Hamısı</div>
+            <div class="re-filter" data-re-filter="residential">Ev</div>
+            <div class="re-filter" data-re-filter="commercial">Obyekt</div>
+          </div>
+          <div id="re-listings-list"></div>
+        </div>
+        <div class="re-panel" id="re-owned-panel" style="display:none;">
+          <div id="re-owned-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REALESTATE — Əmlak detayı -->
+    <div class="screen-view" id="screen-realestate-detail">
+      <div class="app-header">
+        <div class="btn-back" data-back="realestate">←</div>
+        <div class="app-title" id="re-detail-title">Əmlak<small id="re-detail-sub">—</small></div>
+      </div>
+      <div class="app-body">
+        <div class="re-detail-img" id="re-detail-img">🏠</div>
+        <div class="re-detail-info" id="re-detail-info"></div>
+        <div class="re-detail-actions" id="re-detail-actions"></div>
+        <div id="re-business-section" style="display:none;">
+          <div class="section-title" style="padding:12px 16px 8px;">Biznes növü seç</div>
+          <div class="re-business-grid" id="re-business-grid"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REALESTATE — Modal -->
+    <div class="modal-overlay" id="re-modal-overlay">
+      <div class="trade-modal">
+        <div class="tm-title" id="re-modal-title">Əmlak al</div>
+        <div class="tm-sub" id="re-modal-sub">—</div>
+        <div class="tm-summary">
+          <span id="re-modal-cost-label">Məbləğ</span>
+          <span id="re-modal-cost">$0</span>
+        </div>
+        <div class="tm-summary" style="margin-top:6px;" id="re-modal-income-row">
+          <span id="re-modal-income-label">Həftəlik gəlir</span>
+          <span id="re-modal-income" style="color:#1FD67A;">$0/həftə</span>
+        </div>
+        <div class="tm-error" id="re-modal-error" style="display:none;">Kifayət qədər balans yoxdur</div>
+        <div class="tm-actions">
+          <button class="btn-modal-cancel" id="btn-re-modal-cancel">İmtina</button>
+          <button class="btn-modal-confirm buy" id="btn-re-modal-confirm">Təsdiqlə</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         MARKET APP — Ana ekran
+    ============================================================= -->
+    <div class="screen-view" id="screen-market">
+      <div class="app-header">
+        <div class="btn-back" data-back="home">←</div>
+        <div class="app-title">MARKET<small>Nəqliyyat və texnika</small></div>
+      </div>
+      <div class="app-body" style="padding:0;">
+        <div class="market-main-tabs">
+          <div class="market-main-tab active" data-market-tab="stores">Mağazalar</div>
+          <div class="market-main-tab" data-market-tab="owned">Sahib Olduqlarım</div>
+        </div>
+        <div id="market-stores-list" style="overflow-y:auto;max-height:calc(100% - 90px);"></div>
+        <div id="market-owned-list" style="display:none;overflow-y:auto;max-height:calc(100% - 90px);"></div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         MARKET APP — Mağaza içi ekran
+    ============================================================= -->
+    <div class="screen-view" id="screen-market-store">
+      <div class="app-header">
+        <div class="btn-back" id="btn-market-store-back">←</div>
+        <div class="app-title" id="market-store-title">Mağaza<small id="market-store-desc"></small></div>
+      </div>
+      <div class="app-body" style="padding:0;">
+        <div class="mkt-store-header">
+          <span class="mkt-store-header-icon" id="market-store-icon"></span>
+          <div>
+            <div class="mkt-store-header-name" id="market-store-title-2"></div>
+            <div class="mkt-store-header-desc" id="market-store-desc-2"></div>
+          </div>
+        </div>
+        <div id="market-store-grid" style="overflow-y:auto;max-height:calc(100% - 80px);"></div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         MARKET — Satın alma popup (bottom sheet)
+    ============================================================= -->
+    <div id="mkt-item-popup-overlay">
+      <div class="mkt-item-popup">
+        <div class="mkt-popup-drag"></div>
+        <img id="mkt-popup-img" src="" alt="" style="display:none;">
+        <div class="mkt-popup-header">
+          <div class="mkt-popup-icon-wrap"><span id="mkt-popup-icon"></span></div>
+          <div>
+            <div class="mkt-popup-title" id="mkt-popup-name"></div>
+            <div class="mkt-popup-brand" id="mkt-popup-brand"></div>
+          </div>
+        </div>
+        <div class="mkt-popup-desc" id="mkt-popup-desc"></div>
+        <div class="mkt-popup-price-row">
+          <span class="mkt-popup-price-label">Qiymət</span>
+          <span class="mkt-popup-price-val" id="mkt-popup-price"></span>
+        </div>
+        <div class="mkt-popup-balance-row">
+          <span class="mkt-popup-balance-label">Kartda mövcud</span>
+          <span class="mkt-popup-balance-val" id="mkt-popup-balance"></span>
+        </div>
+        <button id="btn-mkt-buy">Al</button>
+        <button id="btn-mkt-popup-close">Ləğv et</button>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         TRADE MODAL (Al/Sat)
+    ============================================================= -->
+    <div class="modal-overlay" id="trade-modal-overlay">
+      <div class="trade-modal">
+        <div class="tm-title" id="tm-title">Al</div>
+        <div class="tm-sub" id="tm-sub">Trade balansından alış edilir</div>
+        <div class="tm-input-row">
+          <input type="number" id="tm-quantity-input" placeholder="0" min="0" step="any">
+          <span class="tm-unit" id="tm-unit-label">ədəd</span>
+        </div>
+        <div class="tm-leverage-row" id="tm-leverage-row" style="display:none;">
+          <button class="lev-btn active" data-lev="1">1x</button>
+          <button class="lev-btn" data-lev="2">2x</button>
+          <button class="lev-btn" data-lev="5">5x</button>
+          <button class="lev-btn" data-lev="10">10x</button>
+        </div>
+        <div class="tm-error" id="tm-error">Kifayət qədər balans yoxdur</div>
+        <div class="tm-summary">
+          <span id="tm-total-label">Cəmi məbləğ</span>
+          <span id="tm-total">$0.00</span>
+        </div>
+        <div class="tm-actions">
+          <button class="btn-modal-cancel" id="btn-modal-cancel">İmtina</button>
+          <button class="btn-modal-confirm buy" id="btn-modal-confirm">Təsdiqlə</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLOSE POSITION MODAL -->
+    <div class="modal-overlay" id="close-pos-overlay">
+      <div class="trade-modal">
+        <div class="tm-title" id="close-pos-title">Mövqe</div>
+        <div class="tm-sub" id="close-pos-detail">—</div>
+        <div class="tm-actions">
+          <button class="btn-modal-cancel" id="btn-close-pos-cancel">İmtina</button>
+          <button class="btn-modal-confirm sell" id="btn-close-pos-confirm">Mövqəni Bağla</button>
+        </div>
+      </div>
+    </div>
+
     <!-- ============ TOAST ============ -->
     <div class="toast" id="toast"></div>
   </div>
 </div>
+
 <script src="banks-config.js"></script>
 <script src="data.js"></script>
 <script src="business-data.js"></script>
 <script src="business-engine.js"></script>
 <script src="business-app.js"></script>
+<script src="market-data.js"></script>
+<script src="market-app.js"></script>
 <script src="engine.js"></script>
 <script src="leaderboard.js"></script>
 <script src="app.js"></script>
