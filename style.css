@@ -2345,8 +2345,7 @@ body {
 .biz-collect-btn:hover { background: #2ecc71; }
 
 /* ============================================================
-   BUSINESS APP — CSS DÜZƏLDILMIŞ (style.css-in SONUNA əlavə et)
-   JS-dəki sinif adları ilə tam uyğundur
+   BUSINESS APP — CSS (style.css-in SONUNA əlavə et)
 ============================================================ */
 
 /* ── Stats Bar ── */
@@ -2398,14 +2397,7 @@ body {
   border-bottom-color: #1FD67A;
 }
 
-/* ── Market List Container ── */
-#biz-market-list,
-#biz-my-list {
-  overflow-y: auto;
-  flex: 1;
-}
-
-/* ── biz-market-card (JS renderBizMarketList-də istifadə olunur) ── */
+/* ── biz-market-card ── */
 .biz-market-card {
   display: flex;
   align-items: center;
@@ -2418,24 +2410,19 @@ body {
 .biz-market-card:active,
 .biz-market-card:hover { background: rgba(255,255,255,0.04); }
 
-/* ── bmc-main, bmc-name, bmc-meta (market card içi) ── */
 .bmc-main { flex: 1; min-width: 0; }
-
 .bmc-name {
   font-size: 14px;
   font-weight: 700;
   color: var(--c-text-primary);
   margin-bottom: 3px;
 }
-
 .bmc-meta {
   font-size: 11px;
   color: var(--c-text-secondary);
   margin-bottom: 4px;
 }
 .bmc-meta strong { color: var(--c-text-primary); }
-
-/* ── bmc-proj-tag (layihə adları üçün pill-lər) ── */
 .bmc-projects {
   display: flex;
   flex-wrap: wrap;
@@ -2450,8 +2437,6 @@ body {
   background: rgba(255,255,255,0.07);
   color: rgba(255,255,255,0.45);
 }
-
-/* ── bmc-right (sağ tərəf — status badge) ── */
 .bmc-right {
   display: flex;
   flex-direction: column;
@@ -2459,40 +2444,18 @@ body {
   gap: 6px;
   flex-shrink: 0;
 }
-
-/* ── bmc-status (owned / locked / available) ── */
 .bmc-status {
   font-size: 11px;
   font-weight: 700;
   padding: 5px 11px;
   border-radius: 20px;
 }
-.bmc-status.owned {
-  background: rgba(31,214,122,0.15);
-  color: #1FD67A;
-}
-.bmc-status.locked {
-  background: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.35);
-}
-.bmc-status.available {
-  background: #1FD67A;
-  color: #000;
-}
+.bmc-status.owned    { background: rgba(31,214,122,0.15); color: #1FD67A; }
+.bmc-status.locked   { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.35); }
+.bmc-status.available { background: #1FD67A; color: #000; }
 
 /* ── App Icon ── */
-.app-icon.business {
-  background: linear-gradient(135deg, #1a7a4a, #2dbe75);
-}
-
-/* ── Empty States ── */
-.biz-empty {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--c-text-secondary);
-  font-size: 14px;
-  line-height: 1.6;
-}
+.app-icon.business { background: linear-gradient(135deg, #1a7a4a, #2dbe75); }
 
 /* ── Business Detail Hero ── */
 .biz-detail-hero {
@@ -2517,6 +2480,7 @@ body {
   font-weight: 700;
   cursor: pointer;
   transition: opacity 0.2s;
+  width: 80%;
 }
 .btn-biz-unlock:disabled {
   background: rgba(31,214,122,0.2);
@@ -2525,7 +2489,61 @@ body {
 }
 .btn-biz-unlock:active:not(:disabled) { opacity: 0.8; }
 
-/* ── Section Header (Management screen) ── */
+/* ── Project type cards (detail ekranı) ── */
+.biz-proj-type-card {
+  margin: 0 16px 10px;
+  padding: 14px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.07);
+  transition: background 0.15s;
+}
+.bptc-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.bptc-icon { font-size: 20px; }
+.bptc-name { flex: 1; font-size: 13px; font-weight: 700; color: var(--c-text-primary); }
+.btn-start-proj {
+  padding: 6px 14px;
+  background: #1FD67A;
+  border: none;
+  border-radius: 8px;
+  color: #000;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.btn-start-proj:active { opacity: 0.8; }
+
+.bptc-desc {
+  font-size: 11px;
+  color: var(--c-text-secondary);
+  margin-bottom: 6px;
+}
+.bptc-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 11px;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 6px;
+}
+
+/* ── Project card alt sətir (satış, ROI, gəlir) ── */
+.bptc-bottom {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 4px;
+}
+.bpt-sell   { font-size: 12px; font-weight: 700; color: #1FD67A; }
+.bpt-roi    { font-size: 12px; font-weight: 700; color: #1FD67A; }
+.bpt-income { font-size: 12px; font-weight: 700; color: #5AA9FF; }
+
+/* ── Section Header ── */
 .biz-section-header {
   display: flex;
   align-items: center;
@@ -2583,10 +2601,6 @@ body {
   font-size: 13px;
   color: var(--c-text-secondary);
 }
-.bumo-price {
-  font-family: var(--f-mono);
-  font-weight: 700;
-  font-size: 14px;
-}
+.bumo-price { font-family: var(--f-mono); font-weight: 700; font-size: 14px; }
 .bumo-price.sell { color: #1FD67A; }
 .bumo-price.rent { color: #5AA9FF; }
