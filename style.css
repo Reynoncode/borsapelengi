@@ -2343,3 +2343,250 @@ body {
   font-size: 0.82rem;
 }
 .biz-collect-btn:hover { background: #2ecc71; }
+
+/* ============================================================
+   BUSINESS APP — CSS DÜZƏLDILMIŞ (style.css-in SONUNA əlavə et)
+   JS-dəki sinif adları ilə tam uyğundur
+============================================================ */
+
+/* ── Stats Bar ── */
+.biz-stats-bar {
+  display: flex;
+  background: rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  padding: 12px 0 10px;
+}
+.biz-stat {
+  flex: 1;
+  text-align: center;
+  border-right: 1px solid rgba(255,255,255,0.06);
+}
+.biz-stat:last-child { border-right: none; }
+.bsb-label {
+  font-size: 10px;
+  color: var(--c-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 3px;
+}
+.bsb-value {
+  font-family: var(--f-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--c-text-primary);
+}
+.bsb-value.up { color: #1FD67A; }
+
+/* ── Main Tabs ── */
+.biz-main-tabs {
+  display: flex;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.biz-main-tab {
+  flex: 1;
+  text-align: center;
+  padding: 11px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text-secondary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+.biz-main-tab.active {
+  color: #1FD67A;
+  border-bottom-color: #1FD67A;
+}
+
+/* ── Market List Container ── */
+#biz-market-list,
+#biz-my-list {
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* ── biz-market-card (JS renderBizMarketList-də istifadə olunur) ── */
+.biz-market-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.biz-market-card:active,
+.biz-market-card:hover { background: rgba(255,255,255,0.04); }
+
+/* ── bmc-main, bmc-name, bmc-meta (market card içi) ── */
+.bmc-main { flex: 1; min-width: 0; }
+
+.bmc-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--c-text-primary);
+  margin-bottom: 3px;
+}
+
+.bmc-meta {
+  font-size: 11px;
+  color: var(--c-text-secondary);
+  margin-bottom: 4px;
+}
+.bmc-meta strong { color: var(--c-text-primary); }
+
+/* ── bmc-proj-tag (layihə adları üçün pill-lər) ── */
+.bmc-projects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+.bmc-proj-tag {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.45);
+}
+
+/* ── bmc-right (sağ tərəf — status badge) ── */
+.bmc-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* ── bmc-status (owned / locked / available) ── */
+.bmc-status {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 11px;
+  border-radius: 20px;
+}
+.bmc-status.owned {
+  background: rgba(31,214,122,0.15);
+  color: #1FD67A;
+}
+.bmc-status.locked {
+  background: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.35);
+}
+.bmc-status.available {
+  background: #1FD67A;
+  color: #000;
+}
+
+/* ── App Icon ── */
+.app-icon.business {
+  background: linear-gradient(135deg, #1a7a4a, #2dbe75);
+}
+
+/* ── Empty States ── */
+.biz-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--c-text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ── Business Detail Hero ── */
+.biz-detail-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 16px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  gap: 8px;
+}
+.bdh-icon { font-size: 48px; }
+.bdh-desc { font-size: 13px; color: var(--c-text-secondary); text-align: center; }
+
+.btn-biz-unlock {
+  margin-top: 8px;
+  padding: 10px 24px;
+  background: linear-gradient(135deg, #1FD67A, #15a85f);
+  border: none;
+  border-radius: 12px;
+  color: #000;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.btn-biz-unlock:disabled {
+  background: rgba(31,214,122,0.2);
+  color: #1FD67A;
+  cursor: default;
+}
+.btn-biz-unlock:active:not(:disabled) { opacity: 0.8; }
+
+/* ── Section Header (Management screen) ── */
+.biz-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px 6px;
+}
+.biz-section-header h3 {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--c-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0;
+}
+.btn-biz-new-project {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 12px;
+  background: rgba(31,214,122,0.15);
+  border: 1px solid rgba(31,214,122,0.3);
+  border-radius: 10px;
+  color: #1FD67A;
+  cursor: pointer;
+}
+.btn-biz-new-project:active { background: rgba(31,214,122,0.25); }
+
+/* ── Unit Modal ── */
+#biz-unit-modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+}
+.biz-unit-modal {
+  background: var(--c-surface, #1a2535);
+  border-radius: 16px;
+  padding: 20px 18px;
+  width: 290px;
+  max-width: 90vw;
+}
+.biz-unit-modal-options {
+  margin: 12px 0 16px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 12px;
+  padding: 12px;
+}
+.bumo-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 13px;
+  color: var(--c-text-secondary);
+}
+.bumo-price {
+  font-family: var(--f-mono);
+  font-weight: 700;
+  font-size: 14px;
+}
+.bumo-price.sell { color: #1FD67A; }
+.bumo-price.rent { color: #5AA9FF; }
