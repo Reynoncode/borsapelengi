@@ -7785,3 +7785,280 @@ function calcPropertyIncome(property, ownershipType, businessTypeId = null) {
 
   return 0;
 }  
+
+/* ============================================================
+   MARKET — MAĞAZALAR VƏ NƏQLIYYAT VASİTƏLƏRİ
+   data.js-in sonuna əlavə et
+============================================================ */
+
+const MARKET_STORES = [
+  {
+    id: "normal_car",
+    name: "Normal Avtomobillər",
+    icon: "🚗",
+    desc: "Gündəlik istifadə üçün etibarlı avtomobillər",
+    imgFolder: "normalcar"
+  },
+  {
+    id: "sport_car",
+    name: "Sport Avtomobillər",
+    icon: "🏎️",
+    desc: "Yüksək sürətli, prestijli sport maşınlar",
+    imgFolder: "sportcar"
+  },
+  {
+    id: "air_vehicle",
+    name: "Hava Nəqliyyatı",
+    icon: "✈️",
+    desc: "Helikopterlər, təyyarələr və dronlar",
+    imgFolder: "airvehicle"
+  },
+  {
+    id: "motorcycle",
+    name: "Motosikllər",
+    icon: "🏍️",
+    desc: "Klassik və sport motosikllər",
+    imgFolder: "motorcycle"
+  },
+  {
+    id: "water_vehicle",
+    name: "Su Nəqliyyatı",
+    icon: "🚤",
+    desc: "Qayıqlar, yaxtalar və su scooterləri",
+    imgFolder: "watervehicle"
+  }
+];
+
+const MARKET_ITEMS = [
+
+  /* ── NORMAL AVTOMOBILLƏR ── */
+  {
+    id: "nc_1",
+    storeId: "normal_car",
+    name: "Toyota Camry",
+    brand: "Toyota",
+    img: "market/normalcar1.png",
+    price: 28000,
+    resellValue: 0.75,
+    desc: "Etibarlı, rahat, gündəlik istifadə üçün ideal sedan. Aşağı yanacaq sərfiyyatı.",
+    specs: "2.5L · 200 hp · Avtomatik"
+  },
+  {
+    id: "nc_2",
+    storeId: "normal_car",
+    name: "Honda Civic",
+    brand: "Honda",
+    img: "market/normalcar2.png",
+    price: 22000,
+    resellValue: 0.72,
+    desc: "Kompakt, iqtisadi, şəhər şəraitinə uyğun. Gənclərin sevimlisi.",
+    specs: "1.5L Turbo · 158 hp · CVT"
+  },
+  {
+    id: "nc_3",
+    storeId: "normal_car",
+    name: "BMW 3 Series",
+    brand: "BMW",
+    img: "market/normalcar3.png",
+    price: 55000,
+    resellValue: 0.70,
+    desc: "Premium sürücülük zövqü, lüks salon, güclü mühərrik. Biznes üçün ideal.",
+    specs: "2.0L Turbo · 255 hp · 8-sürətli"
+  },
+  {
+    id: "nc_4",
+    storeId: "normal_car",
+    name: "Tesla Model 3",
+    brand: "Tesla",
+    img: "market/normalcar4.png",
+    price: 42000,
+    resellValue: 0.73,
+    desc: "Tam elektrik, autopilot, sıfır emissiya. Gələcəyin avtomobili.",
+    specs: "Elektrik · 358 hp · 0-100: 5.8s"
+  },
+
+  /* ── SPORT AVTOMOBILLƏR ── */
+  {
+    id: "sc_1",
+    storeId: "sport_car",
+    name: "Ferrari 488",
+    brand: "Ferrari",
+    img: "market/sportcar1.png",
+    price: 280000,
+    resellValue: 0.80,
+    desc: "İtalyan sürət şah əsəri. 670 at gücü ilə həyatını dəyişdir.",
+    specs: "3.9L Twin-Turbo V8 · 670 hp · 0-100: 3s"
+  },
+  {
+    id: "sc_2",
+    storeId: "sport_car",
+    name: "Lamborghini Huracán",
+    brand: "Lamborghini",
+    img: "market/sportcar2.png",
+    price: 320000,
+    resellValue: 0.82,
+    desc: "Yolun əsl canavarı. Addıcionalda hiss etdiyin ən güclü nəqliyyat.",
+    specs: "5.2L V10 · 610 hp · 0-100: 2.9s"
+  },
+  {
+    id: "sc_3",
+    storeId: "sport_car",
+    name: "Porsche 911 GT3",
+    brand: "Porsche",
+    img: "market/sportcar3.png",
+    price: 195000,
+    resellValue: 0.85,
+    desc: "Yarış pistindən günəlik yola. Mükəmməl balans və texnologiya.",
+    specs: "4.0L Flat-6 · 502 hp · 0-100: 3.4s"
+  },
+  {
+    id: "sc_4",
+    storeId: "sport_car",
+    name: "McLaren 720S",
+    brand: "McLaren",
+    img: "market/sportcar4.png",
+    price: 310000,
+    resellValue: 0.79,
+    desc: "Britaniya mühəndisliyinin zirvəsi. Karbon gövdə, inanılmaz aerodinamika.",
+    specs: "4.0L Twin-Turbo V8 · 720 hp · 0-100: 2.8s"
+  },
+
+  /* ── HAVA NƏQLIYYATI ── */
+  {
+    id: "av_1",
+    storeId: "air_vehicle",
+    name: "Robinson R44",
+    brand: "Robinson",
+    img: "market/airvehicle1.png",
+    price: 380000,
+    resellValue: 0.65,
+    desc: "Dörd nəfərlik şəxsi helikopter. Biznes görüşlərinə, şəhərüstü səfərlərə.",
+    specs: "4 nəfər · 400 km menzil · 240 km/s"
+  },
+  {
+    id: "av_2",
+    storeId: "air_vehicle",
+    name: "Cessna 172",
+    brand: "Cessna",
+    img: "market/airvehicle2.png",
+    price: 420000,
+    resellValue: 0.68,
+    desc: "Klassik şəxsi uçuş təyyarəsi. Dünyada ən çox istehsal edilən model.",
+    specs: "4 nəfər · 1300 km menzil · 230 km/s"
+  },
+  {
+    id: "av_3",
+    storeId: "air_vehicle",
+    name: "DJI Agras T40",
+    brand: "DJI",
+    img: "market/airvehicle3.png",
+    price: 35000,
+    resellValue: 0.55,
+    desc: "Ticarət dronları. Fotokamera, yük daşıma, kənd təsərrüfatı istifadəsi.",
+    specs: "40 kq yük · 10 km menzil · 8 m/s"
+  },
+  {
+    id: "av_4",
+    storeId: "air_vehicle",
+    name: "Cirrus SR22",
+    brand: "Cirrus",
+    img: "market/airvehicle4.png",
+    price: 750000,
+    resellValue: 0.70,
+    desc: "Lüks özəl uçuş. Hər şəhərə öz vaxtında çat. Paraşüt sistemi daxil.",
+    specs: "4 nəfər · 1900 km menzil · 335 km/s"
+  },
+
+  /* ── MOTOSİKLLƏR ── */
+  {
+    id: "mc_1",
+    storeId: "motorcycle",
+    name: "Harley-Davidson Sportster",
+    brand: "Harley-Davidson",
+    img: "market/motorcycle1.png",
+    price: 18000,
+    resellValue: 0.78,
+    desc: "Amerikan əfsanəsi. Yolda azadlıq hissi verən klassik kruiser.",
+    specs: "1200cc V-Twin · 73 hp · 180 km/s"
+  },
+  {
+    id: "mc_2",
+    storeId: "motorcycle",
+    name: "Ducati Panigale V4",
+    brand: "Ducati",
+    img: "market/motorcycle2.png",
+    price: 42000,
+    resellValue: 0.75,
+    desc: "İtalyan sport motosiklinin zirvəsi. Yarış texnologiyası, günəlik yolda.",
+    specs: "1103cc V4 · 214 hp · 0-100: 2.5s"
+  },
+  {
+    id: "mc_3",
+    storeId: "motorcycle",
+    name: "BMW R 1250 GS",
+    brand: "BMW",
+    img: "market/motorcycle3.png",
+    price: 28000,
+    resellValue: 0.76,
+    desc: "Hər arazdan keçən macəra motosikli. Dünya turu üçün hazır.",
+    specs: "1254cc Boxer · 136 hp · 200 km/s"
+  },
+  {
+    id: "mc_4",
+    storeId: "motorcycle",
+    name: "Honda CBR1000RR",
+    brand: "Honda",
+    img: "market/motorcycle4.png",
+    price: 22000,
+    resellValue: 0.73,
+    desc: "Dünyanın ən etibarlı sport motosikli. Güc, balans, texnologiya.",
+    specs: "999cc Inline-4 · 189 hp · 299 km/s"
+  },
+
+  /* ── SU NƏQLİYYATI ── */
+  {
+    id: "wv_1",
+    storeId: "water_vehicle",
+    name: "Sea-Doo Spark",
+    brand: "Sea-Doo",
+    img: "market/watervehicle1.png",
+    price: 8500,
+    resellValue: 0.65,
+    desc: "Yüngül, sürətli su scooteri. Xəzər sahilləri üçün əyləncənin ünvanı.",
+    specs: "900cc · 90 hp · 2 nəfər · 75 km/s"
+  },
+  {
+    id: "wv_2",
+    storeId: "water_vehicle",
+    name: "Yamaha 242X",
+    brand: "Yamaha",
+    img: "market/watervehicle2.png",
+    price: 55000,
+    resellValue: 0.68,
+    desc: "Ailə üçün geniş, rahat qayıq. Dalğıclıq, istirahət, əyləncə.",
+    specs: "2x Yamaha 1.8L · 8 nəfər · 55 km/s"
+  },
+  {
+    id: "wv_3",
+    storeId: "water_vehicle",
+    name: "Sunseeker Manhattan 68",
+    brand: "Sunseeker",
+    img: "market/watervehicle3.png",
+    price: 1800000,
+    resellValue: 0.72,
+    desc: "Ultra lüks motor yaxta. VIP qonaqlar üçün, açıq dənizdə istirahət.",
+    specs: "2x 1550 hp · 12 nəfər · 35 knot"
+  },
+  {
+    id: "wv_4",
+    storeId: "water_vehicle",
+    name: "Bayliner Element",
+    brand: "Bayliner",
+    img: "market/watervehicle4.png",
+    price: 22000,
+    resellValue: 0.66,
+    desc: "Klassik ailə qayığı. Balıqçılıq, gəzinti, istirahət üçün mükəmməl.",
+    specs: "115 hp · 6 nəfər · 50 km/s"
+  }
+
+];
