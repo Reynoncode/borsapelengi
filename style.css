@@ -2492,54 +2492,16 @@ body {
 
 
 /* ============================================================
-   MARKET — 2li GRID VƏ ƏLAVƏ STİLLƏR
-   Bu kodu style.css-in sonuna əlavə et (mövcud .mkt-* stillərindən SONRA)
+   MARKET — ƏLAVƏ STİLLƏR (DÜZƏLDİLMİŞ)
+   Köhnə market_css.css-i SİL, bunu style.css-in sonuna əlavə et.
+   NOT: #market-store-grid grid stili artıq style.css-də var,
+        burada yalnız çatışmayan hissələr var.
 ============================================================ */
 
-/* 2 sütunlu grid — mağaza içi */
-.mkt-grid-2col {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  padding: 10px;
-}
-
-/* Item kartı — tam yenidən (grid üçün) */
-.mkt-item-card {
-  background: rgba(255,255,255,0.05);
-  border-radius: 14px;
-  overflow: hidden;
-  cursor: pointer;
-  transition: transform 0.15s, background 0.15s;
-  border: 1px solid rgba(255,255,255,0.07);
-  display: flex;
-  flex-direction: column;
-}
-
-.mkt-item-card:active {
-  transform: scale(0.97);
-  background: rgba(255,255,255,0.09);
-}
-
+/* Item kartı owned vəziyyəti */
 .mkt-item-card.mkt-item-owned {
-  border: 1px solid rgba(31,214,122,0.35);
-  background: rgba(31,214,122,0.05);
-}
-
-/* Şəkil sahəsi */
-.mkt-item-img-wrap {
-  width: 100%;
-  aspect-ratio: 16/9;
-  background: rgba(255,255,255,0.04);
-  overflow: hidden;
-  position: relative;
-}
-
-.mkt-item-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
+  border: 1px solid rgba(31, 214, 122, 0.4);
+  background: rgba(31, 214, 122, 0.05);
 }
 
 /* Şəkil yüklənmədikdə placeholder */
@@ -2550,54 +2512,24 @@ body {
   align-items: center;
   justify-content: center;
   font-size: 32px;
-  background: rgba(255,255,255,0.04);
+  background: rgba(255, 255, 255, 0.04);
   color: #555;
 }
 
-/* Məlumat sahəsi */
-.mkt-item-info {
-  padding: 8px 10px 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1;
-}
-
-.mkt-item-name {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--c-text-primary, #fff);
-  line-height: 1.2;
-}
-
-.mkt-item-brand {
-  font-size: 10px;
-  color: var(--c-text-secondary, #888);
-}
-
-.mkt-item-price {
-  font-size: 13px;
-  font-weight: 800;
-  color: #1FD67A;
-  margin-top: 4px;
-}
-
-/* Popup — şəkil */
+/* Popup şəkli */
 #mkt-popup-img {
   width: 100%;
-  height: 180px;
-  object-fit: cover;
   border-radius: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
+  max-height: 180px;
+  object-fit: cover;
   display: block;
 }
 
-/* Popup active */
-#mkt-item-popup-overlay.active {
-  display: flex;
-}
+/* Popup göstər/gizlət — JS style.display="flex" ilə idarə edir */
+/* CSS-dəki display:none saxla, .active class əlavə etmə — JS-dən idarə olunur */
 
-/* Alış düyməsi aktiv rəng */
+/* Al düyməsi aktiv rəng (disabled olmadıqda) */
 #btn-mkt-buy:not(:disabled) {
   background: linear-gradient(135deg, #1FD67A, #17a85e);
   color: #fff;
@@ -2611,9 +2543,4 @@ body {
   padding: 60px 20px;
   font-size: 14px;
   line-height: 1.7;
-}
-
-/* Mağaza store-back düyməsi — geri market-ə */
-#btn-market-store-back {
-  cursor: pointer;
 }
