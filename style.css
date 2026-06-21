@@ -2322,6 +2322,7 @@ body {
   align-items: flex-end;
   justify-content: center;
 }
+#mkt-item-popup-overlay.active { display: flex; }
 .mkt-item-popup {
   background: var(--c-surface, #141e2e);
   border-radius: 20px 20px 0 0;
