@@ -19,7 +19,10 @@ let state = {
   engineState: null,
   unseenNewsCount: 0,
   currentCity: "baku",
-  ownedProperties: []
+  ownedProperties: [],
+  ownedVehicles: []
+
+
 };
 
 // UI state
@@ -82,6 +85,7 @@ function initFreshState() {
   state.currentCity      = "baku";
   state.ownedProperties  = [];
    state.businesses       = [];
+   state.ownedVehicles = [];
   ASSETS.forEach(a => {
     state.holdings[a.id]     = 0;
     state.priceHistory[a.id] = [a.basePrice];
@@ -2055,9 +2059,13 @@ function renderAll() {
   renderNewsFeed();
   if (currentDetailAssetId) renderAssetDetail();
   if (activeInvTab==="portfolio") renderPortfolio();
-    if (document.getElementById("screen-business")?.classList.contains("active") ||
+  if (document.getElementById("screen-business")?.classList.contains("active") ||
       document.getElementById("screen-business-mgmt")?.classList.contains("active")) {
     renderBusiness();
+  }
+   if (document.getElementById("screen-market")?.classList.contains("active")) {
+    renderMarketStores();
+    renderMarketOwned();
   }
 }
 
@@ -2067,7 +2075,8 @@ function setupEventListeners() {
       const app = el.dataset.app;
       if (app === "travel")       { openTravel();     return; }
       if (app === "realestate")   { openRealEstate(); return; }
-       if (app === "business")     { openBusiness();   return; }   // ← YENİ
+      if (app === "business")     { openBusiness();   return; }
+      if (app === "market")       { openMarket();     return; } // ← YENİ
       if (app === "leaderboard")  {
         Leaderboard.updateForDay(state.day);
         renderLeaderboard();
@@ -2175,6 +2184,8 @@ function setupEventListeners() {
     renderCurrentCityBanner();
     renderTravelMap();
     renderCityList();
+    setupMarketListeners();
+
   });
 
   document.getElementById("btn-re-modal-cancel").addEventListener("click",  closeREModal);
@@ -2202,6 +2213,241 @@ function setupEventListeners() {
 }
 
 initLeaderboard();
+
+/* ============================================================
+   MARKET — JS FUNKSİYALARI
+   Bu kodu app.js-in sonuna, start() funksiyasından əvvəl əlavə et
+============================================================ */
+
+/* ── Hal-hazırda seçili item ── */
+let currentMktItemId = null;
+
+/* ──────────────────────────────────────────────────────────
+   MARKET — AÇ
+────────────────────────────────────────────────────────── */
+function openMarket() {
+  navigateTo("market");
+  renderMarketStores();
+  renderMarketOwned();
+}
+
+/* ──────────────────────────────────────────────────────────
+   MARKET — MAĞAZA SİYAHISI (ana ekran)
+────────────────────────────────────────────────────────── */
+function renderMarketStores() {
+  const list = document.getElementById("market-stores-list");
+  list.innerHTML = MARKET_STORES.map(store => {
+    const ownedCount = (state.ownedVehicles || []).filter(v => {
+      const item = MARKET_ITEMS.find(i => i.id === v.itemId);
+      return item && item.storeId === store.id;
+    }).length;
+
+    return `
+      <div class="mkt-store-card" onclick="openMarketStore('${store.id}')">
+        <span class="mkt-store-icon">${store.icon}</span>
+        <div class="mkt-store-info">
+          <div class="mkt-store-name">${store.name}</div>
+          <div class="mkt-store-desc">${store.desc}</div>
+        </div>
+        <div class="mkt-store-right">
+          ${ownedCount > 0 ? `<span class="mkt-owned-badge">${ownedCount}</span>` : ""}
+          <span class="mkt-arrow">›</span>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+/* ──────────────────────────────────────────────────────────
+   MARKET — MAĞAZA İÇİ (2li grid)
+────────────────────────────────────────────────────────── */
+function openMarketStore(storeId) {
+  const store = MARKET_STORES.find(s => s.id === storeId);
+  const items = MARKET_ITEMS.filter(i => i.storeId === storeId);
+
+  document.getElementById("market-store-icon").textContent   = store.icon;
+  document.getElementById("market-store-title-2").textContent = store.name;
+  document.getElementById("market-store-desc-2").textContent  = store.desc;
+  document.getElementById("market-store-title").textContent   = store.name;
+
+  // Geri düyməsi bu mağaza üçün market-ə qayıtsın
+  document.getElementById("btn-market-store-back").onclick = () => navigateTo("market");
+
+  const grid = document.getElementById("market-store-grid");
+  grid.innerHTML = `<div class="mkt-grid-2col">` + items.map(item => {
+    const isOwned = (state.ownedVehicles || []).some(v => v.itemId === item.id);
+    return `
+      <div class="mkt-item-card${isOwned ? " mkt-item-owned" : ""}" onclick="openMktItemPopup('${item.id}')">
+        <div class="mkt-item-img-wrap">
+          <img class="mkt-item-img"
+               src="${item.img}"
+               alt="${item.name}"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+          <div class="mkt-item-img-placeholder" style="display:none;">${store.icon}</div>
+        </div>
+        <div class="mkt-item-info">
+          <div class="mkt-item-name">${item.name}</div>
+          <div class="mkt-item-brand">${item.brand}</div>
+          <div class="mkt-item-price">${fmtMoney(item.price)}</div>
+          ${isOwned ? `<div class="mkt-item-appreciate" style="color:#1FD67A;font-size:10px;margin-top:2px;">✓ Sahib olduğun</div>` : ""}
+        </div>
+      </div>
+    `;
+  }).join("") + `</div>`;
+
+  navigateTo("market-store");
+}
+
+/* ──────────────────────────────────────────────────────────
+   MARKET — ITEM POPUP (alış kartı)
+────────────────────────────────────────────────────────── */
+function openMktItemPopup(itemId) {
+  currentMktItemId = itemId;
+  const item    = MARKET_ITEMS.find(i => i.id === itemId);
+  const balance = getPrimaryBalance();
+  const canBuy  = balance >= item.price;
+  const isOwned = (state.ownedVehicles || []).some(v => v.itemId === item.id);
+
+  // Şəkil
+  const img = document.getElementById("mkt-popup-img");
+  img.src = item.img;
+  img.style.display = "block";
+  img.onerror = () => { img.style.display = "none"; };
+
+  document.getElementById("mkt-popup-icon").textContent  = "";
+  document.getElementById("mkt-popup-name").textContent  = item.name;
+  document.getElementById("mkt-popup-brand").textContent = item.brand + " · " + item.specs;
+  document.getElementById("mkt-popup-desc").textContent  = item.desc;
+  document.getElementById("mkt-popup-price").textContent = fmtMoney(item.price);
+  document.getElementById("mkt-popup-balance").textContent = fmtMoney(balance);
+
+  const buyBtn = document.getElementById("btn-mkt-buy");
+  if (isOwned) {
+    buyBtn.textContent  = "Artıq sahib olduğun";
+    buyBtn.disabled     = true;
+    buyBtn.style.background = "#2a2a3a";
+    buyBtn.style.color  = "#888";
+  } else if (!canBuy) {
+    buyBtn.textContent  = "Balans kifayət deyil";
+    buyBtn.disabled     = true;
+    buyBtn.style.background = "#2a2a3a";
+    buyBtn.style.color  = "#888";
+  } else {
+    buyBtn.textContent  = `Al — ${fmtMoney(item.price)}`;
+    buyBtn.disabled     = false;
+    buyBtn.style.background = "";
+    buyBtn.style.color  = "";
+  }
+
+  document.getElementById("mkt-item-popup-overlay").classList.add("active");
+}
+
+function closeMktPopup() {
+  document.getElementById("mkt-item-popup-overlay").classList.remove("active");
+  currentMktItemId = null;
+}
+
+function confirmMktBuy() {
+  if (!currentMktItemId) return;
+  const item = MARKET_ITEMS.find(i => i.id === currentMktItemId);
+  const card = getPrimaryCard();
+  if (!card || card.balance < item.price) {
+    showToast("❌ Balans kifayət deyil!");
+    return;
+  }
+  card.balance -= item.price;
+  if (!state.ownedVehicles) state.ownedVehicles = [];
+  state.ownedVehicles.push({
+    itemId:   item.id,
+    boughtAt: item.price,
+    boughtDay: state.day
+  });
+  addTransaction(`${item.name} alındı`, item.price, "out", "MARKET");
+  showToast(`🎉 ${item.name} alındı!`);
+  saveState();
+  closeMktPopup();
+  renderHome();
+  // Mağaza içini yenilə (owned badge)
+  const store = MARKET_STORES.find(s => s.id === item.storeId);
+  if (store) openMarketStore(store.id);
+}
+
+/* ──────────────────────────────────────────────────────────
+   MARKET — SAHİB OLDUQLARIM
+────────────────────────────────────────────────────────── */
+function renderMarketOwned() {
+  const list = document.getElementById("market-owned-list");
+  const owned = state.ownedVehicles || [];
+
+  if (owned.length === 0) {
+    list.innerHTML = `<div class="mkt-empty">Hələ heç nə almamısan.<br>Mağazaya gir, nəqliyyat al! 🚗</div>`;
+    return;
+  }
+
+  // Mağazaya görə qruplaşdır
+  const groups = {};
+  owned.forEach(v => {
+    const item  = MARKET_ITEMS.find(i => i.id === v.itemId);
+    const store = item ? MARKET_STORES.find(s => s.id === item.storeId) : null;
+    if (!item || !store) return;
+    if (!groups[store.id]) groups[store.id] = { store, items: [] };
+    groups[store.id].items.push({ owned: v, item });
+  });
+
+  list.innerHTML = Object.values(groups).map(group => `
+    <div class="mkt-owned-group-title">${group.store.icon} ${group.store.name}</div>
+    ${group.items.map(({ owned: v, item }) => `
+      <div class="mkt-owned-card">
+        <div class="mkt-owned-img">
+          <img src="${item.img}" alt="${item.name}"
+               style="width:100%;height:100%;object-fit:cover;border-radius:8px;"
+               onerror="this.style.display='none'">
+        </div>
+        <div class="mkt-owned-info">
+          <div class="mkt-owned-name">${item.name}</div>
+          <div class="mkt-owned-meta">${item.brand} · ${item.specs}</div>
+          <div class="mkt-owned-price-row">
+            <span class="mkt-owned-bought">Alış: ${fmtMoney(v.boughtAt)}</span>
+            <span style="color:#888;font-size:10px;">Gün ${v.boughtDay}</span>
+          </div>
+          <div style="color:#aaa;font-size:10px;margin-top:2px;">
+            Yenidən satış: ~${fmtMoney(Math.round(v.boughtAt * item.resellValue))}
+          </div>
+        </div>
+      </div>
+    `).join("")}
+  `).join("");
+}
+
+/* ──────────────────────────────────────────────────────────
+   MARKET — TAB SWİTCH (Mağazalar / Sahib Olduqlarım)
+────────────────────────────────────────────────────────── */
+function setupMarketListeners() {
+  // Ana ekran tab-lar
+  document.querySelectorAll(".market-main-tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".market-main-tab").forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
+      const which = tab.dataset.marketTab;
+      document.getElementById("market-stores-list").style.display = which === "stores" ? "block" : "none";
+      document.getElementById("market-owned-list").style.display  = which === "owned"  ? "block" : "none";
+      if (which === "owned") renderMarketOwned();
+      if (which === "stores") renderMarketStores();
+    });
+  });
+
+  // Alış düyməsi
+  document.getElementById("btn-mkt-buy").addEventListener("click", confirmMktBuy);
+
+  // Bağla düyməsi
+  document.getElementById("btn-mkt-popup-close").addEventListener("click", closeMktPopup);
+
+  // Overlay tıklama ilə bağla
+  document.getElementById("mkt-item-popup-overlay").addEventListener("click", function(e) {
+    if (e.target === this) closeMktPopup();
+  });
+}
+
 /* ──────────────────────────────────────────────────────────
    BAŞLANĞIC
 ────────────────────────────────────────────────────────── */
@@ -2216,6 +2462,7 @@ function start() {
     if (!state.currentCity)     state.currentCity = "baku";
     if (!state.ownedProperties) state.ownedProperties = [];
     if (!state.businesses)      state.businesses = [];
+    if (!state.ownedVehicles)   state.ownedVehicles = [];
     if (state.bankBalance !== undefined && !state.cards) {
       state.cards = [{
         id: "kapitan_standard_" + Date.now(),
