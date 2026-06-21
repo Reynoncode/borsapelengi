@@ -2410,8 +2410,12 @@ function renderMarketOwned() {
 }
 
 /* ── Bütün Market event-ları BİR DƏFƏ bağla ── */
+let marketListenersSetup = false;
+
 function setupMarketListeners() {
-  // Tab switch
+  if (marketListenersSetup) return;   // ← dublikat qoruması
+  marketListenersSetup = true;
+
   document.querySelectorAll(".market-main-tab").forEach(tab => {
     tab.addEventListener("click", () => {
       document.querySelectorAll(".market-main-tab").forEach(t => t.classList.remove("active"));
@@ -2424,13 +2428,9 @@ function setupMarketListeners() {
     });
   });
 
-  // Al düyməsi
   document.getElementById("btn-mkt-buy").addEventListener("click", confirmMktBuy);
-
-  // Ləğv et düyməsi
   document.getElementById("btn-mkt-popup-close").addEventListener("click", closeMktPopup);
 
-  // Overlay-ə tıklayaraq bağla (popup xaricindəki qaranlıq sahə)
   document.getElementById("mkt-item-popup-overlay").addEventListener("click", function(e) {
     if (e.target === this) closeMktPopup();
   });
