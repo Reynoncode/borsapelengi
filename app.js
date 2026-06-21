@@ -2215,25 +2215,25 @@ function setupEventListeners() {
 initLeaderboard();
 
 /* ============================================================
-   MARKET — JS FUNKSİYALARI
-   Bu kodu app.js-in sonuna, start() funksiyasından əvvəl əlavə et
+   MARKET — JS FUNKSİYALARI (DÜZƏLDİLMİŞ)
+   Bu kodu app.js-in sonuna, start() funksiyasından əvvəl əlavə et.
+   Əgər köhnə market_appjs.js artıq əlavə etmisənsə, onu SİL, bunu yaz.
 ============================================================ */
 
-/* ── Hal-hazırda seçili item ── */
 let currentMktItemId = null;
 
-/* ──────────────────────────────────────────────────────────
-   MARKET — AÇ
-────────────────────────────────────────────────────────── */
+/* ── Market aç ── */
 function openMarket() {
   navigateTo("market");
+  // Tab-ı "Mağazalar"-a resetlə
+  document.querySelectorAll(".market-main-tab").forEach(t => t.classList.remove("active"));
+  document.querySelector("[data-market-tab='stores']")?.classList.add("active");
+  document.getElementById("market-stores-list").style.display = "block";
+  document.getElementById("market-owned-list").style.display  = "none";
   renderMarketStores();
-  renderMarketOwned();
 }
 
-/* ──────────────────────────────────────────────────────────
-   MARKET — MAĞAZA SİYAHISI (ana ekran)
-────────────────────────────────────────────────────────── */
+/* ── Ana ekran: mağaza siyahısı ── */
 function renderMarketStores() {
   const list = document.getElementById("market-stores-list");
   list.innerHTML = MARKET_STORES.map(store => {
@@ -2241,7 +2241,6 @@ function renderMarketStores() {
       const item = MARKET_ITEMS.find(i => i.id === v.itemId);
       return item && item.storeId === store.id;
     }).length;
-
     return `
       <div class="mkt-store-card" onclick="openMarketStore('${store.id}')">
         <span class="mkt-store-icon">${store.icon}</span>
@@ -2253,35 +2252,36 @@ function renderMarketStores() {
           ${ownedCount > 0 ? `<span class="mkt-owned-badge">${ownedCount}</span>` : ""}
           <span class="mkt-arrow">›</span>
         </div>
-      </div>
-    `;
+      </div>`;
   }).join("");
 }
 
-/* ──────────────────────────────────────────────────────────
-   MARKET — MAĞAZA İÇİ (2li grid)
-────────────────────────────────────────────────────────── */
+/* ── Mağaza içi: 2li grid ──
+   #market-store-grid özündə artıq display:grid var (style.css-də).
+   Biz birbaşa onun içinə item kartları yazırıq, əlavə wrapper yoxdur. */
 function openMarketStore(storeId) {
   const store = MARKET_STORES.find(s => s.id === storeId);
   const items = MARKET_ITEMS.filter(i => i.storeId === storeId);
 
-  document.getElementById("market-store-icon").textContent   = store.icon;
+  document.getElementById("market-store-icon").textContent    = store.icon;
   document.getElementById("market-store-title-2").textContent = store.name;
   document.getElementById("market-store-desc-2").textContent  = store.desc;
   document.getElementById("market-store-title").textContent   = store.name;
 
-  // Geri düyməsi bu mağaza üçün market-ə qayıtsın
-  document.getElementById("btn-market-store-back").onclick = () => navigateTo("market");
+  // Geri düyməsi market-ə qayıtsın
+  const backBtn = document.getElementById("btn-market-store-back");
+  backBtn.onclick = () => navigateTo("market");
 
   const grid = document.getElementById("market-store-grid");
-  grid.innerHTML = `<div class="mkt-grid-2col">` + items.map(item => {
+  // #market-store-grid artıq CSS-də grid:1fr 1fr var — birbaşa item-ları yaz
+  grid.innerHTML = items.map(item => {
     const isOwned = (state.ownedVehicles || []).some(v => v.itemId === item.id);
     return `
-      <div class="mkt-item-card${isOwned ? " mkt-item-owned" : ""}" onclick="openMktItemPopup('${item.id}')">
+      <div class="mkt-item-card${isOwned ? " mkt-item-owned" : ""}"
+           onclick="openMktItemPopup('${item.id}')">
         <div class="mkt-item-img-wrap">
           <img class="mkt-item-img"
-               src="${item.img}"
-               alt="${item.name}"
+               src="${item.img}" alt="${item.name}"
                onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
           <div class="mkt-item-img-placeholder" style="display:none;">${store.icon}</div>
         </div>
@@ -2289,24 +2289,21 @@ function openMarketStore(storeId) {
           <div class="mkt-item-name">${item.name}</div>
           <div class="mkt-item-brand">${item.brand}</div>
           <div class="mkt-item-price">${fmtMoney(item.price)}</div>
-          ${isOwned ? `<div class="mkt-item-appreciate" style="color:#1FD67A;font-size:10px;margin-top:2px;">✓ Sahib olduğun</div>` : ""}
+          ${isOwned ? `<div class="mkt-item-appreciate">✓ Sahib olduğun</div>` : ""}
         </div>
-      </div>
-    `;
-  }).join("") + `</div>`;
+      </div>`;
+  }).join("");
 
   navigateTo("market-store");
 }
 
-/* ──────────────────────────────────────────────────────────
-   MARKET — ITEM POPUP (alış kartı)
-────────────────────────────────────────────────────────── */
+/* ── Item popup (alış kartı) ── */
 function openMktItemPopup(itemId) {
   currentMktItemId = itemId;
   const item    = MARKET_ITEMS.find(i => i.id === itemId);
   const balance = getPrimaryBalance();
-  const canBuy  = balance >= item.price;
   const isOwned = (state.ownedVehicles || []).some(v => v.itemId === item.id);
+  const canBuy  = !isOwned && balance >= item.price;
 
   // Şəkil
   const img = document.getElementById("mkt-popup-img");
@@ -2323,27 +2320,25 @@ function openMktItemPopup(itemId) {
 
   const buyBtn = document.getElementById("btn-mkt-buy");
   if (isOwned) {
-    buyBtn.textContent  = "Artıq sahib olduğun";
-    buyBtn.disabled     = true;
-    buyBtn.style.background = "#2a2a3a";
-    buyBtn.style.color  = "#888";
+    buyBtn.textContent = "Artıq sahib olduğun";
+    buyBtn.disabled = true;
+    buyBtn.style.cssText = "background:#2a2a3a;color:#666;";
   } else if (!canBuy) {
-    buyBtn.textContent  = "Balans kifayət deyil";
-    buyBtn.disabled     = true;
-    buyBtn.style.background = "#2a2a3a";
-    buyBtn.style.color  = "#888";
+    buyBtn.textContent = "Balans kifayət deyil";
+    buyBtn.disabled = true;
+    buyBtn.style.cssText = "background:#2a2a3a;color:#666;";
   } else {
-    buyBtn.textContent  = `Al — ${fmtMoney(item.price)}`;
-    buyBtn.disabled     = false;
-    buyBtn.style.background = "";
-    buyBtn.style.color  = "";
+    buyBtn.textContent = `Al — ${fmtMoney(item.price)}`;
+    buyBtn.disabled = false;
+    buyBtn.style.cssText = "background:linear-gradient(135deg,#1FD67A,#17a85e);color:#fff;font-weight:700;";
   }
 
-  document.getElementById("mkt-item-popup-overlay").classList.add("active");
+  // Popup-u göstər
+  document.getElementById("mkt-item-popup-overlay").style.display = "flex";
 }
 
 function closeMktPopup() {
-  document.getElementById("mkt-item-popup-overlay").classList.remove("active");
+  document.getElementById("mkt-item-popup-overlay").style.display = "none";
   currentMktItemId = null;
 }
 
@@ -2358,7 +2353,7 @@ function confirmMktBuy() {
   card.balance -= item.price;
   if (!state.ownedVehicles) state.ownedVehicles = [];
   state.ownedVehicles.push({
-    itemId:   item.id,
+    itemId: item.id,
     boughtAt: item.price,
     boughtDay: state.day
   });
@@ -2367,24 +2362,19 @@ function confirmMktBuy() {
   saveState();
   closeMktPopup();
   renderHome();
-  // Mağaza içini yenilə (owned badge)
+  // Mağazanı yenilə (owned göstərsin)
   const store = MARKET_STORES.find(s => s.id === item.storeId);
   if (store) openMarketStore(store.id);
 }
 
-/* ──────────────────────────────────────────────────────────
-   MARKET — SAHİB OLDUQLARIM
-────────────────────────────────────────────────────────── */
+/* ── Sahib olduqlarım ── */
 function renderMarketOwned() {
-  const list = document.getElementById("market-owned-list");
+  const list  = document.getElementById("market-owned-list");
   const owned = state.ownedVehicles || [];
-
   if (owned.length === 0) {
     list.innerHTML = `<div class="mkt-empty">Hələ heç nə almamısan.<br>Mağazaya gir, nəqliyyat al! 🚗</div>`;
     return;
   }
-
-  // Mağazaya görə qruplaşdır
   const groups = {};
   owned.forEach(v => {
     const item  = MARKET_ITEMS.find(i => i.id === v.itemId);
@@ -2393,10 +2383,9 @@ function renderMarketOwned() {
     if (!groups[store.id]) groups[store.id] = { store, items: [] };
     groups[store.id].items.push({ owned: v, item });
   });
-
-  list.innerHTML = Object.values(groups).map(group => `
-    <div class="mkt-owned-group-title">${group.store.icon} ${group.store.name}</div>
-    ${group.items.map(({ owned: v, item }) => `
+  list.innerHTML = Object.values(groups).map(g => `
+    <div class="mkt-owned-group-title">${g.store.icon} ${g.store.name}</div>
+    ${g.items.map(({ owned: v, item }) => `
       <div class="mkt-owned-card">
         <div class="mkt-owned-img">
           <img src="${item.img}" alt="${item.name}"
@@ -2414,16 +2403,13 @@ function renderMarketOwned() {
             Yenidən satış: ~${fmtMoney(Math.round(v.boughtAt * item.resellValue))}
           </div>
         </div>
-      </div>
-    `).join("")}
+      </div>`).join("")}
   `).join("");
 }
 
-/* ──────────────────────────────────────────────────────────
-   MARKET — TAB SWİTCH (Mağazalar / Sahib Olduqlarım)
-────────────────────────────────────────────────────────── */
+/* ── Bütün Market event-ları BİR DƏFƏ bağla ── */
 function setupMarketListeners() {
-  // Ana ekran tab-lar
+  // Tab switch
   document.querySelectorAll(".market-main-tab").forEach(tab => {
     tab.addEventListener("click", () => {
       document.querySelectorAll(".market-main-tab").forEach(t => t.classList.remove("active"));
@@ -2431,23 +2417,22 @@ function setupMarketListeners() {
       const which = tab.dataset.marketTab;
       document.getElementById("market-stores-list").style.display = which === "stores" ? "block" : "none";
       document.getElementById("market-owned-list").style.display  = which === "owned"  ? "block" : "none";
-      if (which === "owned") renderMarketOwned();
+      if (which === "owned")  renderMarketOwned();
       if (which === "stores") renderMarketStores();
     });
   });
 
-  // Alış düyməsi
+  // Al düyməsi
   document.getElementById("btn-mkt-buy").addEventListener("click", confirmMktBuy);
 
-  // Bağla düyməsi
+  // Ləğv et düyməsi
   document.getElementById("btn-mkt-popup-close").addEventListener("click", closeMktPopup);
 
-  // Overlay tıklama ilə bağla
+  // Overlay-ə tıklayaraq bağla (popup xaricindəki qaranlıq sahə)
   document.getElementById("mkt-item-popup-overlay").addEventListener("click", function(e) {
     if (e.target === this) closeMktPopup();
   });
 }
-
 /* ──────────────────────────────────────────────────────────
    BAŞLANĞIC
 ────────────────────────────────────────────────────────── */
