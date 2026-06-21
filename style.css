@@ -2314,15 +2314,21 @@ body {
 
 /* ── Satın alma popup ── */
 #mkt-item-popup-overlay {
-  display: none;
+  display: flex;           /* ← none deyil, flex */
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.65);
   z-index: 9999;
   align-items: flex-end;
   justify-content: center;
+  opacity: 0;              /* ← gizlət */
+  pointer-events: none;    /* ← tıklamanı bloklа */
+  transition: opacity 0.2s;
 }
-#mkt-item-popup-overlay.active { display: flex; }
+#mkt-item-popup-overlay.active {
+  opacity: 1;
+  pointer-events: all;     /* ← aktiv et */
+}
 .mkt-item-popup {
   background: var(--c-surface, #141e2e);
   border-radius: 20px 20px 0 0;
