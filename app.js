@@ -2334,11 +2334,13 @@ function openMktItemPopup(itemId) {
   }
 
   // Popup-u göstər
-  document.getElementById("mkt-item-popup-overlay").style.display = "flex";
+document.getElementById("mkt-item-popup-overlay").classList.add("active");
+
 }
 
 function closeMktPopup() {
-  document.getElementById("mkt-item-popup-overlay").style.display = "none";
+document.getElementById("mkt-item-popup-overlay").classList.remove("active");
+
   currentMktItemId = null;
 }
 
